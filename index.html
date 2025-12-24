@@ -1338,9 +1338,9 @@
                             <input type="text" class="form-input" placeholder="Option label (e.g., 'Talk', 'Buy', 'Fight')" data-option="label">
                             <input type="text" class="form-input" placeholder="Option description (optional)" data-option="description" style="margin-top: 0.5rem;">
                             <div class="rewards-row">
-                                <input type="number" class="form-input" placeholder="Gold" data-option="gold" value="0">
-                                <input type="number" class="form-input" placeholder="Shards" data-option="shards" value="0">
-                                <input type="number" class="form-input" placeholder="EXP" data-option="exp" value="0">
+                                <input type="number" class="form-input" placeholder="Gold" data-option="gold">
+                                <input type="number" class="form-input" placeholder="Shards" data-option="shards">
+                                <input type="number" class="form-input" placeholder="EXP" data-option="exp">
                             </div>
                         </div>
                     </div>
@@ -2021,6 +2021,11 @@
                 img.style.display = 'block';
                 img.onload = () => {
                     console.log('Map image loaded:', img.naturalWidth, 'x', img.naturalHeight);
+                    // Center the view on the image
+                    const rect = mapCanvas.getBoundingClientRect();
+                    translateX = rect.width / 2;
+                    translateY = rect.height / 2;
+                    updateTransform();
                 };
             } else if (img) {
                 img.style.display = 'none';
@@ -2096,6 +2101,9 @@
             if (node) {
                 modalTitle.textContent = 'Edit Node';
                 deleteBtn.style.display = 'block';
+                
+                // Populate node name
+                document.getElementById('nodeName').value = node.name;
                 
                 // Load variants from node
                 if (node.variants && node.variants.length > 0) {
@@ -2353,6 +2361,20 @@
                             variantHtml.push(`<div class="node-viewer-rewards">${rewards.join('')}</div>`);
                         }
                         
+                        // Display outcomes if present
+                        if (option.outcomes && option.outcomes.trim()) {
+                            variantHtml.push(`
+                                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px; border-left: 3px solid var(--accent);">
+                                    <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 0.5rem;">
+                                        📊 Outcomes
+                                    </div>
+                                    <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem; white-space: pre-wrap;">
+                                        ${option.outcomes}
+                                    </div>
+                                </div>
+                            `);
+                        }
+                        
                         // Display follow-up events
                         if (option.followupEvents && option.followupEvents.length > 0) {
                             variantHtml.push(`
@@ -2605,9 +2627,16 @@
                     <input type="text" class="form-input" placeholder="Option label (e.g., 'Talk', 'Buy', 'Fight')" data-option="label" value="${option?.label || ''}">
                     <input type="text" class="form-input" placeholder="Option description (optional)" data-option="description" style="margin-top: 0.5rem;" value="${option?.description || ''}">
                     <div class="rewards-row">
-                        <input type="number" class="form-input" placeholder="Gold" data-option="gold" value="${option?.gold || 0}">
-                        <input type="number" class="form-input" placeholder="Shards" data-option="shards" value="${option?.shards || 0}">
-                        <input type="number" class="form-input" placeholder="EXP" data-option="exp" value="${option?.exp || 0}">
+                        <input type="number" class="form-input" placeholder="Gold" data-option="gold" value="${option?.gold !== undefined && option.gold !== 0 ? option.gold : ''}">
+                        <input type="number" class="form-input" placeholder="Shards" data-option="shards" value="${option?.shards !== undefined && option.shards !== 0 ? option.shards : ''}">
+                        <input type="number" class="form-input" placeholder="EXP" data-option="exp" value="${option?.exp !== undefined && option.exp !== 0 ? option.exp : ''}">
+                    </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <label class="form-label" style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">
+                            Outcomes (Success/Fail Results)
+                        </label>
+                        <textarea class="form-textarea" placeholder="Describe what happens on success, critical success, fail, or critical fail..." data-option="outcomes" style="min-height: 80px;">${option?.outcomes || ''}</textarea>
                     </div>
                     
                     <div style="margin-top: 1rem;">
@@ -2640,9 +2669,9 @@
                     <textarea class="form-textarea" placeholder="Event description" data-followup="description" style="min-height: 60px; margin-bottom: 0.5rem;">${event?.description || ''}</textarea>
                     <div class="form-label" style="font-size: 0.85rem; margin-bottom: 0.5rem;">Rewards:</div>
                     <div class="rewards-row">
-                        <input type="number" class="form-input" placeholder="Gold" data-followup="gold" value="${event?.gold || 0}">
-                        <input type="number" class="form-input" placeholder="Shards" data-followup="shards" value="${event?.shards || 0}">
-                        <input type="number" class="form-input" placeholder="EXP" data-followup="exp" value="${event?.exp || 0}">
+                        <input type="number" class="form-input" placeholder="Gold" data-followup="gold" value="${event?.gold !== undefined && event.gold !== 0 ? event.gold : ''}">
+                        <input type="number" class="form-input" placeholder="Shards" data-followup="shards" value="${event?.shards !== undefined && event.shards !== 0 ? event.shards : ''}">
+                        <input type="number" class="form-input" placeholder="EXP" data-followup="exp" value="${event?.exp !== undefined && event.exp !== 0 ? event.exp : ''}">
                     </div>
                 </div>
             `;
@@ -2823,15 +2852,29 @@
                 
                 nameInput.addEventListener('input', () => {
                     variant.name = nameInput.value;
-                    renderVariantTabs();
+                    updateVariantTabLabels();
                 });
                 
                 chanceInput.addEventListener('input', () => {
                     variant.chance = parseInt(chanceInput.value) || 0;
-                    renderVariantTabs();
+                    updateVariantTabLabels();
                 });
                 
                 variantsContainer.appendChild(variantItem);
+            });
+        }
+
+        function updateVariantTabLabels() {
+            const tabsContainer = document.getElementById('variantTabs');
+            const tabs = tabsContainer.querySelectorAll('.variant-tab');
+            
+            currentNodeVariants.forEach((variant, index) => {
+                if (tabs[index]) {
+                    tabs[index].innerHTML = `
+                        <span>${variant.name}</span>
+                        <span class="variant-tab-chance">(${variant.chance}%)</span>
+                    `;
+                }
             });
         }
 
@@ -2878,6 +2921,7 @@
                     gold: parseInt(item.querySelector('[data-option="gold"]').value) || 0,
                     shards: parseInt(item.querySelector('[data-option="shards"]').value) || 0,
                     exp: parseInt(item.querySelector('[data-option="exp"]').value) || 0,
+                    outcomes: item.querySelector('[data-option="outcomes"]')?.value || '',
                     followupEvents: followupEvents
                 };
                 if (option.label) options.push(option);
