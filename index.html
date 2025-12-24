@@ -1556,27 +1556,6 @@
                 mapCanvas.classList.add('adding-node');
             });
 
-
-            // Debug button
-            document.getElementById('debugBtn').addEventListener('click', () => {
-                console.log('=== DEBUG INFO ===');
-                console.log('Current Map ID:', currentMapId);
-                console.log('All Maps:', maps);
-                const currentMap = maps.find(m => m.id === currentMapId);
-                console.log('Current Map:', currentMap);
-                console.log('Nodes in current map:', currentMap?.nodes);
-                console.log('Transform:', { scale, translateX, translateY });
-                console.log('Node elements in DOM:', mapImageContainer.querySelectorAll('.node').length);
-                alert('Check browser console (F12) for debug info');
-            });
-            
-            // Show debug button when holding Shift
-            document.addEventListener('keydown', (e) => {
-                if (e.shiftKey && e.key === 'D') {
-                    document.getElementById('debugBtn').style.display = 'block';
-                }
-            });
-
             // Add Map Button
             document.getElementById('addMapBtn').addEventListener('click', () => {
                 if (!isAdmin) {
@@ -1657,28 +1636,37 @@
             mapForm.addEventListener('submit', saveMap);
             document.getElementById('deleteMapBtn').addEventListener('click', deleteMap);
 
-            // Tags Input
-            document.getElementById('tagInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addTag(e.target.value.trim());
-                    e.target.value = '';
-                }
-            });
+            // Tags Input (in modal)
+            const tagInput = document.getElementById('tagInput');
+            if (tagInput) {
+                tagInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addTag(e.target.value.trim());
+                        e.target.value = '';
+                    }
+                });
+            }
 
-            // Add Variant Button
-            document.getElementById('addVariantBtn').addEventListener('click', addVariant);
+            // Add Variant Button (in modal)
+            const addVariantBtn = document.getElementById('addVariantBtn');
+            if (addVariantBtn) {
+                addVariantBtn.addEventListener('click', addVariant);
+            }
 
-            // Show/hide map link based on node type
-            document.getElementById('nodeType').addEventListener('change', (e) => {
-                const mapLinkGroup = document.getElementById('mapLinkGroup');
-                if (e.target.value === 'transition') {
-                    mapLinkGroup.style.display = 'block';
-                    populateMapLinkDropdown();
-                } else {
-                    mapLinkGroup.style.display = 'none';
-                }
-            });
+            // Show/hide map link based on node type (in modal)
+            const nodeTypeSelect = document.getElementById('nodeType');
+            if (nodeTypeSelect) {
+                nodeTypeSelect.addEventListener('change', (e) => {
+                    const mapLinkGroup = document.getElementById('mapLinkGroup');
+                    if (e.target.value === 'transition') {
+                        mapLinkGroup.style.display = 'block';
+                        populateMapLinkDropdown();
+                    } else {
+                        mapLinkGroup.style.display = 'none';
+                    }
+                });
+            }
 
             // Search
             searchInput.addEventListener('input', performSearch);
