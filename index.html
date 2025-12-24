@@ -1786,16 +1786,12 @@
             // Render all root maps
             rootMaps.forEach(map => {
                 renderMapItem(map);
-            });
-            
-            // If a map is selected, show its submaps
-            if (currentMapId) {
-                const currentMap = maps.find(m => m.id === currentMapId);
-                if (currentMap) {
-                    // Show submaps of the current map
-                    renderSubmaps(currentMapId, 1);
+                
+                // If this map is selected, show its submaps right after it
+                if (currentMapId === map.id) {
+                    renderSubmaps(map.id, 1);
                 }
-            }
+            });
         }
 
         function renderMapItem(map, level = 0) {
