@@ -1782,10 +1782,20 @@
             const rootMaps = maps.filter(m => !m.parentId);
             // Sort by displayOrder
             rootMaps.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+            
+            // Render all root maps
             rootMaps.forEach(map => {
                 renderMapItem(map);
-                renderSubmaps(map.id, 1);
             });
+            
+            // If a map is selected, show its submaps
+            if (currentMapId) {
+                const currentMap = maps.find(m => m.id === currentMapId);
+                if (currentMap) {
+                    // Show submaps of the current map
+                    renderSubmaps(currentMapId, 1);
+                }
+            }
         }
 
         function renderMapItem(map, level = 0) {
@@ -1810,10 +1820,14 @@
                 </div>
             ` : '';
             
+            // Check if this map has submaps
+            const hasSubmaps = maps.some(m => m.parentId === map.id);
+            const submapIndicator = hasSubmaps ? ' <span style="opacity: 0.6;">▼</span>' : '';
+            
             li.innerHTML = `
                 ${dragHandleHtml}
                 <div class="map-item-name">
-                    <span>${map.name}</span>
+                    <span>${map.name}${submapIndicator}</span>
                     ${actionsHtml}
                 </div>
                 <div class="map-item-count">${map.nodes.length} nodes</div>
