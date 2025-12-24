@@ -35,43 +35,7 @@
             height: 100vh;
         }
 
-        /* Login Screen */
-        .login-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #1a1410 0%, #2d2416 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 5000;
-        }
-
-        .login-screen.hidden {
-            display: none;
-        }
-
-        .login-box {
-            background: linear-gradient(to bottom, var(--dark), var(--darker));
-            border: 2px solid var(--primary);
-            border-radius: 12px;
-            padding: 3rem;
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 20px 60px var(--shadow);
-        }
-
-        .login-title {
-            font-family: 'Cinzel', serif;
-            font-size: 2rem;
-            color: var(--primary);
-            text-align: center;
-            margin-bottom: 2rem;
-            letter-spacing: 2px;
-        }
-
+        /* Login Modal uses existing modal styles */
         .login-form {
             display: flex;
             flex-direction: column;
@@ -120,16 +84,6 @@
             text-align: center;
             margin-top: 1rem;
             font-size: 0.9rem;
-        }
-
-        .view-mode-notice {
-            background: rgba(56, 161, 105, 0.2);
-            border: 1px solid var(--success);
-            padding: 1rem;
-            border-radius: 6px;
-            text-align: center;
-            margin-top: 1rem;
-            color: var(--success);
         }
 
         .user-info {
@@ -384,6 +338,46 @@
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .map-item.draggable {
+            cursor: move;
+        }
+
+        .map-item.dragging {
+            opacity: 0.5;
+            background: rgba(212, 175, 55, 0.3);
+        }
+
+        .map-item.drag-over {
+            border-top: 3px solid var(--primary);
+            margin-top: 0.5rem;
+        }
+
+        .map-item.drag-over-bottom {
+            border-bottom: 3px solid var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .map-drag-handle {
+            position: absolute;
+            left: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary);
+            font-size: 1rem;
+            cursor: move;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .map-item:hover .map-drag-handle {
+            opacity: 1;
+        }
+
+        .map-item-name {
+            margin-left: 1.5rem;
         }
 
         .map-item:hover {
@@ -1184,31 +1178,28 @@
     </style>
 </head>
 <body>
-    <!-- Login Screen -->
-    <div class="login-screen" id="loginScreen">
-        <div class="login-box">
-            <h1 class="login-title">⚔ MAP FORGE ⚔</h1>
-            <form class="login-form" id="loginForm">
-                <input type="email" class="login-input" id="loginEmail" placeholder="Admin Email" required>
-                <input type="password" class="login-input" id="loginPassword" placeholder="Password" required>
-                <button type="submit" class="login-btn">Login as Admin</button>
-                <div class="login-error" id="loginError"></div>
-            </form>
-            <button class="login-btn" id="continueAsViewer" style="background: rgba(139, 115, 85, 0.5); margin-top: 1rem;">
-                Continue as Viewer
-            </button>
-            <div class="view-mode-notice" style="display: none;" id="viewModeNotice">
-                Viewing as guest - you can explore but not edit
-            </div>
-        </div>
-    </div>
-
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
     </div>
 
-    <div class="app-container" id="appContainer" style="display: none;">
+    <!-- Login Modal (triggered by button) -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Admin Login</h2>
+                <button class="close-btn" id="closeLoginModalBtn">×</button>
+            </div>
+            <form class="login-form" id="loginForm">
+                <input type="email" class="login-input" id="loginEmail" placeholder="Admin Email" required>
+                <input type="password" class="login-input" id="loginPassword" placeholder="Password" required>
+                <button type="submit" class="login-btn">Login</button>
+                <div class="login-error" id="loginError"></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer">
         <!-- Header -->
         <div class="header">
             <div class="title">⚔ MAP FORGE v2.0 ⚔</div>
@@ -1217,16 +1208,13 @@
                 <div class="search-results" id="searchResults"></div>
             </div>
             <div class="header-actions">
-                <button class="btn btn-secondary" id="exportBtn">📤 Export</button>
-                <button class="btn btn-secondary" id="importBtn">📥 Import</button>
                 <button class="btn btn-secondary" id="addMapBtn">+ New Map</button>
                 <button class="btn btn-primary" id="addNodeBtn">+ Add Node</button>
-                <button class="btn btn-secondary" id="debugBtn" style="display: none;">🐛 Debug</button>
             </div>
             <div class="user-info">
-                <span id="userEmail"></span>
                 <span id="userRole"></span>
-                <button class="logout-btn" id="logoutBtn">Logout</button>
+                <button class="btn btn-primary" id="loginBtn" style="display: none;">🔐 Admin Login</button>
+                <button class="logout-btn" id="logoutBtn" style="display: none;">Logout</button>
             </div>
         </div>
 
@@ -1412,7 +1400,6 @@
     </div>
 
     <!-- Hidden file input for import -->
-    <input type="file" id="importFileInput" accept=".json" style="display: none;">
 
     <script>
         // ==========================================
@@ -1483,11 +1470,14 @@
             showLoading();
             
             // Update UI based on role
-            document.getElementById('userEmail').textContent = currentUser?.email || 'Viewer';
             if (isAdmin) {
                 document.getElementById('userRole').innerHTML = '<span class="admin-badge">🛡️ ADMIN</span>';
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'block';
             } else {
                 document.getElementById('userRole').innerHTML = '<span class="viewer-badge">👁️ VIEWER</span>';
+                document.getElementById('loginBtn').style.display = 'block';
+                document.getElementById('logoutBtn').style.display = 'none';
                 disableAdminFeatures();
             }
 
@@ -1517,24 +1507,12 @@
             translateY = rect.height / 2;
             updateTransform();
 
-            hideLoginScreen();
             hideLoading();
         }
 
         function disableAdminFeatures() {
             document.getElementById('addNodeBtn').disabled = true;
             document.getElementById('addMapBtn').disabled = true;
-            document.getElementById('importBtn').disabled = true;
-        }
-
-        function showLoginScreen() {
-            document.getElementById('loginScreen').classList.remove('hidden');
-            document.getElementById('appContainer').style.display = 'none';
-        }
-
-        function hideLoginScreen() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('appContainer').style.display = 'flex';
         }
 
         function setupRealtimeSync() {
@@ -1578,19 +1556,6 @@
                 mapCanvas.classList.add('adding-node');
             });
 
-            // Export Button
-            document.getElementById('exportBtn').addEventListener('click', exportData);
-
-            // Import Button
-            document.getElementById('importBtn').addEventListener('click', () => {
-                if (!isAdmin) {
-                    alert('Admin access required');
-                    return;
-                }
-                document.getElementById('importFileInput').click();
-            });
-
-            document.getElementById('importFileInput').addEventListener('change', importData);
 
             // Debug button
             document.getElementById('debugBtn').addEventListener('click', () => {
@@ -1821,6 +1786,8 @@
         function renderMaps() {
             mapList.innerHTML = '';
             const rootMaps = maps.filter(m => !m.parentId);
+            // Sort by displayOrder
+            rootMaps.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
             rootMaps.forEach(map => {
                 renderMapItem(map);
                 renderSubmaps(map.id, 1);
@@ -1831,6 +1798,16 @@
             const li = document.createElement('li');
             li.className = `map-item ${level > 0 ? 'submap' : ''} ${map.id === currentMapId ? 'active' : ''}`;
             li.style.marginLeft = `${level * 1.5}rem`;
+            li.dataset.mapId = map.id;
+            li.dataset.parentId = map.parentId || '';
+            
+            // Make draggable for admins
+            if (isAdmin) {
+                li.draggable = true;
+                li.classList.add('draggable');
+            }
+            
+            const dragHandleHtml = isAdmin ? '<span class="map-drag-handle">⋮⋮</span>' : '';
             
             const actionsHtml = isAdmin ? `
                 <div class="map-item-actions">
@@ -1840,21 +1817,171 @@
             ` : '';
             
             li.innerHTML = `
+                ${dragHandleHtml}
                 <div class="map-item-name">
                     <span>${map.name}</span>
                     ${actionsHtml}
                 </div>
                 <div class="map-item-count">${map.nodes.length} nodes</div>
             `;
-            li.addEventListener('click', () => selectMap(map.id));
+            
+            li.addEventListener('click', (e) => {
+                if (!e.target.closest('.map-action-btn')) {
+                    selectMap(map.id);
+                }
+            });
+            
+            // Drag and drop event listeners
+            if (isAdmin) {
+                li.addEventListener('dragstart', handleDragStart);
+                li.addEventListener('dragend', handleDragEnd);
+                li.addEventListener('dragover', handleDragOver);
+                li.addEventListener('dragleave', handleDragLeave);
+                li.addEventListener('drop', handleDrop);
+            }
+            
             mapList.appendChild(li);
         }
 
         function renderSubmaps(parentId, level) {
             const submaps = maps.filter(m => m.parentId === parentId);
+            // Sort by displayOrder if it exists
+            submaps.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
             submaps.forEach(map => {
                 renderMapItem(map, level);
                 renderSubmaps(map.id, level + 1);
+            });
+        }
+
+        // ==========================================
+        // MAP DRAG AND DROP FUNCTIONS
+        // ==========================================
+        let draggedMapElement = null;
+        let draggedMapId = null;
+
+        function handleDragStart(e) {
+            draggedMapElement = e.currentTarget;
+            draggedMapId = draggedMapElement.dataset.mapId;
+            draggedMapElement.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', draggedMapElement.innerHTML);
+        }
+
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            
+            // Remove all drag-over indicators
+            document.querySelectorAll('.map-item').forEach(item => {
+                item.classList.remove('drag-over', 'drag-over-bottom');
+            });
+            
+            draggedMapElement = null;
+            draggedMapId = null;
+        }
+
+        function handleDragOver(e) {
+            if (!draggedMapElement) return;
+            
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            const targetElement = e.currentTarget;
+            const targetMapId = targetElement.dataset.mapId;
+            const targetParentId = targetElement.dataset.parentId;
+            const draggedMap = maps.find(m => m.id === draggedMapId);
+            const draggedParentId = draggedMap?.parentId || '';
+            
+            // Can only reorder within the same parent scope
+            if (targetParentId !== draggedParentId) {
+                return;
+            }
+            
+            // Don't allow dropping on itself
+            if (targetMapId === draggedMapId) {
+                return;
+            }
+            
+            // Determine if we should show indicator above or below
+            const rect = targetElement.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            
+            targetElement.classList.remove('drag-over', 'drag-over-bottom');
+            
+            if (e.clientY < midpoint) {
+                targetElement.classList.add('drag-over');
+            } else {
+                targetElement.classList.add('drag-over-bottom');
+            }
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over', 'drag-over-bottom');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (!draggedMapId) return;
+            
+            const targetElement = e.currentTarget;
+            const targetMapId = targetElement.dataset.mapId;
+            const targetParentId = targetElement.dataset.parentId;
+            const draggedMap = maps.find(m => m.id === draggedMapId);
+            const draggedParentId = draggedMap?.parentId || '';
+            
+            // Can only reorder within the same parent scope
+            if (targetParentId !== draggedParentId) {
+                return;
+            }
+            
+            if (targetMapId === draggedMapId) {
+                return;
+            }
+            
+            // Determine insert position based on drop location
+            const rect = targetElement.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            const insertBefore = e.clientY < midpoint;
+            
+            // Reorder maps
+            reorderMaps(draggedMapId, targetMapId, insertBefore, draggedParentId);
+            
+            // Clean up
+            targetElement.classList.remove('drag-over', 'drag-over-bottom');
+        }
+
+        function reorderMaps(draggedId, targetId, insertBefore, parentId) {
+            // Get all maps with the same parent
+            const siblingMaps = maps.filter(m => (m.parentId || '') === parentId);
+            
+            // Sort by current display order
+            siblingMaps.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+            
+            // Find indices
+            const draggedIndex = siblingMaps.findIndex(m => m.id === draggedId);
+            const targetIndex = siblingMaps.findIndex(m => m.id === targetId);
+            
+            if (draggedIndex === -1 || targetIndex === -1) return;
+            
+            // Remove dragged item
+            const [draggedMap] = siblingMaps.splice(draggedIndex, 1);
+            
+            // Calculate new target index after removal
+            const newTargetIndex = siblingMaps.findIndex(m => m.id === targetId);
+            
+            // Insert at new position
+            const insertIndex = insertBefore ? newTargetIndex : newTargetIndex + 1;
+            siblingMaps.splice(insertIndex, 0, draggedMap);
+            
+            // Update display orders
+            siblingMaps.forEach((map, index) => {
+                map.displayOrder = index;
+            });
+            
+            // Save to database
+            saveData().then(() => {
+                renderMaps();
             });
         }
 
@@ -3184,6 +3311,7 @@
                         parent_id: map.parentId,
                         image_url: map.imageUrl,
                         nodes: map.nodes,
+                        display_order: map.displayOrder || 0,
                         updated_at: new Date().toISOString()
                     })));
                 
@@ -3217,7 +3345,8 @@
                         name: row.name,
                         parentId: row.parent_id,
                         imageUrl: row.image_url,
-                        nodes: row.nodes || []
+                        nodes: row.nodes || [],
+                        displayOrder: row.display_order || 0
                     }));
                 } else {
                     maps = [];
@@ -3239,6 +3368,19 @@
         // ==========================================
         // AUTHENTICATION
         // ==========================================
+        
+        // Login button opens modal
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            document.getElementById('loginModal').classList.add('active');
+            document.getElementById('loginError').textContent = '';
+        });
+
+        // Close login modal
+        document.getElementById('closeLoginModalBtn').addEventListener('click', () => {
+            document.getElementById('loginModal').classList.remove('active');
+        });
+
+        // Login form submission
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
@@ -3257,6 +3399,9 @@
                 currentUser = data.user;
                 isAdmin = true;
                 errorEl.textContent = '';
+                document.getElementById('loginModal').classList.remove('active');
+                
+                // Re-initialize as admin
                 await initializeApp();
             } catch (error) {
                 errorEl.textContent = error.message;
@@ -3264,15 +3409,7 @@
             }
         });
 
-        document.getElementById('continueAsViewer').addEventListener('click', () => {
-            isAdmin = false;
-            currentUser = { email: 'Viewer (Guest)' };
-            document.getElementById('viewModeNotice').style.display = 'block';
-            setTimeout(async () => {
-                await initializeApp();
-            }, 1000);
-        });
-
+        // Logout button
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             if (isAdmin) {
                 await supabaseClient.auth.signOut();
@@ -3280,8 +3417,12 @@
             location.reload();
         });
 
-        // Initialize the app - show login screen
-        // init();
+        // Start app as viewer by default
+        (async function() {
+            isAdmin = false;
+            currentUser = null;
+            await initializeApp();
+        })();
     </script>
 </body>
 </html>
