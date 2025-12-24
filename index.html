@@ -1710,14 +1710,6 @@
                 }
             });
 
-            // Close modals on background click
-            nodeModal.addEventListener('click', (e) => {
-                if (e.target === nodeModal) closeNodeModal();
-            });
-            mapModal.addEventListener('click', (e) => {
-                if (e.target === mapModal) closeMapModal();
-            });
-
             // Context menu
             document.getElementById('contextEdit').addEventListener('click', () => {
                 if (contextMenuNodeId) {
@@ -2156,7 +2148,7 @@
                 }
                 
                 renderVariantTabs();
-                switchToVariant(0);
+                switchToVariant(0, true); // Skip save on initial load
                 
                 // Show map link if current variant is a transition
                 if (currentNodeVariants[0].type === 'transition') {
@@ -2778,9 +2770,11 @@
             switchToVariant(currentVariantIndex);
         }
 
-        function switchToVariant(index) {
-            // Save current variant data before switching
-            saveCurrentVariantData();
+        function switchToVariant(index, skipSave = false) {
+            // Save current variant data before switching (unless this is the initial load)
+            if (!skipSave) {
+                saveCurrentVariantData();
+            }
             
             currentVariantIndex = index;
             const variant = currentNodeVariants[index];
