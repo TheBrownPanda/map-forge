@@ -1635,12 +1635,40 @@
             document.getElementById('cancelBtn').addEventListener('click', closeNodeModal);
             nodeForm.addEventListener('submit', saveNode);
             document.getElementById('deleteNodeBtn').addEventListener('click', deleteNode);
+            
+            // Prevent closing node modal when clicking outside
+            nodeModal.addEventListener('click', (e) => {
+                // Only close if clicking directly on the modal backdrop, not on modal-content or its children
+                if (e.target === nodeModal) {
+                    // Do nothing - don't close
+                    e.stopPropagation();
+                }
+            });
 
             // Map Modal
             document.getElementById('closeMapModalBtn').addEventListener('click', closeMapModal);
             document.getElementById('cancelMapBtn').addEventListener('click', closeMapModal);
             mapForm.addEventListener('submit', saveMap);
             document.getElementById('deleteMapBtn').addEventListener('click', deleteMap);
+            
+            // Prevent closing map modal when clicking outside
+            mapModal.addEventListener('click', (e) => {
+                // Only close if clicking directly on the modal backdrop, not on modal-content or its children
+                if (e.target === mapModal) {
+                    // Do nothing - don't close
+                    e.stopPropagation();
+                }
+            });
+            
+            // Prevent closing login modal when clicking outside
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) {
+                loginModal.addEventListener('click', (e) => {
+                    if (e.target === loginModal) {
+                        e.stopPropagation();
+                    }
+                });
+            }
 
             // Tags Input (in modal)
             const tagInput = document.getElementById('tagInput');
@@ -2021,10 +2049,14 @@
                 img.style.display = 'block';
                 img.onload = () => {
                     console.log('Map image loaded:', img.naturalWidth, 'x', img.naturalHeight);
-                    // Center the view on the image
+                    // Center the view on the actual center of the image
                     const rect = mapCanvas.getBoundingClientRect();
-                    translateX = rect.width / 2;
-                    translateY = rect.height / 2;
+                    const imageWidth = img.naturalWidth;
+                    const imageHeight = img.naturalHeight;
+                    
+                    // Calculate translation to center the image in the viewport
+                    translateX = (rect.width / 2) - (imageWidth / 2);
+                    translateY = (rect.height / 2) - (imageHeight / 2);
                     updateTransform();
                 };
             } else if (img) {
