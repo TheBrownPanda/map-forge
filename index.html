@@ -1474,6 +1474,7 @@
                 document.getElementById('userRole').innerHTML = '<span class="admin-badge">🛡️ ADMIN</span>';
                 document.getElementById('loginBtn').style.display = 'none';
                 document.getElementById('logoutBtn').style.display = 'block';
+                enableAdminFeatures();
             } else {
                 document.getElementById('userRole').innerHTML = '<span class="viewer-badge">👁️ VIEWER</span>';
                 document.getElementById('loginBtn').style.display = 'block';
@@ -1508,6 +1509,11 @@
             updateTransform();
 
             hideLoading();
+        }
+
+        function enableAdminFeatures() {
+            document.getElementById('addNodeBtn').disabled = false;
+            document.getElementById('addMapBtn').disabled = false;
         }
 
         function disableAdminFeatures() {
