@@ -1407,8 +1407,8 @@
         // IMPORTANT: Replace these with your actual Supabase values!
         // Get these from: Supabase Dashboard → Settings → API
         // ==========================================
-        const SUPABASE_URL = 'https://sczwwgszicbwomriucuz.supabase.co/'; // e.g., 'https://xxxxx.supabase.co/'
-        const SUPABASE_ANON_KEY = 'sb_publishable_7Zh2AuEoohMwZKFLdTZjHQ_9fmeso6p'; // Long JWT token
+        const SUPABASE_URL = 'https://sczwwgszicbwomriucuz.supabase.co'; // e.g., 'https://xxxxx.supabase.co'
+        const SUPABASE_ANON_KEY = 'sb_publishable_7Zh2AuEoohMwZKFLdTZjHQ_9fmeso6p'; // Publishable key
 
         // Initialize Supabase client
         const { createClient } = supabase;
@@ -3337,7 +3337,10 @@
                     .select('*')
                     .order('created_at', { ascending: true });
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw error;
+                }
                 
                 if (data && data.length > 0) {
                     maps = data.map(row => ({
@@ -3352,8 +3355,9 @@
                     maps = [];
                 }
             } catch (error) {
-                console.error('Error loading:', error);
+                console.error('Error loading from Supabase:', error);
                 maps = [];
+                throw error; // Re-throw to be caught by initializeApp
             }
         }
 
@@ -3419,9 +3423,21 @@
 
         // Start app as viewer by default
         (async function() {
-            isAdmin = false;
-            currentUser = null;
-            await initializeApp();
+            try {
+                isAdmin = false;
+                currentUser = null;
+                await initializeApp();
+            } catch (error) {
+                hideLoading();
+                console.error('Initialization error:', error);
+                
+                // Check if it's a Supabase configuration error
+                if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE') {
+                    alert('⚠️ Supabase not configured!\n\nPlease update the SUPABASE_URL and SUPABASE_ANON_KEY in the HTML file.\n\nSee QUICK_START.md for setup instructions.');
+                } else {
+                    alert('Error loading application:\n\n' + error.message + '\n\nCheck browser console (F12) for details.');
+                }
+            }
         })();
     </script>
 </body>
