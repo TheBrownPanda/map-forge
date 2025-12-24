@@ -1,0 +1,2721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Game Map</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #d4af37;
+            --secondary: #8b7355;
+            --dark: #1a1410;
+            --darker: #0d0a08;
+            --light: #f5e6d3;
+            --accent: #c9a961;
+            --danger: #c53030;
+            --success: #38a169;
+            --shadow: rgba(0, 0, 0, 0.6);
+        }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: linear-gradient(135deg, #1a1410 0%, #2d2416 100%);
+            color: var(--light);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1a1410 0%, #2d2416 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+        }
+
+        .login-screen.hidden {
+            display: none;
+        }
+
+        .login-box {
+            background: linear-gradient(to bottom, var(--dark), var(--darker));
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 3rem;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px var(--shadow);
+        }
+
+        .login-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 2rem;
+            letter-spacing: 2px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .login-input {
+            padding: 0.75rem 1rem;
+            background: rgba(42, 35, 26, 0.6);
+            border: 1px solid var(--secondary);
+            border-radius: 6px;
+            color: var(--light);
+            font-size: 1rem;
+            font-family: 'Lato', sans-serif;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(42, 35, 26, 0.8);
+        }
+
+        .login-btn {
+            padding: 0.875rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--darker);
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            font-family: 'Lato', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
+        }
+
+        .login-error {
+            color: var(--danger);
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .view-mode-notice {
+            background: rgba(56, 161, 105, 0.2);
+            border: 1px solid var(--success);
+            padding: 1rem;
+            border-radius: 6px;
+            text-align: center;
+            margin-top: 1rem;
+            color: var(--success);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: auto;
+            color: var(--light);
+            font-size: 0.9rem;
+        }
+
+        .admin-badge {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--darker);
+            padding: 0.35rem 0.75rem;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .viewer-badge {
+            background: rgba(139, 115, 85, 0.3);
+            color: var(--light);
+            padding: 0.35rem 0.75rem;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: 1px solid var(--secondary);
+        }
+
+        .logout-btn {
+            background: rgba(139, 115, 85, 0.3);
+            color: var(--light);
+            border: 1px solid var(--secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            font-family: 'Lato', sans-serif;
+        }
+
+        .logout-btn:hover {
+            background: rgba(139, 115, 85, 0.5);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 4000;
+            display: none;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--secondary);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(to bottom, var(--darker), var(--dark));
+            border-bottom: 2px solid var(--primary);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            box-shadow: 0 4px 20px var(--shadow);
+            z-index: 1000;
+        }
+
+        .title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-shadow: 2px 2px 4px var(--shadow);
+            letter-spacing: 2px;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1.25rem;
+            background: rgba(42, 35, 26, 0.8);
+            border: 1px solid var(--secondary);
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: 'Lato', sans-serif;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+            background: rgba(42, 35, 26, 0.95);
+        }
+
+        .search-input::placeholder {
+            color: rgba(245, 230, 211, 0.5);
+        }
+
+        .search-results {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            left: 0;
+            right: 0;
+            background: var(--dark);
+            border: 1px solid var(--secondary);
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 8px 24px var(--shadow);
+            z-index: 1000;
+            display: none;
+        }
+
+        .search-results.active {
+            display: block;
+        }
+
+        .search-result-item {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(139, 115, 85, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .search-result-item:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-name {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .result-meta {
+            font-size: 0.85rem;
+            color: rgba(245, 230, 211, 0.7);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Lato', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--darker);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(139, 115, 85, 0.3);
+            color: var(--light);
+            border: 1px solid var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(139, 115, 85, 0.5);
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: linear-gradient(to bottom, var(--dark), var(--darker));
+            border-right: 2px solid var(--secondary);
+            padding: 1.5rem;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px var(--shadow);
+        }
+
+        .sidebar h3 {
+            font-family: 'Cinzel', serif;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+
+        .map-list {
+            list-style: none;
+        }
+
+        .map-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            background: rgba(42, 35, 26, 0.5);
+            border: 1px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .map-item:hover {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: var(--primary);
+        }
+
+        .map-item.active {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(201, 169, 97, 0.2));
+            border-color: var(--primary);
+        }
+
+        .map-item.submap {
+            margin-left: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .map-item-name {
+            font-weight: 600;
+            color: var(--light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .map-item-actions {
+            display: none;
+            gap: 0.5rem;
+        }
+
+        .map-item:hover .map-item-actions {
+            display: flex;
+        }
+
+        .map-action-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .map-action-btn:hover {
+            color: var(--accent);
+            transform: scale(1.2);
+        }
+
+        .map-item-count {
+            font-size: 0.85rem;
+            color: rgba(245, 230, 211, 0.6);
+            margin-top: 0.25rem;
+        }
+
+        /* Map Canvas */
+        .map-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: radial-gradient(ellipse at center, #2a231a 0%, #1a1410 100%);
+        }
+
+        .map-canvas {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            cursor: grab;
+        }
+
+        .map-canvas.grabbing {
+            cursor: grabbing;
+        }
+
+        .map-canvas.adding-node {
+            cursor: crosshair;
+        }
+
+        .map-image-container {
+            position: relative;
+            transform-origin: 0 0;
+            left: 0;
+            top: 0;
+        }
+
+        .map-image {
+            max-width: none;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .node {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+            pointer-events: auto;
+            margin-left: 0;
+            margin-top: 0;
+        }
+
+        .node-icon {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px var(--shadow), 0 0 0 3px rgba(212, 175, 55, 0.5);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .node:hover .node-icon {
+            transform: scale(1.3);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.8), 0 0 0 4px var(--primary);
+        }
+
+        .node.highlighted {
+            animation: pulse 1.5s ease-in-out infinite;
+            z-index: 200;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.4);
+            }
+        }
+
+        .node-combat { background: linear-gradient(135deg, #c53030, #9b2c2c); }
+        .node-event { background: linear-gradient(135deg, #805ad5, #6b46c1); }
+        .node-card { background: linear-gradient(135deg, #38a169, #2f855a); }
+        .node-crafter { background: linear-gradient(135deg, #dd6b20, #c05621); }
+        .node-rest { background: linear-gradient(135deg, #3182ce, #2c5282); }
+        .node-character { background: linear-gradient(135deg, #d69e2e, #b7791f); }
+        .node-transition { background: linear-gradient(135deg, #718096, #4a5568); }
+        .node-shop { background: linear-gradient(135deg, #38b2ac, #319795); }
+        .node-quest { background: linear-gradient(135deg, #ed8936, #dd6b20); }
+        .node-rift { background: linear-gradient(135deg, #9f7aea, #805ad5); }
+        .node-boss { background: linear-gradient(135deg, #e53e3e, #c53030); }
+        .node-information { background: linear-gradient(135deg, #4299e1, #3182ce); }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(to bottom, var(--dark), var(--darker));
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px var(--shadow);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(197, 48, 48, 0.2);
+            color: var(--danger);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--light);
+            font-size: 0.95rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(42, 35, 26, 0.6);
+            border: 1px solid var(--secondary);
+            border-radius: 6px;
+            color: var(--light);
+            font-size: 1rem;
+            font-family: 'Lato', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(42, 35, 26, 0.8);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .tags-input-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(42, 35, 26, 0.6);
+            border: 1px solid var(--secondary);
+            border-radius: 6px;
+            min-height: 50px;
+        }
+
+        .tag {
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            color: var(--light);
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tag-remove {
+            cursor: pointer;
+            font-weight: bold;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .tag-remove:hover {
+            opacity: 1;
+        }
+
+        .tag-input {
+            flex: 1;
+            min-width: 120px;
+            border: none;
+            background: transparent;
+            color: var(--light);
+            outline: none;
+            padding: 0.35rem;
+        }
+
+        .options-container {
+            border: 1px solid var(--secondary);
+            border-radius: 6px;
+            padding: 1rem;
+            background: rgba(42, 35, 26, 0.3);
+        }
+
+        .option-item {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(42, 35, 26, 0.5);
+            border-radius: 6px;
+            position: relative;
+        }
+
+        .option-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .option-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .option-number {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .option-remove {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.35rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .option-remove:hover {
+            background: #9b2c2c;
+        }
+
+        .rewards-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: flex-end;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #9b2c2c;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 100;
+        }
+
+        .zoom-btn {
+            width: 48px;
+            height: 48px;
+            background: rgba(26, 20, 16, 0.9);
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            color: var(--primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .zoom-btn:hover {
+            background: rgba(212, 175, 55, 0.2);
+            transform: scale(1.1);
+        }
+
+        .mode-indicator {
+            position: absolute;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--darker);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+            z-index: 100;
+            display: none;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        .mode-indicator.active {
+            display: block;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -10px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        .context-menu {
+            position: fixed;
+            background: var(--dark);
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px var(--shadow);
+            z-index: 3000;
+            min-width: 150px;
+            display: none;
+        }
+
+        .context-menu.active {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(139, 115, 85, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .context-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .context-menu-item:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .context-menu-item.danger:hover {
+            background: rgba(197, 48, 48, 0.2);
+            color: var(--danger);
+        }
+
+        .no-results {
+            padding: 2rem;
+            text-align: center;
+            color: rgba(245, 230, 211, 0.6);
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(26, 20, 16, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--secondary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* Node Viewer Panel */
+        .node-viewer {
+            position: absolute;
+            right: 2rem;
+            top: 2rem;
+            width: 350px;
+            max-height: calc(100vh - 8rem);
+            background: linear-gradient(to bottom, var(--dark), var(--darker));
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px var(--shadow);
+            z-index: 500;
+            display: none;
+            overflow-y: auto;
+            animation: slideInRight 0.3s ease;
+        }
+
+        .node-viewer.active {
+            display: block;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .node-viewer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--secondary);
+        }
+
+        .node-viewer-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+            color: var(--primary);
+            font-weight: 700;
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .node-viewer-close {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            margin-left: 0.5rem;
+        }
+
+        .node-viewer-close:hover {
+            background: rgba(197, 48, 48, 0.2);
+            color: var(--danger);
+        }
+
+        .node-viewer-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .node-viewer-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .node-viewer-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .node-viewer-label {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .node-viewer-content {
+            color: var(--light);
+            line-height: 1.6;
+        }
+
+        .node-viewer-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .node-viewer-tag {
+            background: rgba(139, 115, 85, 0.3);
+            color: var(--light);
+            padding: 0.35rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            border: 1px solid var(--secondary);
+        }
+
+        .node-viewer-option {
+            background: rgba(42, 35, 26, 0.5);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            border: 1px solid var(--secondary);
+        }
+
+        .node-viewer-option:last-child {
+            margin-bottom: 0;
+        }
+
+        .node-viewer-option-label {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .node-viewer-option-desc {
+            color: rgba(245, 230, 211, 0.8);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .node-viewer-rewards {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: rgba(245, 230, 211, 0.7);
+        }
+
+        .node-viewer-reward {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .node-viewer-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--secondary);
+        }
+
+        .btn-small {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <h1 class="login-title">⚔ MAP FORGE ⚔</h1>
+            <form class="login-form" id="loginForm">
+                <input type="email" class="login-input" id="loginEmail" placeholder="Admin Email" required>
+                <input type="password" class="login-input" id="loginPassword" placeholder="Password" required>
+                <button type="submit" class="login-btn">Login as Admin</button>
+                <div class="login-error" id="loginError"></div>
+            </form>
+            <button class="login-btn" id="continueAsViewer" style="background: rgba(139, 115, 85, 0.5); margin-top: 1rem;">
+                Continue as Viewer
+            </button>
+            <div class="view-mode-notice" style="display: none;" id="viewModeNotice">
+                Viewing as guest - you can explore but not edit
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="app-container" id="appContainer" style="display: none;">
+        <!-- Header -->
+        <div class="header">
+            <div class="title">⚔ MAP FORGE v2.0 ⚔</div>
+            <div class="search-container">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search nodes, tags, or content...">
+                <div class="search-results" id="searchResults"></div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="exportBtn">📤 Export</button>
+                <button class="btn btn-secondary" id="importBtn">📥 Import</button>
+                <button class="btn btn-secondary" id="addMapBtn">+ New Map</button>
+                <button class="btn btn-primary" id="addNodeBtn">+ Add Node</button>
+                <button class="btn btn-secondary" id="debugBtn" style="display: none;">🐛 Debug</button>
+            </div>
+            <div class="user-info">
+                <span id="userEmail"></span>
+                <span id="userRole"></span>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <h3>Maps</h3>
+                <ul class="map-list" id="mapList"></ul>
+            </div>
+
+            <!-- Map Canvas -->
+            <div class="map-container">
+                <div class="mode-indicator" id="modeIndicator">Click on the map to place node</div>
+                <div class="map-canvas" id="mapCanvas">
+                    <div class="map-image-container" id="mapImageContainer"></div>
+                </div>
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoomInBtn">+</button>
+                    <button class="zoom-btn" id="zoomResetBtn">⊙</button>
+                    <button class="zoom-btn" id="zoomOutBtn">−</button>
+                </div>
+
+                <!-- Node Viewer Panel -->
+                <div class="node-viewer" id="nodeViewer">
+                    <div class="node-viewer-header">
+                        <h3 class="node-viewer-title" id="viewerNodeName"></h3>
+                        <button class="node-viewer-close" id="closeViewerBtn">×</button>
+                    </div>
+                    <div id="viewerContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Node Modal -->
+    <div class="modal" id="nodeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Create New Node</h2>
+                <button class="close-btn" id="closeModalBtn">×</button>
+            </div>
+            <form id="nodeForm">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" id="nodeName" placeholder="Enter node name" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Node Type</label>
+                    <select class="form-select" id="nodeType" required>
+                        <option value="combat">Combat</option>
+                        <option value="event">Event (rarity)</option>
+                        <option value="card">Card node</option>
+                        <option value="crafter">Crafter node</option>
+                        <option value="rest">Rest node</option>
+                        <option value="character">Character</option>
+                        <option value="transition">Map transition</option>
+                        <option value="shop">Shop</option>
+                        <option value="quest">Quest end</option>
+                        <option value="rift">Eldritch Rift</option>
+                        <option value="boss">Region boss</option>
+                        <option value="information">Information</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="mapLinkGroup" style="display: none;">
+                    <label class="form-label">Linked Map (for transitions)</label>
+                    <select class="form-select" id="nodeMapLink">
+                        <option value="">None</option>
+                    </select>
+                    <small style="color: rgba(245, 230, 211, 0.6); display: block; margin-top: 0.5rem;">Select which map this node transitions to</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" id="nodeDescription" placeholder="Enter description"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tags</label>
+                    <div class="tags-input-container" id="tagsContainer">
+                        <input type="text" class="tag-input" id="tagInput" placeholder="Add a tag...">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Options (Actions at this node)</label>
+                    <div class="options-container" id="optionsContainer">
+                        <div class="option-item">
+                            <div class="option-header">
+                                <span class="option-number">Option 1</span>
+                                <button type="button" class="option-remove" onclick="removeOption(this)">Remove</button>
+                            </div>
+                            <input type="text" class="form-input" placeholder="Option label (e.g., 'Talk', 'Buy', 'Fight')" data-option="label">
+                            <input type="text" class="form-input" placeholder="Option description (optional)" data-option="description" style="margin-top: 0.5rem;">
+                            <div class="rewards-row">
+                                <input type="number" class="form-input" placeholder="Gold" data-option="gold" value="0">
+                                <input type="number" class="form-input" placeholder="Shards" data-option="shards" value="0">
+                                <input type="number" class="form-input" placeholder="EXP" data-option="exp" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" style="margin-top: 1rem; width: 100%;" onclick="addOption()">+ Add Option</button>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-danger" id="deleteNodeBtn" style="display: none;">Delete Node</button>
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveNodeBtn">Save Node</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Map Modal -->
+    <div class="modal" id="mapModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Create New Map</h2>
+                <button class="close-btn" id="closeMapModalBtn">×</button>
+            </div>
+            <form id="mapForm">
+                <div class="form-group">
+                    <label class="form-label">Map Name</label>
+                    <input type="text" class="form-input" id="mapName" placeholder="Enter map name" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Parent Map (optional)</label>
+                    <select class="form-select" id="parentMap">
+                        <option value="">None (Root Map)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Map Image</label>
+                    <input type="file" class="form-input" id="mapImageFile" accept="image/*" style="padding: 0.5rem;">
+                    <input type="text" class="form-input" id="mapImageUrl" placeholder="Or enter image URL" style="margin-top: 0.5rem;">
+                    <small style="color: rgba(245, 230, 211, 0.6); display: block; margin-top: 0.5rem;">Upload an image or provide a URL</small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-danger" id="deleteMapBtn" style="display: none;">Delete Map</button>
+                    <button type="button" class="btn btn-secondary" id="cancelMapBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Map</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" id="contextEdit">👁️ View Node</div>
+        <div class="context-menu-item" id="contextMove">↔️ Move Node</div>
+        <div class="context-menu-item danger" id="contextDelete">🗑️ Delete Node</div>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="importFileInput" accept=".json" style="display: none;">
+
+    <script>
+        // ==========================================
+        // SUPABASE CONFIGURATION
+        // IMPORTANT: Replace these with your actual Supabase values!
+        // Get these from: Supabase Dashboard → Settings → API
+        // ==========================================
+        const SUPABASE_URL = 'https://sczwwgszicbwomriucuz.supabase.co'; // e.g., 'https://xxxxx.supabase.co'
+        const SUPABASE_ANON_KEY = 'sb_publishable_7Zh2AuEoohMwZKFLdTZjHQ_9fmeso6p'; // Long JWT token
+
+        // Initialize Supabase client
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Authentication state
+        let isAdmin = false;
+        let currentUser = null;
+
+        // Data Storage
+        let maps = [];
+        let currentMapId = null;
+        let editingNodeId = null;
+        let viewingNodeId = null;
+        let isAddingNode = false;
+        let pendingNodePosition = null;
+
+        // Pan and Zoom
+        let scale = 1;
+        let translateX = 0;
+        let translateY = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+
+        // Node dragging
+        let isDraggingNode = false;
+        let draggedNodeId = null;
+        let nodeDragStartX = 0;
+        let nodeDragStartY = 0;
+        let isMovingMode = false;
+
+        // Context menu
+        let contextMenuNodeId = null;
+
+        // DOM Elements
+        const mapCanvas = document.getElementById('mapCanvas');
+        const mapImageContainer = document.getElementById('mapImageContainer');
+        const mapList = document.getElementById('mapList');
+        const nodeModal = document.getElementById('nodeModal');
+        const mapModal = document.getElementById('mapModal');
+        const nodeForm = document.getElementById('nodeForm');
+        const mapForm = document.getElementById('mapForm');
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const modeIndicator = document.getElementById('modeIndicator');
+
+        // Initialize
+        async function init() {
+            // Don't auto-initialize - wait for login
+            // This will be called after authentication
+        }
+
+        async function initializeApp() {
+            showLoading();
+            
+            // Update UI based on role
+            document.getElementById('userEmail').textContent = currentUser?.email || 'Viewer';
+            if (isAdmin) {
+                document.getElementById('userRole').innerHTML = '<span class="admin-badge">🛡️ ADMIN</span>';
+            } else {
+                document.getElementById('userRole').innerHTML = '<span class="viewer-badge">👁️ VIEWER</span>';
+                disableAdminFeatures();
+            }
+
+            // Load data from Supabase
+            await loadData();
+            
+            if (maps.length === 0 && isAdmin) {
+                createDefaultMap();
+                await saveData();
+            }
+
+            renderMaps();
+            if (maps.length > 0) {
+                selectMap(maps[0].id);
+            }
+
+            setupEventListeners();
+            
+            // Setup real-time sync for viewers
+            if (!isAdmin) {
+                setupRealtimeSync();
+            }
+
+            // Center view
+            const rect = mapCanvas.getBoundingClientRect();
+            translateX = rect.width / 2;
+            translateY = rect.height / 2;
+            updateTransform();
+
+            hideLoginScreen();
+            hideLoading();
+        }
+
+        function disableAdminFeatures() {
+            document.getElementById('addNodeBtn').disabled = true;
+            document.getElementById('addMapBtn').disabled = true;
+            document.getElementById('importBtn').disabled = true;
+        }
+
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('appContainer').style.display = 'none';
+        }
+
+        function hideLoginScreen() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('appContainer').style.display = 'flex';
+        }
+
+        function setupRealtimeSync() {
+            supabaseClient
+                .channel('maps-changes')
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'maps' },
+                    async () => {
+                        console.log('Real-time update received');
+                        await loadData();
+                        renderMaps();
+                        if (currentMapId) {
+                            renderMapCanvas();
+                        }
+                    }
+                )
+                .subscribe();
+        }
+
+        function createDefaultMap() {
+            const defaultMap = {
+                id: generateId(),
+                name: 'Main Map',
+                parentId: null,
+                imageUrl: '',
+                nodes: []
+            };
+            maps.push(defaultMap);
+            saveData();
+        }
+
+        function setupEventListeners() {
+            // Add Node Button
+            document.getElementById('addNodeBtn').addEventListener('click', () => {
+                if (!isAdmin) {
+                    alert('Admin access required');
+                    return;
+                }
+                isAddingNode = true;
+                modeIndicator.classList.add('active');
+                mapCanvas.classList.add('adding-node');
+            });
+
+            // Export Button
+            document.getElementById('exportBtn').addEventListener('click', exportData);
+
+            // Import Button
+            document.getElementById('importBtn').addEventListener('click', () => {
+                if (!isAdmin) {
+                    alert('Admin access required');
+                    return;
+                }
+                document.getElementById('importFileInput').click();
+            });
+
+            document.getElementById('importFileInput').addEventListener('change', importData);
+
+            // Debug button
+            document.getElementById('debugBtn').addEventListener('click', () => {
+                console.log('=== DEBUG INFO ===');
+                console.log('Current Map ID:', currentMapId);
+                console.log('All Maps:', maps);
+                const currentMap = maps.find(m => m.id === currentMapId);
+                console.log('Current Map:', currentMap);
+                console.log('Nodes in current map:', currentMap?.nodes);
+                console.log('Transform:', { scale, translateX, translateY });
+                console.log('Node elements in DOM:', mapImageContainer.querySelectorAll('.node').length);
+                alert('Check browser console (F12) for debug info');
+            });
+            
+            // Show debug button when holding Shift
+            document.addEventListener('keydown', (e) => {
+                if (e.shiftKey && e.key === 'D') {
+                    document.getElementById('debugBtn').style.display = 'block';
+                }
+            });
+
+            // Add Map Button
+            document.getElementById('addMapBtn').addEventListener('click', () => {
+                if (!isAdmin) {
+                    alert('Admin access required');
+                    return;
+                }
+                openMapModal();
+            });
+
+            // Map Canvas Click
+            mapCanvas.addEventListener('click', (e) => {
+                if (e.target.classList.contains('node') || e.target.closest('.node')) {
+                    return; // Let node handle its own click
+                }
+
+                const rect = mapCanvas.getBoundingClientRect();
+                const canvasX = e.clientX - rect.left;
+                const canvasY = e.clientY - rect.top;
+                
+                // Convert canvas coordinates to map coordinates
+                const mapX = (canvasX - translateX) / scale;
+                const mapY = (canvasY - translateY) / scale;
+
+                console.log('Click position:', { canvasX, canvasY, mapX, mapY, scale, translateX, translateY });
+
+                if (isAddingNode && currentMapId) {
+                    pendingNodePosition = { x: mapX, y: mapY };
+                    openNodeModal();
+                    isAddingNode = false;
+                    modeIndicator.classList.remove('active');
+                    mapCanvas.classList.remove('adding-node');
+                    console.log('Creating node at:', mapX, mapY);
+                } else if (isMovingMode && draggedNodeId && currentMapId) {
+                    // Move the node to new position
+                    const map = maps.find(m => m.id === currentMapId);
+                    const node = map?.nodes.find(n => n.id === draggedNodeId);
+                    if (node) {
+                        node.x = mapX;
+                        node.y = mapY;
+                        saveData();
+                        renderMapCanvas();
+                        console.log('Moved node to:', mapX, mapY);
+                    }
+                    isMovingMode = false;
+                    draggedNodeId = null;
+                    mapCanvas.style.cursor = '';
+                    modeIndicator.classList.remove('active');
+                }
+            });
+
+            // Pan and Zoom
+            mapCanvas.addEventListener('mousedown', startDrag);
+            mapCanvas.addEventListener('mousemove', drag);
+            mapCanvas.addEventListener('mouseup', endDrag);
+            mapCanvas.addEventListener('mouseleave', endDrag);
+            mapCanvas.addEventListener('wheel', zoom);
+
+            // Zoom Controls
+            document.getElementById('zoomInBtn').addEventListener('click', () => zoomTo(scale * 1.2));
+            document.getElementById('zoomOutBtn').addEventListener('click', () => zoomTo(scale / 1.2));
+            document.getElementById('zoomResetBtn').addEventListener('click', () => {
+                scale = 1;
+                const rect = mapCanvas.getBoundingClientRect();
+                translateX = rect.width / 2;
+                translateY = rect.height / 2;
+                updateTransform();
+            });
+
+            // Node Modal
+            document.getElementById('closeModalBtn').addEventListener('click', closeNodeModal);
+            document.getElementById('cancelBtn').addEventListener('click', closeNodeModal);
+            nodeForm.addEventListener('submit', saveNode);
+            document.getElementById('deleteNodeBtn').addEventListener('click', deleteNode);
+
+            // Map Modal
+            document.getElementById('closeMapModalBtn').addEventListener('click', closeMapModal);
+            document.getElementById('cancelMapBtn').addEventListener('click', closeMapModal);
+            mapForm.addEventListener('submit', saveMap);
+            document.getElementById('deleteMapBtn').addEventListener('click', deleteMap);
+
+            // Tags Input
+            document.getElementById('tagInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag(e.target.value.trim());
+                    e.target.value = '';
+                }
+            });
+
+            // Show/hide map link based on node type
+            document.getElementById('nodeType').addEventListener('change', (e) => {
+                const mapLinkGroup = document.getElementById('mapLinkGroup');
+                if (e.target.value === 'transition') {
+                    mapLinkGroup.style.display = 'block';
+                    populateMapLinkDropdown();
+                } else {
+                    mapLinkGroup.style.display = 'none';
+                }
+            });
+
+            // Search
+            searchInput.addEventListener('input', performSearch);
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.classList.remove('active');
+                }
+            });
+
+            // Close modals on background click
+            nodeModal.addEventListener('click', (e) => {
+                if (e.target === nodeModal) closeNodeModal();
+            });
+            mapModal.addEventListener('click', (e) => {
+                if (e.target === mapModal) closeMapModal();
+            });
+
+            // Context menu
+            document.getElementById('contextEdit').addEventListener('click', () => {
+                if (contextMenuNodeId) {
+                    viewNode(contextMenuNodeId);
+                    closeContextMenu();
+                }
+            });
+
+            document.getElementById('contextMove').addEventListener('click', () => {
+                if (contextMenuNodeId) {
+                    enterMoveMode(contextMenuNodeId);
+                    closeContextMenu();
+                }
+            });
+
+            document.getElementById('contextDelete').addEventListener('click', () => {
+                if (contextMenuNodeId) {
+                    deleteNodeQuick(contextMenuNodeId);
+                    closeContextMenu();
+                }
+            });
+
+            // Close context menu on click outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.context-menu')) {
+                    closeContextMenu();
+                }
+            });
+
+            // Node viewer
+            document.getElementById('closeViewerBtn').addEventListener('click', closeNodeViewer);
+
+            // Node moving
+            mapCanvas.addEventListener('mousemove', moveNode);
+            mapCanvas.addEventListener('mouseup', endMoveNode);
+        }
+
+        // Pan and Zoom Functions
+        function startDrag(e) {
+            if (isAddingNode || isMovingMode || e.target.classList.contains('node') || e.target.closest('.node')) return;
+            isDragging = true;
+            dragStartX = e.clientX - translateX;
+            dragStartY = e.clientY - translateY;
+            mapCanvas.classList.add('grabbing');
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            translateX = e.clientX - dragStartX;
+            translateY = e.clientY - dragStartY;
+            updateTransform();
+        }
+
+        function endDrag() {
+            isDragging = false;
+            mapCanvas.classList.remove('grabbing');
+        }
+
+        function zoom(e) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            const newScale = Math.max(0.1, Math.min(5, scale * delta));
+            
+            const rect = mapCanvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const worldX = (mouseX - translateX) / scale;
+            const worldY = (mouseY - translateY) / scale;
+            
+            translateX = mouseX - worldX * newScale;
+            translateY = mouseY - worldY * newScale;
+            scale = newScale;
+            
+            updateTransform();
+        }
+
+        function zoomTo(newScale) {
+            scale = Math.max(0.1, Math.min(5, newScale));
+            updateTransform();
+        }
+
+        function updateTransform() {
+            mapImageContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        }
+
+        // Map Functions
+        function renderMaps() {
+            mapList.innerHTML = '';
+            const rootMaps = maps.filter(m => !m.parentId);
+            rootMaps.forEach(map => {
+                renderMapItem(map);
+                renderSubmaps(map.id, 1);
+            });
+        }
+
+        function renderMapItem(map, level = 0) {
+            const li = document.createElement('li');
+            li.className = `map-item ${level > 0 ? 'submap' : ''} ${map.id === currentMapId ? 'active' : ''}`;
+            li.style.marginLeft = `${level * 1.5}rem`;
+            
+            const actionsHtml = isAdmin ? `
+                <div class="map-item-actions">
+                    <button class="map-action-btn" onclick="event.stopPropagation(); editMap('${map.id}')" title="Edit Map">✏️</button>
+                    <button class="map-action-btn" onclick="event.stopPropagation(); deleteMapFromSidebar('${map.id}')" title="Delete Map">🗑️</button>
+                </div>
+            ` : '';
+            
+            li.innerHTML = `
+                <div class="map-item-name">
+                    <span>${map.name}</span>
+                    ${actionsHtml}
+                </div>
+                <div class="map-item-count">${map.nodes.length} nodes</div>
+            `;
+            li.addEventListener('click', () => selectMap(map.id));
+            mapList.appendChild(li);
+        }
+
+        function renderSubmaps(parentId, level) {
+            const submaps = maps.filter(m => m.parentId === parentId);
+            submaps.forEach(map => {
+                renderMapItem(map, level);
+                renderSubmaps(map.id, level + 1);
+            });
+        }
+
+        function selectMap(mapId) {
+            currentMapId = mapId;
+            renderMaps();
+            renderMapCanvas();
+        }
+
+        function renderMapCanvas() {
+            const map = maps.find(m => m.id === currentMapId);
+            if (!map) {
+                console.log('No map found for currentMapId:', currentMapId);
+                return;
+            }
+
+            console.log('Rendering map:', map.name, 'with', map.nodes.length, 'nodes');
+
+            // Clear existing nodes
+            const existingNodes = mapImageContainer.querySelectorAll('.node');
+            existingNodes.forEach(node => node.remove());
+
+            // Render map image if exists
+            let img = mapImageContainer.querySelector('.map-image');
+            
+            if (map.imageUrl) {
+                if (!img) {
+                    img = document.createElement('img');
+                    img.className = 'map-image';
+                    mapImageContainer.appendChild(img);
+                }
+                img.src = map.imageUrl;
+                img.style.display = 'block';
+                img.onload = () => {
+                    console.log('Map image loaded:', img.naturalWidth, 'x', img.naturalHeight);
+                };
+            } else if (img) {
+                img.style.display = 'none';
+            }
+
+            // Render nodes
+            console.log('About to render', map.nodes.length, 'nodes');
+            map.nodes.forEach(node => {
+                console.log('Rendering node:', node.name, 'at position', node.x, node.y);
+                renderNode(node);
+            });
+        }
+
+        function renderNode(node) {
+            const nodeEl = document.createElement('div');
+            nodeEl.className = 'node';
+            nodeEl.style.left = `${node.x}px`;
+            nodeEl.style.top = `${node.y}px`;
+            nodeEl.dataset.nodeId = node.id;
+            nodeEl.innerHTML = `<div class="node-icon node-${node.type}">${getNodeIcon(node.type)}</div>`;
+            
+            // Click to view
+            nodeEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!isDraggingNode && !isMovingMode) {
+                    viewNode(node.id);
+                }
+            });
+            
+            // Right-click context menu
+            nodeEl.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                showNodeContextMenu(e, node.id);
+            });
+            
+            mapImageContainer.appendChild(nodeEl);
+            console.log('Rendered node:', node.name, 'at map coords:', node.x, node.y, 'Current transform:', { scale, translateX, translateY });
+        }
+
+        function getNodeIcon(type) {
+            const icons = {
+                combat: '⚔️',
+                event: '📜',
+                card: '🎴',
+                crafter: '🔨',
+                rest: '🛏️',
+                character: '👤',
+                transition: '🚪',
+                shop: '🏪',
+                quest: '❓',
+                rift: '🌀',
+                boss: '👹',
+                information: 'ℹ️'
+            };
+            const icon = icons[type] || '⭐';
+            console.log('Getting icon for type:', type, '→', icon);
+            return icon;
+        }
+
+        // Node Modal Functions
+        function openNodeModal(node = null) {
+            if (!isAdmin) {
+                alert('Admin access required to edit nodes');
+                return;
+            }
+
+            editingNodeId = node ? node.id : null;
+            const modalTitle = document.getElementById('modalTitle');
+            const deleteBtn = document.getElementById('deleteNodeBtn');
+            const mapLinkGroup = document.getElementById('mapLinkGroup');
+
+            if (node) {
+                modalTitle.textContent = 'Edit Node';
+                deleteBtn.style.display = 'block';
+                populateNodeForm(node);
+                
+                // Show map link if it's a transition
+                if (node.type === 'transition') {
+                    mapLinkGroup.style.display = 'block';
+                    populateMapLinkDropdown();
+                } else {
+                    mapLinkGroup.style.display = 'none';
+                }
+            } else {
+                modalTitle.textContent = 'Create New Node';
+                deleteBtn.style.display = 'none';
+                nodeForm.reset();
+                resetOptions();
+                mapLinkGroup.style.display = 'none';
+            }
+
+            nodeModal.classList.add('active');
+        }
+
+        function closeNodeModal() {
+            nodeModal.classList.remove('active');
+            editingNodeId = null;
+            pendingNodePosition = null;
+            nodeForm.reset();
+        }
+
+        function populateNodeForm(node) {
+            document.getElementById('nodeName').value = node.name;
+            document.getElementById('nodeType').value = node.type;
+            document.getElementById('nodeDescription').value = node.description || '';
+            
+            // Populate map link if it exists
+            if (node.mapLink) {
+                document.getElementById('nodeMapLink').value = node.mapLink;
+            }
+            
+            // Clear and populate tags
+            const tagsContainer = document.getElementById('tagsContainer');
+            const existingTags = tagsContainer.querySelectorAll('.tag');
+            existingTags.forEach(tag => tag.remove());
+            node.tags.forEach(tag => addTag(tag));
+
+            // Clear and populate options
+            resetOptions();
+            if (node.options && node.options.length > 0) {
+                const optionsContainer = document.getElementById('optionsContainer');
+                optionsContainer.innerHTML = '';
+                node.options.forEach((option, index) => {
+                    const optionHtml = createOptionHtml(index + 1, option);
+                    optionsContainer.insertAdjacentHTML('beforeend', optionHtml);
+                });
+            }
+        }
+
+        function populateMapLinkDropdown() {
+            const select = document.getElementById('nodeMapLink');
+            select.innerHTML = '<option value="">None</option>';
+            
+            maps.forEach(map => {
+                const option = document.createElement('option');
+                option.value = map.id;
+                option.textContent = map.name;
+                select.appendChild(option);
+            });
+        }
+
+        function saveNode(e) {
+            e.preventDefault();
+            
+            const map = maps.find(m => m.id === currentMapId);
+            if (!map) return;
+
+            const nodeData = {
+                id: editingNodeId || generateId(),
+                name: document.getElementById('nodeName').value,
+                type: document.getElementById('nodeType').value,
+                description: document.getElementById('nodeDescription').value,
+                mapLink: document.getElementById('nodeMapLink').value || null,
+                tags: getTags(),
+                options: getOptions(),
+                x: 0,
+                y: 0
+            };
+
+            if (editingNodeId) {
+                // Update existing node
+                const nodeIndex = map.nodes.findIndex(n => n.id === editingNodeId);
+                if (nodeIndex !== -1) {
+                    nodeData.x = map.nodes[nodeIndex].x;
+                    nodeData.y = map.nodes[nodeIndex].y;
+                    map.nodes[nodeIndex] = nodeData;
+                }
+            } else {
+                // Create new node
+                if (pendingNodePosition) {
+                    nodeData.x = pendingNodePosition.x;
+                    nodeData.y = pendingNodePosition.y;
+                }
+                map.nodes.push(nodeData);
+            }
+
+            saveData();
+            renderMapCanvas();
+            closeNodeModal();
+        }
+
+        function editNode(nodeId) {
+            const map = maps.find(m => m.id === currentMapId);
+            const node = map?.nodes.find(n => n.id === nodeId);
+            if (node) {
+                closeNodeViewer(); // Close viewer when opening editor
+                openNodeModal(node);
+            }
+        }
+
+        // Node Viewer Functions
+        function viewNode(nodeId) {
+            const map = maps.find(m => m.id === currentMapId);
+            const node = map?.nodes.find(n => n.id === nodeId);
+            if (!node) return;
+
+            viewingNodeId = nodeId;
+            
+            document.getElementById('viewerNodeName').textContent = node.name;
+            
+            const content = document.getElementById('viewerContent');
+            let html = '';
+
+            // Node Type
+            const typeClass = `node-${node.type}`;
+            const typeIcon = getNodeIcon(node.type);
+            html += `<div class="node-viewer-type ${typeClass}">${typeIcon} ${formatNodeType(node.type)}</div>`;
+
+            // Linked Map (for transitions)
+            if (node.mapLink) {
+                const linkedMap = maps.find(m => m.id === node.mapLink);
+                if (linkedMap) {
+                    html += `
+                        <div class="node-viewer-section">
+                            <div class="node-viewer-label">Transitions To</div>
+                            <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="goToLinkedMap('${node.mapLink}')">
+                                🚪 Go to ${linkedMap.name}
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+
+            // Description
+            if (node.description) {
+                html += `
+                    <div class="node-viewer-section">
+                        <div class="node-viewer-label">Description</div>
+                        <div class="node-viewer-content">${node.description}</div>
+                    </div>
+                `;
+            }
+
+            // Tags
+            if (node.tags && node.tags.length > 0) {
+                html += `
+                    <div class="node-viewer-section">
+                        <div class="node-viewer-label">Tags</div>
+                        <div class="node-viewer-tags">
+                            ${node.tags.map(tag => `<span class="node-viewer-tag">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Options
+            if (node.options && node.options.length > 0) {
+                html += `<div class="node-viewer-section">
+                    <div class="node-viewer-label">Options</div>`;
+                
+                node.options.forEach((option, index) => {
+                    html += `<div class="node-viewer-option">`;
+                    html += `<div class="node-viewer-option-label">${index + 1}. ${option.label || 'Unnamed Option'}</div>`;
+                    
+                    if (option.description) {
+                        html += `<div class="node-viewer-option-desc">${option.description}</div>`;
+                    }
+                    
+                    const rewards = [];
+                    if (option.gold && option.gold !== 0) rewards.push(`<span class="node-viewer-reward">💰 ${option.gold} Gold</span>`);
+                    if (option.shards && option.shards !== 0) rewards.push(`<span class="node-viewer-reward">💎 ${option.shards} Shards</span>`);
+                    if (option.exp && option.exp !== 0) rewards.push(`<span class="node-viewer-reward">⭐ ${option.exp} EXP</span>`);
+                    
+                    if (rewards.length > 0) {
+                        html += `<div class="node-viewer-rewards">${rewards.join('')}</div>`;
+                    }
+                    
+                    html += `</div>`;
+                });
+                
+                html += `</div>`;
+            }
+
+            // Actions
+            if (isAdmin) {
+                html += `
+                    <div class="node-viewer-actions">
+                        <button class="btn btn-primary btn-small" onclick="editNodeFromViewer()">✏️ Edit</button>
+                        <button class="btn btn-secondary btn-small" onclick="moveNodeFromViewer()">↔️ Move</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteNodeFromViewer()">🗑️ Delete</button>
+                    </div>
+                `;
+            }
+
+            content.innerHTML = html;
+            document.getElementById('nodeViewer').classList.add('active');
+        }
+
+        function closeNodeViewer() {
+            document.getElementById('nodeViewer').classList.remove('active');
+            viewingNodeId = null;
+        }
+
+        function formatNodeType(type) {
+            const typeMap = {
+                combat: 'Combat',
+                event: 'Event (Rarity)',
+                card: 'Card Node',
+                crafter: 'Crafter Node',
+                rest: 'Rest Node',
+                character: 'Character',
+                transition: 'Map Transition',
+                shop: 'Shop',
+                quest: 'Quest End',
+                rift: 'Eldritch Rift',
+                boss: 'Region Boss',
+                information: 'Information'
+            };
+            return typeMap[type] || type;
+        }
+
+        // Actions from viewer
+        function editNodeFromViewer() {
+            if (viewingNodeId) {
+                editNode(viewingNodeId);
+            }
+        }
+
+        function moveNodeFromViewer() {
+            if (viewingNodeId) {
+                enterMoveMode(viewingNodeId);
+                closeNodeViewer();
+            }
+        }
+
+        function deleteNodeFromViewer() {
+            if (viewingNodeId) {
+                deleteNodeQuick(viewingNodeId);
+                closeNodeViewer();
+            }
+        }
+
+        function goToLinkedMap(mapId) {
+            closeNodeViewer();
+            selectMap(mapId);
+        }
+
+        function deleteNode() {
+            if (!editingNodeId || !confirm('Are you sure you want to delete this node?')) return;
+
+            const map = maps.find(m => m.id === currentMapId);
+            if (map) {
+                map.nodes = map.nodes.filter(n => n.id !== editingNodeId);
+                saveData();
+                renderMapCanvas();
+                closeNodeModal();
+            }
+        }
+
+        function deleteNodeQuick(nodeId) {
+            if (!isAdmin) {
+                alert('Admin access required to delete nodes');
+                return;
+            }
+            if (!confirm('Are you sure you want to delete this node?')) return;
+
+            const map = maps.find(m => m.id === currentMapId);
+            if (map) {
+                map.nodes = map.nodes.filter(n => n.id !== nodeId);
+                saveData();
+                renderMapCanvas();
+            }
+        }
+
+        // Context Menu Functions
+        function showNodeContextMenu(e, nodeId) {
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenuNodeId = nodeId;
+            
+            contextMenu.style.left = `${e.pageX}px`;
+            contextMenu.style.top = `${e.pageY}px`;
+            contextMenu.classList.add('active');
+        }
+
+        function closeContextMenu() {
+            document.getElementById('contextMenu').classList.remove('active');
+            contextMenuNodeId = null;
+        }
+
+        // Node Moving Functions
+        function enterMoveMode(nodeId) {
+            if (!isAdmin) {
+                alert('Admin access required to move nodes');
+                return;
+            }
+
+            isMovingMode = true;
+            draggedNodeId = nodeId;
+            mapCanvas.style.cursor = 'move';
+            modeIndicator.textContent = 'Click on the map to place the node in new location';
+            modeIndicator.classList.add('active');
+            
+            // Highlight the node being moved
+            const nodeEl = mapImageContainer.querySelector(`[data-node-id="${nodeId}"]`);
+            if (nodeEl) {
+                nodeEl.classList.add('highlighted');
+            }
+        }
+
+        function moveNode(e) {
+            // This is handled by clicking instead of dragging for better control
+        }
+
+        function endMoveNode() {
+            // Handled by click event
+        }
+
+        // Tags Functions
+        function addTag(tagText) {
+            if (!tagText) return;
+            
+            const tagsContainer = document.getElementById('tagsContainer');
+            const tagInput = document.getElementById('tagInput');
+            
+            const tag = document.createElement('div');
+            tag.className = 'tag';
+            tag.innerHTML = `
+                ${tagText}
+                <span class="tag-remove" onclick="this.parentElement.remove()">×</span>
+            `;
+            
+            tagsContainer.insertBefore(tag, tagInput);
+        }
+
+        function getTags() {
+            const tags = [];
+            document.querySelectorAll('.tag').forEach(tag => {
+                const text = tag.textContent.replace('×', '').trim();
+                if (text) tags.push(text);
+            });
+            return tags;
+        }
+
+        // Options Functions
+        function resetOptions() {
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = createOptionHtml(1);
+        }
+
+        function createOptionHtml(number, option = null) {
+            return `
+                <div class="option-item">
+                    <div class="option-header">
+                        <span class="option-number">Option ${number}</span>
+                        <button type="button" class="option-remove" onclick="removeOption(this)">Remove</button>
+                    </div>
+                    <input type="text" class="form-input" placeholder="Option label (e.g., 'Talk', 'Buy', 'Fight')" data-option="label" value="${option?.label || ''}">
+                    <input type="text" class="form-input" placeholder="Option description (optional)" data-option="description" style="margin-top: 0.5rem;" value="${option?.description || ''}">
+                    <div class="rewards-row">
+                        <input type="number" class="form-input" placeholder="Gold" data-option="gold" value="${option?.gold || 0}">
+                        <input type="number" class="form-input" placeholder="Shards" data-option="shards" value="${option?.shards || 0}">
+                        <input type="number" class="form-input" placeholder="EXP" data-option="exp" value="${option?.exp || 0}">
+                    </div>
+                </div>
+            `;
+        }
+
+        function addOption() {
+            const optionsContainer = document.getElementById('optionsContainer');
+            const number = optionsContainer.children.length + 1;
+            optionsContainer.insertAdjacentHTML('beforeend', createOptionHtml(number));
+        }
+
+        function removeOption(btn) {
+            const optionsContainer = document.getElementById('optionsContainer');
+            if (optionsContainer.children.length > 1) {
+                btn.closest('.option-item').remove();
+                updateOptionNumbers();
+            }
+        }
+
+        function updateOptionNumbers() {
+            const options = document.querySelectorAll('.option-item');
+            options.forEach((option, index) => {
+                option.querySelector('.option-number').textContent = `Option ${index + 1}`;
+            });
+        }
+
+        function getOptions() {
+            const options = [];
+            document.querySelectorAll('.option-item').forEach(item => {
+                const option = {
+                    label: item.querySelector('[data-option="label"]').value,
+                    description: item.querySelector('[data-option="description"]').value,
+                    gold: parseInt(item.querySelector('[data-option="gold"]').value) || 0,
+                    shards: parseInt(item.querySelector('[data-option="shards"]').value) || 0,
+                    exp: parseInt(item.querySelector('[data-option="exp"]').value) || 0
+                };
+                if (option.label) options.push(option);
+            });
+            return options;
+        }
+
+        // Map Modal Functions
+        let editingMapId = null;
+
+        function openMapModal(mapId = null) {
+            if (!isAdmin) {
+                alert('Admin access required to edit maps');
+                return;
+            }
+
+            editingMapId = mapId;
+            const modalTitle = mapModal.querySelector('.modal-title');
+            const deleteBtn = document.getElementById('deleteMapBtn');
+            
+            if (mapId) {
+                const map = maps.find(m => m.id === mapId);
+                if (map) {
+                    modalTitle.textContent = 'Edit Map';
+                    deleteBtn.style.display = 'block';
+                    document.getElementById('mapName').value = map.name;
+                    document.getElementById('mapImageUrl').value = map.imageUrl || '';
+                    
+                    // Update parent select
+                    const parentSelect = document.getElementById('parentMap');
+                    parentSelect.innerHTML = '<option value="">None (Root Map)</option>';
+                    maps.forEach(m => {
+                        if (m.id !== mapId) { // Don't allow selecting self as parent
+                            const option = document.createElement('option');
+                            option.value = m.id;
+                            option.textContent = m.name;
+                            option.selected = m.id === map.parentId;
+                            parentSelect.appendChild(option);
+                        }
+                    });
+                }
+            } else {
+                modalTitle.textContent = 'Create New Map';
+                deleteBtn.style.display = 'none';
+                mapForm.reset();
+                
+                // Update parent map dropdown
+                const parentSelect = document.getElementById('parentMap');
+                parentSelect.innerHTML = '<option value="">None (Root Map)</option>';
+                maps.forEach(map => {
+                    const option = document.createElement('option');
+                    option.value = map.id;
+                    option.textContent = map.name;
+                    parentSelect.appendChild(option);
+                });
+            }
+            
+            // Show the modal
+            mapModal.classList.add('active');
+        }
+
+        function editMap(mapId) {
+            openMapModal(mapId);
+        }
+
+        function deleteMap() {
+            if (!editingMapId || !confirm('Are you sure you want to delete this map? All nodes will be lost.')) return;
+            
+            // Remove the map and any submaps
+            function removeMapAndChildren(mapId) {
+                const children = maps.filter(m => m.parentId === mapId);
+                children.forEach(child => removeMapAndChildren(child.id));
+                maps = maps.filter(m => m.id !== mapId);
+            }
+            
+            removeMapAndChildren(editingMapId);
+            saveData();
+            
+            // Select another map if available
+            if (currentMapId === editingMapId) {
+                currentMapId = maps.length > 0 ? maps[0].id : null;
+            }
+            
+            renderMaps();
+            if (currentMapId) {
+                renderMapCanvas();
+            }
+            closeMapModal();
+        }
+
+        function deleteMapFromSidebar(mapId) {
+            if (!isAdmin) {
+                alert('Admin access required to delete maps');
+                return;
+            }
+
+            const map = maps.find(m => m.id === mapId);
+            if (!map) return;
+            
+            const hasChildren = maps.some(m => m.parentId === mapId);
+            const warningMsg = hasChildren 
+                ? `Are you sure you want to delete "${map.name}"? This will also delete all submaps and their nodes.`
+                : `Are you sure you want to delete "${map.name}"? All ${map.nodes.length} node(s) will be lost.`;
+            
+            if (!confirm(warningMsg)) return;
+            
+            // Remove the map and any submaps
+            function removeMapAndChildren(mapId) {
+                const children = maps.filter(m => m.parentId === mapId);
+                children.forEach(child => removeMapAndChildren(child.id));
+                maps = maps.filter(m => m.id !== mapId);
+            }
+            
+            removeMapAndChildren(mapId);
+            saveData();
+            
+            // Select another map if we deleted the current one
+            if (currentMapId === mapId) {
+                currentMapId = maps.length > 0 ? maps[0].id : null;
+                if (currentMapId) {
+                    selectMap(currentMapId);
+                } else {
+                    // No maps left, clear canvas
+                    const existingNodes = mapImageContainer.querySelectorAll('.node');
+                    existingNodes.forEach(node => node.remove());
+                    const img = mapImageContainer.querySelector('.map-image');
+                    if (img) img.style.display = 'none';
+                }
+            }
+            
+            renderMaps();
+            console.log('Deleted map:', map.name);
+        }
+
+        function closeMapModal() {
+            mapModal.classList.remove('active');
+            mapForm.reset();
+            editingMapId = null;
+        }
+
+        function saveMap(e) {
+            e.preventDefault();
+            
+            const mapName = document.getElementById('mapName').value;
+            const parentId = document.getElementById('parentMap').value || null;
+            const imageUrl = document.getElementById('mapImageUrl').value;
+            const imageFile = document.getElementById('mapImageFile').files[0];
+            
+            console.log('Saving map:', { mapName, parentId, imageUrl, imageFile, editingMapId });
+            
+            function finalizeMap(finalImageUrl) {
+                if (editingMapId) {
+                    // Update existing map
+                    const map = maps.find(m => m.id === editingMapId);
+                    if (map) {
+                        map.name = mapName;
+                        map.parentId = parentId;
+                        map.imageUrl = finalImageUrl;
+                        console.log('Updated map:', map);
+                    }
+                    saveData();
+                    renderMaps();
+                    renderMapCanvas();
+                } else {
+                    // Create new map
+                    const newMap = {
+                        id: generateId(),
+                        name: mapName,
+                        parentId: parentId,
+                        imageUrl: finalImageUrl,
+                        nodes: []
+                    };
+                    maps.push(newMap);
+                    console.log('Created new map:', newMap);
+                    saveData();
+                    renderMaps();
+                    selectMap(newMap.id);
+                }
+                
+                closeMapModal();
+            }
+            
+            // Handle file upload
+            if (imageFile) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    console.log('File loaded, data URL length:', event.target.result.length);
+                    finalizeMap(event.target.result);
+                };
+                reader.onerror = (error) => {
+                    console.error('File read error:', error);
+                    finalizeMap(imageUrl);
+                };
+                reader.readAsDataURL(imageFile);
+            } else {
+                finalizeMap(imageUrl);
+            }
+        }
+
+        // Search Functions
+        function performSearch() {
+            const query = searchInput.value.toLowerCase().trim();
+            
+            if (!query) {
+                searchResults.classList.remove('active');
+                clearHighlights();
+                return;
+            }
+
+            const results = [];
+            maps.forEach(map => {
+                map.nodes.forEach(node => {
+                    const searchText = `${node.name} ${node.description} ${node.tags.join(' ')}`.toLowerCase();
+                    if (searchText.includes(query)) {
+                        results.push({ node, map });
+                    }
+                });
+            });
+
+            displaySearchResults(results);
+        }
+
+        function displaySearchResults(results) {
+            searchResults.innerHTML = '';
+            
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="no-results">No nodes found</div>';
+                searchResults.classList.add('active');
+                return;
+            }
+
+            results.forEach(({ node, map }) => {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                item.innerHTML = `
+                    <div class="result-name">${node.name}</div>
+                    <div class="result-meta">${map.name} • ${node.type}</div>
+                `;
+                item.addEventListener('click', () => {
+                    selectMap(map.id);
+                    highlightNode(node.id);
+                    searchResults.classList.remove('active');
+                    searchInput.value = '';
+                });
+                searchResults.appendChild(item);
+            });
+
+            searchResults.classList.add('active');
+        }
+
+        function highlightNode(nodeId) {
+            clearHighlights();
+            const map = maps.find(m => m.id === currentMapId);
+            const node = map?.nodes.find(n => n.id === nodeId);
+            if (!node) return;
+
+            // Calculate where to position the view to center the node
+            const rect = mapCanvas.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            // Pan to center the node in the viewport
+            translateX = centerX - (node.x * scale);
+            translateY = centerY - (node.y * scale);
+            updateTransform();
+
+            console.log('Highlighting node at:', node.x, node.y, 'View centered at:', translateX, translateY);
+
+            // Add highlight after transform update
+            setTimeout(() => {
+                const nodeElements = mapImageContainer.querySelectorAll('.node');
+                nodeElements.forEach(el => {
+                    const elX = parseFloat(el.style.left);
+                    const elY = parseFloat(el.style.top);
+                    if (Math.abs(elX - node.x) < 1 && Math.abs(elY - node.y) < 1) {
+                        el.classList.add('highlighted');
+                    }
+                });
+            }, 100);
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.node.highlighted').forEach(node => {
+                node.classList.remove('highlighted');
+            });
+        }
+
+        // Export/Import Functions
+        function exportData() {
+            const exportData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                maps: maps
+            };
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `map-forge-export-${Date.now()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            console.log('Exported', maps.length, 'maps');
+            alert(`Exported ${maps.length} map(s) successfully!`);
+        }
+
+        function importData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importedData = JSON.parse(event.target.result);
+                    
+                    // Validate data
+                    if (!importedData.maps || !Array.isArray(importedData.maps)) {
+                        throw new Error('Invalid data format');
+                    }
+
+                    // Ask user what to do with existing data
+                    let shouldMerge = false;
+                    if (maps.length > 0) {
+                        const choice = confirm(
+                            `You have ${maps.length} existing map(s).\n\n` +
+                            `Click OK to MERGE with imported data (${importedData.maps.length} map(s))\n` +
+                            `Click Cancel to REPLACE all existing data`
+                        );
+                        shouldMerge = choice;
+                    }
+
+                    if (shouldMerge) {
+                        // Merge: Add imported maps with new IDs to avoid conflicts
+                        importedData.maps.forEach(map => {
+                            const newMap = {
+                                ...map,
+                                id: generateId(),
+                                parentId: null // Reset parent relationships on merge
+                            };
+                            maps.push(newMap);
+                        });
+                    } else {
+                        // Replace
+                        maps = importedData.maps;
+                    }
+
+                    saveData();
+                    renderMaps();
+                    
+                    // Select first map
+                    if (maps.length > 0) {
+                        selectMap(maps[0].id);
+                    }
+
+                    console.log('Imported', importedData.maps.length, 'maps. Total maps:', maps.length);
+                    alert(`Successfully imported ${importedData.maps.length} map(s)!`);
+                    
+                } catch (error) {
+                    console.error('Import error:', error);
+                    alert('Error importing file. Please make sure it\'s a valid Map Forge export file.');
+                }
+            };
+            
+            reader.onerror = () => {
+                alert('Error reading file');
+            };
+            
+            reader.readAsText(file);
+            
+            // Reset file input
+            e.target.value = '';
+        }
+
+        // Utility Functions
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        async function saveData() {
+            if (!isAdmin) {
+                alert('You must be an admin to make changes');
+                return Promise.reject('Not admin');
+            }
+            return saveToSupabase();
+        }
+
+        async function saveToSupabase() {
+            try {
+                showLoading();
+                const { error } = await supabaseClient
+                    .from('maps')
+                    .upsert(maps.map(map => ({
+                        id: map.id,
+                        name: map.name,
+                        parent_id: map.parentId,
+                        image_url: map.imageUrl,
+                        nodes: map.nodes,
+                        updated_at: new Date().toISOString()
+                    })));
+                
+                if (error) throw error;
+                console.log('Saved to Supabase');
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                console.error('Error saving:', error);
+                alert('Error saving changes: ' + error.message);
+                throw error;
+            }
+        }
+
+        async function loadData() {
+            return loadFromSupabase();
+        }
+
+        async function loadFromSupabase() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('maps')
+                    .select('*')
+                    .order('created_at', { ascending: true });
+                
+                if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    maps = data.map(row => ({
+                        id: row.id,
+                        name: row.name,
+                        parentId: row.parent_id,
+                        imageUrl: row.image_url,
+                        nodes: row.nodes || []
+                    }));
+                } else {
+                    maps = [];
+                }
+            } catch (error) {
+                console.error('Error loading:', error);
+                maps = [];
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // ==========================================
+        // AUTHENTICATION
+        // ==========================================
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorEl = document.getElementById('loginError');
+
+            try {
+                showLoading();
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email,
+                    password
+                });
+                
+                if (error) throw error;
+                
+                currentUser = data.user;
+                isAdmin = true;
+                errorEl.textContent = '';
+                await initializeApp();
+            } catch (error) {
+                errorEl.textContent = error.message;
+                hideLoading();
+            }
+        });
+
+        document.getElementById('continueAsViewer').addEventListener('click', () => {
+            isAdmin = false;
+            currentUser = { email: 'Viewer (Guest)' };
+            document.getElementById('viewModeNotice').style.display = 'block';
+            setTimeout(async () => {
+                await initializeApp();
+            }, 1000);
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            if (isAdmin) {
+                await supabaseClient.auth.signOut();
+            }
+            location.reload();
+        });
+
+        // Initialize the app - show login screen
+        // init();
+    </script>
+</body>
+</html>
