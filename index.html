@@ -805,6 +805,64 @@
             opacity: 0.8;
         }
 
+        /* Follow-up Events */
+        .followup-events-container {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(42, 35, 26, 0.3);
+            border: 1px solid var(--secondary);
+            border-radius: 6px;
+        }
+
+        .followup-event-item {
+            background: rgba(42, 35, 26, 0.5);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            border: 1px solid var(--secondary);
+        }
+
+        .followup-event-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .followup-event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .followup-event-label {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.95rem;
+        }
+
+        .followup-event-remove {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .followup-event-remove:hover {
+            background: #9b2c2c;
+        }
+
+        .followup-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0.5rem 0;
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
         .rewards-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -2164,6 +2222,46 @@
                             variantHtml.push(`<div class="node-viewer-rewards">${rewards.join('')}</div>`);
                         }
                         
+                        // Display follow-up events
+                        if (option.followupEvents && option.followupEvents.length > 0) {
+                            variantHtml.push(`
+                                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(139, 115, 85, 0.3);">
+                                    <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">
+                                        ↓ Follow-up Events (${option.followupEvents.length})
+                                    </div>
+                            `);
+                            
+                            option.followupEvents.forEach((event, eventIdx) => {
+                                variantHtml.push(`
+                                    <div style="background: rgba(42, 35, 26, 0.3); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; border-left: 3px solid var(--primary);">
+                                        <div style="font-weight: 600; color: var(--primary); font-size: 0.9rem; margin-bottom: 0.25rem;">
+                                            ${eventIdx + 1}. ${event.name}
+                                        </div>
+                                `);
+                                
+                                if (event.description) {
+                                    variantHtml.push(`
+                                        <div style="color: rgba(245, 230, 211, 0.8); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                                            ${event.description}
+                                        </div>
+                                    `);
+                                }
+                                
+                                const eventRewards = [];
+                                if (event.gold && event.gold !== 0) eventRewards.push(`<span class="node-viewer-reward">💰 ${event.gold} Gold</span>`);
+                                if (event.shards && event.shards !== 0) eventRewards.push(`<span class="node-viewer-reward">💎 ${event.shards} Shards</span>`);
+                                if (event.exp && event.exp !== 0) eventRewards.push(`<span class="node-viewer-reward">⭐ ${event.exp} EXP</span>`);
+                                
+                                if (eventRewards.length > 0) {
+                                    variantHtml.push(`<div class="node-viewer-rewards">${eventRewards.join('')}</div>`);
+                                }
+                                
+                                variantHtml.push(`</div>`);
+                            });
+                            
+                            variantHtml.push(`</div>`);
+                        }
+                        
                         variantHtml.push(`</div>`);
                     });
                     
@@ -2363,6 +2461,10 @@
         }
 
         function createOptionHtml(number, option = null) {
+            const followupEventsHtml = option?.followupEvents && option.followupEvents.length > 0
+                ? option.followupEvents.map((event, idx) => createFollowupEventHtml(idx, event)).join('')
+                : '';
+            
             return `
                 <div class="option-item">
                     <div class="option-header">
@@ -2376,8 +2478,59 @@
                         <input type="number" class="form-input" placeholder="Shards" data-option="shards" value="${option?.shards || 0}">
                         <input type="number" class="form-input" placeholder="EXP" data-option="exp" value="${option?.exp || 0}">
                     </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <label class="form-label" style="font-size: 0.9rem;">
+                            Follow-up Events (sequential sub-events after this option)
+                            <small style="display: block; font-weight: normal; color: rgba(245, 230, 211, 0.6); margin-top: 0.25rem;">
+                                Add events that happen in sequence (e.g., e_sen4_a1 → e_sen4_a2)
+                            </small>
+                        </label>
+                        <div class="followup-events-container" data-followup-container>
+                            ${followupEventsHtml}
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="addFollowupEvent(this)" style="margin-top: 0.5rem; width: 100%;">
+                            + Add Follow-up Event
+                        </button>
+                    </div>
                 </div>
             `; 
+        }
+
+        function createFollowupEventHtml(index, event = null) {
+            return `
+                ${index > 0 ? '<div class="followup-arrow">↓</div>' : ''}
+                <div class="followup-event-item">
+                    <div class="followup-event-header">
+                        <span class="followup-event-label">Follow-up ${index + 1}</span>
+                        <button type="button" class="followup-event-remove" onclick="removeFollowupEvent(this)">Remove</button>
+                    </div>
+                    <input type="text" class="form-input" placeholder="Event ID/Name (e.g., 'e_sen4_a2')" data-followup="name" value="${event?.name || ''}" style="margin-bottom: 0.5rem;">
+                    <textarea class="form-textarea" placeholder="Event description" data-followup="description" style="min-height: 60px; margin-bottom: 0.5rem;">${event?.description || ''}</textarea>
+                    <div class="form-label" style="font-size: 0.85rem; margin-bottom: 0.5rem;">Rewards:</div>
+                    <div class="rewards-row">
+                        <input type="number" class="form-input" placeholder="Gold" data-followup="gold" value="${event?.gold || 0}">
+                        <input type="number" class="form-input" placeholder="Shards" data-followup="shards" value="${event?.shards || 0}">
+                        <input type="number" class="form-input" placeholder="EXP" data-followup="exp" value="${event?.exp || 0}">
+                    </div>
+                </div>
+            `;
+        }
+
+        function addFollowupEvent(btn) {
+            const optionItem = btn.closest('.option-item');
+            const container = optionItem.querySelector('[data-followup-container]');
+            const currentCount = container.querySelectorAll('.followup-event-item').length;
+            container.insertAdjacentHTML('beforeend', createFollowupEventHtml(currentCount));
+        }
+
+        function removeFollowupEvent(btn) {
+            const eventItem = btn.closest('.followup-event-item');
+            const arrow = eventItem.previousElementSibling;
+            if (arrow && arrow.classList.contains('followup-arrow')) {
+                arrow.remove();
+            }
+            eventItem.remove();
         }
 
         // ==========================================
@@ -2575,12 +2728,26 @@
         function getOptions() {
             const options = [];
             document.querySelectorAll('.option-item').forEach(item => {
+                // Get follow-up events for this option
+                const followupEvents = [];
+                item.querySelectorAll('.followup-event-item').forEach(eventItem => {
+                    const event = {
+                        name: eventItem.querySelector('[data-followup="name"]').value,
+                        description: eventItem.querySelector('[data-followup="description"]').value,
+                        gold: parseInt(eventItem.querySelector('[data-followup="gold"]').value) || 0,
+                        shards: parseInt(eventItem.querySelector('[data-followup="shards"]').value) || 0,
+                        exp: parseInt(eventItem.querySelector('[data-followup="exp"]').value) || 0
+                    };
+                    if (event.name) followupEvents.push(event);
+                });
+                
                 const option = {
                     label: item.querySelector('[data-option="label"]').value,
                     description: item.querySelector('[data-option="description"]').value,
                     gold: parseInt(item.querySelector('[data-option="gold"]').value) || 0,
                     shards: parseInt(item.querySelector('[data-option="shards"]').value) || 0,
-                    exp: parseInt(item.querySelector('[data-option="exp"]').value) || 0
+                    exp: parseInt(item.querySelector('[data-option="exp"]').value) || 0,
+                    followupEvents: followupEvents
                 };
                 if (option.label) options.push(option);
             });
@@ -2648,26 +2815,46 @@
         function deleteMap() {
             if (!editingMapId || !confirm('Are you sure you want to delete this map? All nodes will be lost.')) return;
             
-            // Remove the map and any submaps
-            function removeMapAndChildren(mapId) {
+            if (!isAdmin) {
+                alert('Admin access required to delete maps');
+                return;
+            }
+            
+            // Collect all map IDs to delete (including children)
+            const mapsToDelete = [];
+            function collectMapAndChildren(mapId) {
+                mapsToDelete.push(mapId);
                 const children = maps.filter(m => m.parentId === mapId);
-                children.forEach(child => removeMapAndChildren(child.id));
-                maps = maps.filter(m => m.id !== mapId);
+                children.forEach(child => collectMapAndChildren(child.id));
             }
             
-            removeMapAndChildren(editingMapId);
-            saveData();
+            collectMapAndChildren(editingMapId);
             
-            // Select another map if available
-            if (currentMapId === editingMapId) {
-                currentMapId = maps.length > 0 ? maps[0].id : null;
-            }
+            // Remove from local array
+            maps = maps.filter(m => !mapsToDelete.includes(m.id));
             
-            renderMaps();
-            if (currentMapId) {
-                renderMapCanvas();
-            }
-            closeMapModal();
+            // Delete from Supabase
+            showLoading();
+            Promise.all(mapsToDelete.map(mapId => 
+                supabaseClient.from('maps').delete().eq('id', mapId)
+            )).then(() => {
+                hideLoading();
+                
+                // Select another map if available
+                if (currentMapId === editingMapId) {
+                    currentMapId = maps.length > 0 ? maps[0].id : null;
+                }
+                
+                renderMaps();
+                if (currentMapId) {
+                    renderMapCanvas();
+                }
+                closeMapModal();
+            }).catch(error => {
+                hideLoading();
+                console.error('Error deleting map:', error);
+                alert('Error deleting map: ' + error.message);
+            });
         }
 
         function deleteMapFromSidebar(mapId) {
@@ -2686,32 +2873,47 @@
             
             if (!confirm(warningMsg)) return;
             
-            // Remove the map and any submaps
-            function removeMapAndChildren(mapId) {
+            // Collect all map IDs to delete (including children)
+            const mapsToDelete = [];
+            function collectMapAndChildren(mapId) {
+                mapsToDelete.push(mapId);
                 const children = maps.filter(m => m.parentId === mapId);
-                children.forEach(child => removeMapAndChildren(child.id));
-                maps = maps.filter(m => m.id !== mapId);
+                children.forEach(child => collectMapAndChildren(child.id));
             }
             
-            removeMapAndChildren(mapId);
-            saveData();
+            collectMapAndChildren(mapId);
             
-            // Select another map if we deleted the current one
-            if (currentMapId === mapId) {
-                currentMapId = maps.length > 0 ? maps[0].id : null;
-                if (currentMapId) {
-                    selectMap(currentMapId);
-                } else {
-                    // No maps left, clear canvas
-                    const existingNodes = mapImageContainer.querySelectorAll('.node');
-                    existingNodes.forEach(node => node.remove());
-                    const img = mapImageContainer.querySelector('.map-image');
-                    if (img) img.style.display = 'none';
+            // Remove from local array
+            maps = maps.filter(m => !mapsToDelete.includes(m.id));
+            
+            // Delete from Supabase
+            showLoading();
+            Promise.all(mapsToDelete.map(id => 
+                supabaseClient.from('maps').delete().eq('id', id)
+            )).then(() => {
+                hideLoading();
+                
+                // Select another map if we deleted the current one
+                if (currentMapId === mapId) {
+                    currentMapId = maps.length > 0 ? maps[0].id : null;
+                    if (currentMapId) {
+                        selectMap(currentMapId);
+                    } else {
+                        // No maps left, clear canvas
+                        const existingNodes = mapImageContainer.querySelectorAll('.node');
+                        existingNodes.forEach(node => node.remove());
+                        const img = mapImageContainer.querySelector('.map-image');
+                        if (img) img.style.display = 'none';
+                    }
                 }
-            }
-            
-            renderMaps();
-            console.log('Deleted map:', map.name);
+                
+                renderMaps();
+                console.log('Deleted map:', map.name);
+            }).catch(error => {
+                hideLoading();
+                console.error('Error deleting map:', error);
+                alert('Error deleting map: ' + error.message);
+            });
         }
 
         function closeMapModal() {
