@@ -735,6 +735,76 @@
             background: #9b2c2c;
         }
 
+        /* Variants */
+        .variants-container {
+            border: 1px solid var(--secondary);
+            border-radius: 6px;
+            padding: 1rem;
+            background: rgba(42, 35, 26, 0.3);
+        }
+
+        .variant-item {
+            display: none;
+            padding: 1rem;
+            background: rgba(42, 35, 26, 0.5);
+            border-radius: 6px;
+            border: 1px solid var(--secondary);
+        }
+
+        .variant-item.active {
+            display: block;
+        }
+
+        .variant-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .variant-name-input {
+            font-weight: 600;
+        }
+
+        .variant-chance-input {
+            text-align: center;
+        }
+
+        .variant-tabs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .variant-tab {
+            padding: 0.5rem 1rem;
+            background: rgba(139, 115, 85, 0.3);
+            border: 1px solid var(--secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .variant-tab:hover {
+            background: rgba(139, 115, 85, 0.5);
+        }
+
+        .variant-tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--darker);
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .variant-tab-chance {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
         .rewards-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -1148,6 +1218,32 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="form-label">
+                        Node Variants (for RNG/chance-based encounters)
+                        <small style="display: block; font-weight: normal; color: rgba(245, 230, 211, 0.6); margin-top: 0.25rem;">
+                            Add multiple versions when the same location has different possible encounters
+                        </small>
+                    </label>
+                    <div class="variants-container" id="variantsContainer">
+                        <div class="variant-item active" data-variant-index="0">
+                            <div class="variant-header">
+                                <input type="text" class="form-input variant-name-input" placeholder="Variant name (e.g., 'e_sen4_a1' or 'Encounter A')" value="Default" style="flex: 1;">
+                                <input type="number" class="form-input variant-chance-input" placeholder="%" min="0" max="100" value="100" style="width: 80px; margin-left: 0.5rem;">
+                                <span style="margin-left: 0.5rem; color: var(--light);">%</span>
+                                <button type="button" class="btn btn-secondary btn-small" onclick="removeVariant(this)" style="margin-left: 0.5rem; display: none;">Remove</button>
+                            </div>
+                            <div class="variant-content" style="margin-top: 1rem;">
+                                <!-- Variant-specific content will be inserted here by JS -->
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="addVariantBtn" style="margin-top: 1rem; width: 100%;">+ Add Variant</button>
+                    <div class="variant-tabs" id="variantTabs" style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
+                        <!-- Variant tabs will be added here by JS -->
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label class="form-label">Node Type</label>
                     <select class="form-select" id="nodeType" required>
                         <option value="combat">Combat</option>
@@ -1266,7 +1362,7 @@
         // IMPORTANT: Replace these with your actual Supabase values!
         // Get these from: Supabase Dashboard → Settings → API
         // ==========================================
-        const SUPABASE_URL = 'https://sczwwgszicbwomriucuz.supabase.co'; // e.g., 'https://xxxxx.supabase.co'
+        const SUPABASE_URL = 'https://sczwwgszicbwomriucuz.supabase.co/'; // e.g., 'https://xxxxx.supabase.co/'
         const SUPABASE_ANON_KEY = 'sb_publishable_7Zh2AuEoohMwZKFLdTZjHQ_9fmeso6p'; // Long JWT token
 
         // Initialize Supabase client
@@ -1276,6 +1372,10 @@
         // Authentication state
         let isAdmin = false;
         let currentUser = null;
+
+        // Variant management
+        let currentVariantIndex = 0;
+        let currentNodeVariants = [];
 
         // Data Storage
         let maps = [];
@@ -1543,6 +1643,9 @@
                 }
             });
 
+            // Add Variant Button
+            document.getElementById('addVariantBtn').addEventListener('click', addVariant);
+
             // Show/hide map link based on node type
             document.getElementById('nodeType').addEventListener('change', (e) => {
                 const mapLinkGroup = document.getElementById('mapLinkGroup');
@@ -1804,10 +1907,30 @@
             if (node) {
                 modalTitle.textContent = 'Edit Node';
                 deleteBtn.style.display = 'block';
-                populateNodeForm(node);
                 
-                // Show map link if it's a transition
-                if (node.type === 'transition') {
+                // Load variants from node
+                if (node.variants && node.variants.length > 0) {
+                    currentNodeVariants = JSON.parse(JSON.stringify(node.variants)); // Deep copy
+                    currentVariantIndex = 0;
+                } else {
+                    // Convert old single-variant nodes to variant format
+                    currentNodeVariants = [{
+                        name: 'Default',
+                        chance: 100,
+                        type: node.type,
+                        description: node.description || '',
+                        mapLink: node.mapLink || null,
+                        tags: [...(node.tags || [])],
+                        options: JSON.parse(JSON.stringify(node.options || []))
+                    }];
+                    currentVariantIndex = 0;
+                }
+                
+                renderVariantTabs();
+                switchToVariant(0);
+                
+                // Show map link if current variant is a transition
+                if (currentNodeVariants[0].type === 'transition') {
                     mapLinkGroup.style.display = 'block';
                     populateMapLinkDropdown();
                 } else {
@@ -1817,7 +1940,7 @@
                 modalTitle.textContent = 'Create New Node';
                 deleteBtn.style.display = 'none';
                 nodeForm.reset();
-                resetOptions();
+                initializeVariants();
                 mapLinkGroup.style.display = 'none';
             }
 
@@ -1877,16 +2000,22 @@
             const map = maps.find(m => m.id === currentMapId);
             if (!map) return;
 
+            // Save current variant data before saving node
+            saveCurrentVariantData();
+
             const nodeData = {
                 id: editingNodeId || generateId(),
                 name: document.getElementById('nodeName').value,
-                type: document.getElementById('nodeType').value,
-                description: document.getElementById('nodeDescription').value,
-                mapLink: document.getElementById('nodeMapLink').value || null,
-                tags: getTags(),
-                options: getOptions(),
+                variants: JSON.parse(JSON.stringify(currentNodeVariants)), // Save all variants
                 x: 0,
-                y: 0
+                y: 0,
+                
+                // Keep legacy fields for backward compatibility (use first variant)
+                type: currentNodeVariants[0].type,
+                description: currentNodeVariants[0].description,
+                mapLink: currentNodeVariants[0].mapLink,
+                tags: currentNodeVariants[0].tags,
+                options: currentNodeVariants[0].options
             };
 
             if (editingNodeId) {
@@ -1933,75 +2062,117 @@
             const content = document.getElementById('viewerContent');
             let html = '';
 
-            // Node Type
-            const typeClass = `node-${node.type}`;
-            const typeIcon = getNodeIcon(node.type);
-            html += `<div class="node-viewer-type ${typeClass}">${typeIcon} ${formatNodeType(node.type)}</div>`;
+            // Check if node has variants
+            const hasVariants = node.variants && node.variants.length > 0;
+            const variants = hasVariants ? node.variants : [{
+                name: 'Default',
+                chance: 100,
+                type: node.type,
+                description: node.description,
+                mapLink: node.mapLink,
+                tags: node.tags || [],
+                options: node.options || []
+            }];
 
-            // Linked Map (for transitions)
-            if (node.mapLink) {
-                const linkedMap = maps.find(m => m.id === node.mapLink);
-                if (linkedMap) {
-                    html += `
-                        <div class="node-viewer-section">
-                            <div class="node-viewer-label">Transitions To</div>
-                            <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="goToLinkedMap('${node.mapLink}')">
-                                🚪 Go to ${linkedMap.name}
-                            </button>
+            // Show variant tabs if there are multiple variants
+            if (variants.length > 1) {
+                html += `
+                    <div class="node-viewer-section">
+                        <div class="node-viewer-label">Variants (${variants.length} possible encounters)</div>
+                        <div class="viewer-variant-tabs" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+                            ${variants.map((v, idx) => `
+                                <button class="btn btn-secondary btn-small viewer-variant-tab ${idx === 0 ? 'active' : ''}" 
+                                        onclick="switchViewerVariant(${idx})" 
+                                        data-variant-idx="${idx}"
+                                        style="font-size: 0.85rem;">
+                                    ${v.name} (${v.chance}%)
+                                </button>
+                            `).join('')}
                         </div>
-                    `;
+                    </div>
+                `;
+            }
+
+            // Display each variant's content (only show first by default)
+            variants.forEach((variant, variantIdx) => {
+                const variantHtml = [];
+                const isVisible = variantIdx === 0;
+                
+                variantHtml.push(`<div class="viewer-variant-content" data-variant-idx="${variantIdx}" style="display: ${isVisible ? 'block' : 'none'};">`);
+
+                // Node Type
+                const typeClass = `node-${variant.type}`;
+                const typeIcon = getNodeIcon(variant.type);
+                variantHtml.push(`<div class="node-viewer-type ${typeClass}">${typeIcon} ${formatNodeType(variant.type)}</div>`);
+
+                // Linked Map (for transitions)
+                if (variant.mapLink) {
+                    const linkedMap = maps.find(m => m.id === variant.mapLink);
+                    if (linkedMap) {
+                        variantHtml.push(`
+                            <div class="node-viewer-section">
+                                <div class="node-viewer-label">Transitions To</div>
+                                <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="goToLinkedMap('${variant.mapLink}')">
+                                    🚪 Go to ${linkedMap.name}
+                                </button>
+                            </div>
+                        `);
+                    }
                 }
-            }
 
-            // Description
-            if (node.description) {
-                html += `
-                    <div class="node-viewer-section">
-                        <div class="node-viewer-label">Description</div>
-                        <div class="node-viewer-content">${node.description}</div>
-                    </div>
-                `;
-            }
-
-            // Tags
-            if (node.tags && node.tags.length > 0) {
-                html += `
-                    <div class="node-viewer-section">
-                        <div class="node-viewer-label">Tags</div>
-                        <div class="node-viewer-tags">
-                            ${node.tags.map(tag => `<span class="node-viewer-tag">${tag}</span>`).join('')}
+                // Description
+                if (variant.description) {
+                    variantHtml.push(`
+                        <div class="node-viewer-section">
+                            <div class="node-viewer-label">Description</div>
+                            <div class="node-viewer-content">${variant.description}</div>
                         </div>
-                    </div>
-                `;
-            }
+                    `);
+                }
 
-            // Options
-            if (node.options && node.options.length > 0) {
-                html += `<div class="node-viewer-section">
-                    <div class="node-viewer-label">Options</div>`;
-                
-                node.options.forEach((option, index) => {
-                    html += `<div class="node-viewer-option">`;
-                    html += `<div class="node-viewer-option-label">${index + 1}. ${option.label || 'Unnamed Option'}</div>`;
+                // Tags
+                if (variant.tags && variant.tags.length > 0) {
+                    variantHtml.push(`
+                        <div class="node-viewer-section">
+                            <div class="node-viewer-label">Tags</div>
+                            <div class="node-viewer-tags">
+                                ${variant.tags.map(tag => `<span class="node-viewer-tag">${tag}</span>`).join('')}
+                            </div>
+                        </div>
+                    `);
+                }
+
+                // Options
+                if (variant.options && variant.options.length > 0) {
+                    variantHtml.push(`<div class="node-viewer-section">
+                        <div class="node-viewer-label">Options</div>`);
                     
-                    if (option.description) {
-                        html += `<div class="node-viewer-option-desc">${option.description}</div>`;
-                    }
+                    variant.options.forEach((option, index) => {
+                        variantHtml.push(`<div class="node-viewer-option">`);
+                        variantHtml.push(`<div class="node-viewer-option-label">${index + 1}. ${option.label || 'Unnamed Option'}</div>`);
+                        
+                        if (option.description) {
+                            variantHtml.push(`<div class="node-viewer-option-desc">${option.description}</div>`);
+                        }
+                        
+                        const rewards = [];
+                        if (option.gold && option.gold !== 0) rewards.push(`<span class="node-viewer-reward">💰 ${option.gold} Gold</span>`);
+                        if (option.shards && option.shards !== 0) rewards.push(`<span class="node-viewer-reward">💎 ${option.shards} Shards</span>`);
+                        if (option.exp && option.exp !== 0) rewards.push(`<span class="node-viewer-reward">⭐ ${option.exp} EXP</span>`);
+                        
+                        if (rewards.length > 0) {
+                            variantHtml.push(`<div class="node-viewer-rewards">${rewards.join('')}</div>`);
+                        }
+                        
+                        variantHtml.push(`</div>`);
+                    });
                     
-                    const rewards = [];
-                    if (option.gold && option.gold !== 0) rewards.push(`<span class="node-viewer-reward">💰 ${option.gold} Gold</span>`);
-                    if (option.shards && option.shards !== 0) rewards.push(`<span class="node-viewer-reward">💎 ${option.shards} Shards</span>`);
-                    if (option.exp && option.exp !== 0) rewards.push(`<span class="node-viewer-reward">⭐ ${option.exp} EXP</span>`);
-                    
-                    if (rewards.length > 0) {
-                        html += `<div class="node-viewer-rewards">${rewards.join('')}</div>`;
-                    }
-                    
-                    html += `</div>`;
-                });
-                
-                html += `</div>`;
-            }
+                    variantHtml.push(`</div>`);
+                }
+
+                variantHtml.push(`</div>`);
+                html += variantHtml.join('');
+            });
 
             // Actions
             if (isAdmin) {
@@ -2016,6 +2187,28 @@
 
             content.innerHTML = html;
             document.getElementById('nodeViewer').classList.add('active');
+        }
+
+        function switchViewerVariant(index) {
+            // Hide all variant contents
+            document.querySelectorAll('.viewer-variant-content').forEach(el => {
+                el.style.display = 'none';
+            });
+            
+            // Show selected variant
+            const targetContent = document.querySelector(`.viewer-variant-content[data-variant-idx="${index}"]`);
+            if (targetContent) {
+                targetContent.style.display = 'block';
+            }
+            
+            // Update active tab
+            document.querySelectorAll('.viewer-variant-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            const activeTab = document.querySelector(`.viewer-variant-tab[data-variant-idx="${index}"]`);
+            if (activeTab) {
+                activeTab.classList.add('active');
+            }
         }
 
         function closeNodeViewer() {
@@ -2184,7 +2377,178 @@
                         <input type="number" class="form-input" placeholder="EXP" data-option="exp" value="${option?.exp || 0}">
                     </div>
                 </div>
-            `;
+            `; 
+        }
+
+        // ==========================================
+        // VARIANT FUNCTIONS
+        // ==========================================
+        function initializeVariants() {
+            currentNodeVariants = [{
+                name: 'Default',
+                chance: 100,
+                type: 'combat',
+                description: '',
+                mapLink: null,
+                tags: [],
+                options: []
+            }];
+            currentVariantIndex = 0;
+            renderVariantTabs();
+        }
+
+        function addVariant() {
+            // Save current variant before switching
+            saveCurrentVariantData();
+            
+            const newVariant = {
+                name: `Variant ${currentNodeVariants.length + 1}`,
+                chance: 0,
+                type: 'combat',
+                description: '',
+                mapLink: null,
+                tags: [],
+                options: []
+            };
+            
+            currentNodeVariants.push(newVariant);
+            currentVariantIndex = currentNodeVariants.length - 1;
+            
+            renderVariantTabs();
+            switchToVariant(currentVariantIndex);
+        }
+
+        function removeVariant(btn) {
+            if (currentNodeVariants.length <= 1) {
+                alert('Must have at least one variant');
+                return;
+            }
+            
+            if (!confirm('Remove this variant?')) return;
+            
+            currentNodeVariants.splice(currentVariantIndex, 1);
+            currentVariantIndex = Math.max(0, currentVariantIndex - 1);
+            
+            renderVariantTabs();
+            switchToVariant(currentVariantIndex);
+        }
+
+        function switchToVariant(index) {
+            // Save current variant data before switching
+            saveCurrentVariantData();
+            
+            currentVariantIndex = index;
+            const variant = currentNodeVariants[index];
+            
+            // Update form with variant data
+            document.getElementById('nodeType').value = variant.type;
+            document.getElementById('nodeDescription').value = variant.description || '';
+            
+            // Handle map link
+            const mapLinkGroup = document.getElementById('mapLinkGroup');
+            if (variant.type === 'transition') {
+                mapLinkGroup.style.display = 'block';
+                populateMapLinkDropdown();
+                document.getElementById('nodeMapLink').value = variant.mapLink || '';
+            } else {
+                mapLinkGroup.style.display = 'none';
+            }
+            
+            // Update tags
+            const tagsContainer = document.getElementById('tagsContainer');
+            const existingTags = tagsContainer.querySelectorAll('.tag');
+            existingTags.forEach(tag => tag.remove());
+            variant.tags.forEach(tag => addTag(tag));
+            
+            // Update options
+            resetOptions();
+            if (variant.options && variant.options.length > 0) {
+                const optionsContainer = document.getElementById('optionsContainer');
+                optionsContainer.innerHTML = '';
+                variant.options.forEach((option, idx) => {
+                    const optionHtml = createOptionHtml(idx + 1, option);
+                    optionsContainer.insertAdjacentHTML('beforeend', optionHtml);
+                });
+            }
+            
+            // Update active states
+            document.querySelectorAll('.variant-item').forEach((item, idx) => {
+                item.classList.toggle('active', idx === index);
+            });
+            
+            renderVariantTabs();
+        }
+
+        function saveCurrentVariantData() {
+            if (currentVariantIndex >= currentNodeVariants.length) return;
+            
+            const variant = currentNodeVariants[currentVariantIndex];
+            variant.type = document.getElementById('nodeType').value;
+            variant.description = document.getElementById('nodeDescription').value;
+            variant.mapLink = document.getElementById('nodeMapLink').value || null;
+            variant.tags = getTags();
+            variant.options = getOptions();
+            
+            // Update variant name and chance from variant item
+            const variantItems = document.querySelectorAll('.variant-item');
+            if (variantItems[currentVariantIndex]) {
+                const nameInput = variantItems[currentVariantIndex].querySelector('.variant-name-input');
+                const chanceInput = variantItems[currentVariantIndex].querySelector('.variant-chance-input');
+                if (nameInput) variant.name = nameInput.value;
+                if (chanceInput) variant.chance = parseInt(chanceInput.value) || 0;
+            }
+        }
+
+        function renderVariantTabs() {
+            const tabsContainer = document.getElementById('variantTabs');
+            const variantsContainer = document.getElementById('variantsContainer');
+            
+            tabsContainer.innerHTML = '';
+            variantsContainer.innerHTML = '';
+            
+            currentNodeVariants.forEach((variant, index) => {
+                // Create tab
+                const tab = document.createElement('div');
+                tab.className = `variant-tab ${index === currentVariantIndex ? 'active' : ''}`;
+                tab.innerHTML = `
+                    <span>${variant.name}</span>
+                    <span class="variant-tab-chance">(${variant.chance}%)</span>
+                `;
+                tab.addEventListener('click', () => switchToVariant(index));
+                tabsContainer.appendChild(tab);
+                
+                // Create variant item
+                const variantItem = document.createElement('div');
+                variantItem.className = `variant-item ${index === currentVariantIndex ? 'active' : ''}`;
+                variantItem.dataset.variantIndex = index;
+                
+                const removeBtn = currentNodeVariants.length > 1 ? '' : 'style="display: none;"';
+                
+                variantItem.innerHTML = `
+                    <div class="variant-header">
+                        <input type="text" class="form-input variant-name-input" placeholder="Variant name" value="${variant.name}" style="flex: 1;">
+                        <input type="number" class="form-input variant-chance-input" placeholder="%" min="0" max="100" value="${variant.chance}" style="width: 80px; margin-left: 0.5rem;">
+                        <span style="margin-left: 0.5rem; color: var(--light);">%</span>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="removeVariant(this)" ${removeBtn} style="margin-left: 0.5rem;">Remove</button>
+                    </div>
+                `;
+                
+                // Add event listeners for name/chance changes
+                const nameInput = variantItem.querySelector('.variant-name-input');
+                const chanceInput = variantItem.querySelector('.variant-chance-input');
+                
+                nameInput.addEventListener('input', () => {
+                    variant.name = nameInput.value;
+                    renderVariantTabs();
+                });
+                
+                chanceInput.addEventListener('input', () => {
+                    variant.chance = parseInt(chanceInput.value) || 0;
+                    renderVariantTabs();
+                });
+                
+                variantsContainer.appendChild(variantItem);
+            });
         }
 
         function addOption() {
