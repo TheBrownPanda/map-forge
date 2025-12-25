@@ -3693,15 +3693,40 @@
                         parentId: row.parent_id,
                         imageUrl: row.image_url,
                         nodes: row.nodes || [],
-                        displayOrder: row.display_order || 0
+                        displayOrder: row.display_order !== undefined ? row.display_order : 0
                     }));
                 } else {
                     maps = [];
                 }
             } catch (error) {
                 console.error('Error loading from Supabase:', error);
+                // If it's a column error, provide helpful message
+                if (error.message && error.message.includes('display_order')) {
+                    console.warn('display_order column missing - using default ordering');
+                    // Try again without display_order
+                    try {
+                        const { data, error: retryError } = await supabaseClient
+                            .from('maps')
+                            .select('id, name, parent_id, image_url, nodes, created_at, updated_at')
+                            .order('created_at', { ascending: true });
+                        
+                        if (!retryError && data) {
+                            maps = data.map(row => ({
+                                id: row.id,
+                                name: row.name,
+                                parentId: row.parent_id,
+                                imageUrl: row.image_url,
+                                nodes: row.nodes || [],
+                                displayOrder: 0
+                            }));
+                            return;
+                        }
+                    } catch (retryErr) {
+                        console.error('Retry failed:', retryErr);
+                    }
+                }
                 maps = [];
-                throw error; // Re-throw to be caught by initializeApp
+                throw error;
             }
         }
 
