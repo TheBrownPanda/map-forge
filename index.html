@@ -1470,15 +1470,20 @@
         }
 
         async function initializeApp() {
+            console.log('initializeApp: Starting...');
             showLoading();
+            
+            console.log('initializeApp: isAdmin =', isAdmin);
             
             // Update UI based on role
             if (isAdmin) {
+                console.log('initializeApp: Setting up admin UI');
                 document.getElementById('userRole').innerHTML = '<span class="admin-badge">🛡️ ADMIN</span>';
                 document.getElementById('loginBtn').style.display = 'none';
                 document.getElementById('logoutBtn').style.display = 'block';
                 enableAdminFeatures();
             } else {
+                console.log('initializeApp: Setting up viewer UI');
                 document.getElementById('userRole').innerHTML = '<span class="viewer-badge">👁️ VIEWER</span>';
                 document.getElementById('loginBtn').style.display = 'block';
                 document.getElementById('logoutBtn').style.display = 'none';
@@ -1486,22 +1491,29 @@
             }
 
             // Load data from Supabase
+            console.log('initializeApp: Loading data from Supabase...');
             await loadData();
+            console.log('initializeApp: Data loaded. Maps count:', maps.length);
             
             if (maps.length === 0 && isAdmin) {
+                console.log('initializeApp: No maps found, creating default map');
                 createDefaultMap();
                 await saveData();
             }
 
+            console.log('initializeApp: Rendering maps...');
             renderMaps();
             if (maps.length > 0) {
+                console.log('initializeApp: Selecting first map:', maps[0].name);
                 selectMap(maps[0].id);
             }
 
+            console.log('initializeApp: Setting up event listeners...');
             setupEventListeners();
             
             // Setup real-time sync for viewers
             if (!isAdmin) {
+                console.log('initializeApp: Setting up real-time sync');
                 setupRealtimeSync();
             }
 
@@ -1511,6 +1523,7 @@
             translateY = rect.height / 2;
             updateTransform();
 
+            console.log('initializeApp: Complete!');
             hideLoading();
         }
 
@@ -2794,9 +2807,9 @@
                                 <label class="form-label" style="font-size: 0.9rem; color: #4ade80;">✓ On Success</label>
                                 <textarea class="form-textarea" placeholder="What happens on success..." data-option="onSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onSuccess || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
-                                    <input type="number" class="form-input" placeholder="Gold" data-option="successGold" value="${option?.successGold !== undefined && option.successGold !== 0 ? option.successGold : ''}">
-                                    <input type="number" class="form-input" placeholder="Shards" data-option="successShards" value="${option?.successShards !== undefined && option.successShards !== 0 ? option.successShards : ''}">
-                                    <input type="number" class="form-input" placeholder="EXP" data-option="successExp" value="${option?.successExp !== undefined && option.successExp !== 0 ? option.successExp : ''}">
+                                    <input type="number" class="form-input" placeholder="Gold" data-option="successGold" value="${option?.successGold !== undefined && option.successGold !== 0 ? option.successGold : ""}">
+                                    <input type="number" class="form-input" placeholder="Shards" data-option="successShards" value="${option?.successShards !== undefined && option.successShards !== 0 ? option.successShards : ""}">
+                                    <input type="number" class="form-input" placeholder="EXP" data-option="successExp" value="${option?.successExp !== undefined && option.successExp !== 0 ? option.successExp : ""}">
                                 </div>
                             </div>
                             
@@ -2804,9 +2817,9 @@
                                 <label class="form-label" style="font-size: 0.9rem; color: #60a5fa;">★ On Critical Success</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical success..." data-option="onCritSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritSuccess || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
-                                    <input type="number" class="form-input" placeholder="Gold" data-option="critSuccessGold" value="${option?.critSuccessGold !== undefined && option.critSuccessGold !== 0 ? option.critSuccessGold : ''}">
-                                    <input type="number" class="form-input" placeholder="Shards" data-option="critSuccessShards" value="${option?.critSuccessShards !== undefined && option.critSuccessShards !== 0 ? option.critSuccessShards : ''}">
-                                    <input type="number" class="form-input" placeholder="EXP" data-option="critSuccessExp" value="${option?.critSuccessExp !== undefined && option.critSuccessExp !== 0 ? option.critSuccessExp : ''}">
+                                    <input type="number" class="form-input" placeholder="Gold" data-option="critSuccessGold" value="${option?.critSuccessGold !== undefined && option.critSuccessGold !== 0 ? option.critSuccessGold : ""}">
+                                    <input type="number" class="form-input" placeholder="Shards" data-option="critSuccessShards" value="${option?.critSuccessShards !== undefined && option.critSuccessShards !== 0 ? option.critSuccessShards : ""}">
+                                    <input type="number" class="form-input" placeholder="EXP" data-option="critSuccessExp" value="${option?.critSuccessExp !== undefined && option.critSuccessExp !== 0 ? option.critSuccessExp : ""}">
                                 </div>
                             </div>
                             
@@ -2814,9 +2827,9 @@
                                 <label class="form-label" style="font-size: 0.9rem; color: #fb923c;">✗ On Fail</label>
                                 <textarea class="form-textarea" placeholder="What happens on fail..." data-option="onFail" style="min-height: 60px; margin-top: 0.5rem;">${option?.onFail || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
-                                    <input type="number" class="form-input" placeholder="Gold" data-option="failGold" value="${option?.failGold !== undefined && option.failGold !== 0 ? option.failGold : ''}">
-                                    <input type="number" class="form-input" placeholder="Shards" data-option="failShards" value="${option?.failShards !== undefined && option.failShards !== 0 ? option.failShards : ''}">
-                                    <input type="number" class="form-input" placeholder="EXP" data-option="failExp" value="${option?.failExp !== undefined && option.failExp !== 0 ? option.failExp : ''}">
+                                    <input type="number" class="form-input" placeholder="Gold" data-option="failGold" value="${option?.failGold !== undefined && option.failGold !== 0 ? option.failGold : ""}">
+                                    <input type="number" class="form-input" placeholder="Shards" data-option="failShards" value="${option?.failShards !== undefined && option.failShards !== 0 ? option.failShards : ""}">
+                                    <input type="number" class="form-input" placeholder="EXP" data-option="failExp" value="${option?.failExp !== undefined && option.failExp !== 0 ? option.failExp : ""}">
                                 </div>
                             </div>
                             
@@ -2824,9 +2837,9 @@
                                 <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">☠ On Critical Fail</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical fail..." data-option="onCritFail" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritFail || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
-                                    <input type="number" class="form-input" placeholder="Gold" data-option="critFailGold" value="${option?.critFailGold !== undefined && option.critFailGold !== 0 ? option.critFailGold : ''}">
-                                    <input type="number" class="form-input" placeholder="Shards" data-option="critFailShards" value="${option?.critFailShards !== undefined && option.critFailShards !== 0 ? option.critFailShards : ''}">
-                                    <input type="number" class="form-input" placeholder="EXP" data-option="critFailExp" value="${option?.critFailExp !== undefined && option.critFailExp !== 0 ? option.critFailExp : ''}">
+                                    <input type="number" class="form-input" placeholder="Gold" data-option="critFailGold" value="${option?.critFailGold !== undefined && option.critFailGold !== 0 ? option.critFailGold : ""}">
+                                    <input type="number" class="form-input" placeholder="Shards" data-option="critFailShards" value="${option?.critFailShards !== undefined && option.critFailShards !== 0 ? option.critFailShards : ""}">
+                                    <input type="number" class="form-input" placeholder="EXP" data-option="critFailExp" value="${option?.critFailExp !== undefined && option.critFailExp !== 0 ? option.critFailExp : ""}">
                                 </div>
                             </div>
                         </div>
@@ -3793,12 +3806,22 @@
         // Start app as viewer by default
         (async function() {
             try {
+                console.log('=== MAP FORGE INITIALIZATION START ===');
+                console.log('Supabase URL:', SUPABASE_URL);
+                console.log('Supabase Key (first 20 chars):', SUPABASE_ANON_KEY.substring(0, 20) + '...');
+                
                 isAdmin = false;
                 currentUser = null;
+                
+                console.log('Calling initializeApp...');
                 await initializeApp();
+                console.log('=== MAP FORGE INITIALIZATION COMPLETE ===');
             } catch (error) {
                 hideLoading();
-                console.error('Initialization error:', error);
+                console.error('=== INITIALIZATION ERROR ===');
+                console.error('Error:', error);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
                 
                 // Check if it's a Supabase configuration error
                 if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE') {
