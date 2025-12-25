@@ -1434,6 +1434,9 @@
         let scale = 1;
         let translateX = 0;
         let translateY = 0;
+        let savedTranslateX = 0;
+        let savedTranslateY = 0;
+        let savedScale = 1;
         let isDragging = false;
         let dragStartX = 0;
         let dragStartY = 0;
@@ -1512,13 +1515,13 @@
         }
 
         function enableAdminFeatures() {
-            document.getElementById('addNodeBtn').disabled = false;
-            document.getElementById('addMapBtn').disabled = false;
+            document.getElementById('addNodeBtn').style.display = 'block';
+            document.getElementById('addMapBtn').style.display = 'block';
         }
 
         function disableAdminFeatures() {
-            document.getElementById('addNodeBtn').disabled = true;
-            document.getElementById('addMapBtn').disabled = true;
+            document.getElementById('addNodeBtn').style.display = 'none';
+            document.getElementById('addMapBtn').style.display = 'none';
         }
 
         function setupRealtimeSync() {
@@ -2009,13 +2012,13 @@
             });
         }
 
-        function selectMap(mapId) {
+        function selectMap(mapId, onMapLoaded = null) {
             currentMapId = mapId;
             renderMaps();
-            renderMapCanvas();
+            renderMapCanvas(onMapLoaded);
         }
 
-        function renderMapCanvas() {
+        function renderMapCanvas(onMapLoaded = null) {
             const map = maps.find(m => m.id === currentMapId);
             if (!map) {
                 console.log('No map found for currentMapId:', currentMapId);
@@ -2037,22 +2040,38 @@
                     img.className = 'map-image';
                     mapImageContainer.appendChild(img);
                 }
-                img.src = map.imageUrl;
-                img.style.display = 'block';
-                img.onload = () => {
-                    console.log('Map image loaded:', img.naturalWidth, 'x', img.naturalHeight);
-                    // Center the view on the actual center of the image
-                    const rect = mapCanvas.getBoundingClientRect();
-                    const imageWidth = img.naturalWidth;
-                    const imageHeight = img.naturalHeight;
-                    
-                    // Calculate translation to center the image in the viewport
-                    translateX = (rect.width / 2) - (imageWidth / 2);
-                    translateY = (rect.height / 2) - (imageHeight / 2);
-                    updateTransform();
-                };
+                
+                // If image is already loaded (cached), call callback immediately
+                if (img.src === map.imageUrl && img.complete) {
+                    console.log('Map image already loaded (cached)');
+                    if (onMapLoaded) onMapLoaded();
+                } else {
+                    img.src = map.imageUrl;
+                    img.style.display = 'block';
+                    img.onload = () => {
+                        console.log('Map image loaded:', img.naturalWidth, 'x', img.naturalHeight);
+                        // Center the view on the actual center of the image
+                        const rect = mapCanvas.getBoundingClientRect();
+                        const imageWidth = img.naturalWidth;
+                        const imageHeight = img.naturalHeight;
+                        
+                        // Calculate translation to center the image in the viewport
+                        translateX = (rect.width / 2) - (imageWidth / 2);
+                        translateY = (rect.height / 2) - (imageHeight / 2);
+                        updateTransform();
+                        
+                        // Call callback after image is loaded and centered
+                        if (onMapLoaded) onMapLoaded();
+                    };
+                }
             } else if (img) {
                 img.style.display = 'none';
+                // No image, call callback immediately
+                if (onMapLoaded) onMapLoaded();
+            } else {
+                // No image at all, call callback immediately
+                if (onMapLoaded) onMapLoaded();
+            }
             }
 
             // Render nodes
@@ -2117,6 +2136,11 @@
                 return;
             }
 
+            // Save current view position
+            savedTranslateX = translateX;
+            savedTranslateY = translateY;
+            savedScale = scale;
+
             editingNodeId = node ? node.id : null;
             const modalTitle = document.getElementById('modalTitle');
             const deleteBtn = document.getElementById('deleteNodeBtn');
@@ -2161,6 +2185,7 @@
                 modalTitle.textContent = 'Create New Node';
                 deleteBtn.style.display = 'none';
                 nodeForm.reset();
+                document.getElementById('nodeName').value = ''; // Clear node name
                 initializeVariants();
                 mapLinkGroup.style.display = 'none';
             }
@@ -2173,6 +2198,12 @@
             editingNodeId = null;
             pendingNodePosition = null;
             nodeForm.reset();
+            
+            // Restore saved view position
+            translateX = savedTranslateX;
+            translateY = savedTranslateY;
+            scale = savedScale;
+            updateTransform();
         }
 
         function populateNodeForm(node) {
@@ -2275,6 +2306,11 @@
             const map = maps.find(m => m.id === currentMapId);
             const node = map?.nodes.find(n => n.id === nodeId);
             if (!node) return;
+
+            // Save current view position
+            savedTranslateX = translateX;
+            savedTranslateY = translateY;
+            savedScale = scale;
 
             viewingNodeId = nodeId;
             
@@ -2385,12 +2421,98 @@
                             variantHtml.push(`<div class="node-viewer-rewards">${rewards.join('')}</div>`);
                         }
                         
-                        // Display outcomes if present
+                        // Display structured success/fail outcomes if present
+                        const hasStructuredOutcomes = option.onSuccess || option.onCritSuccess || option.onFail || option.onCritFail;
+                        
+                        if (hasStructuredOutcomes) {
+                            variantHtml.push(`
+                                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px;">
+                                    <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 0.75rem;">
+                                        📊 Success/Fail Outcomes
+                                    </div>
+                            `);
+                            
+                            if (option.onSuccess || option.successGold || option.successShards || option.successExp) {
+                                variantHtml.push(`
+                                    <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(74, 222, 128, 0.1); border-left: 3px solid #4ade80; border-radius: 4px;">
+                                        <div style="color: #4ade80; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">✓ Success</div>
+                                `);
+                                if (option.onSuccess) {
+                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onSuccess}</div>`);
+                                }
+                                const successRewards = [];
+                                if (option.successGold && option.successGold !== 0) successRewards.push(`💰 ${option.successGold}`);
+                                if (option.successShards && option.successShards !== 0) successRewards.push(`💎 ${option.successShards}`);
+                                if (option.successExp && option.successExp !== 0) successRewards.push(`⭐ ${option.successExp}`);
+                                if (successRewards.length > 0) {
+                                    variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${successRewards.join(' ')}</div>`);
+                                }
+                                variantHtml.push(`</div>`);
+                            }
+                            
+                            if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp) {
+                                variantHtml.push(`
+                                    <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(96, 165, 250, 0.1); border-left: 3px solid #60a5fa; border-radius: 4px;">
+                                        <div style="color: #60a5fa; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">★ Critical Success</div>
+                                `);
+                                if (option.onCritSuccess) {
+                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onCritSuccess}</div>`);
+                                }
+                                const critSuccessRewards = [];
+                                if (option.critSuccessGold && option.critSuccessGold !== 0) critSuccessRewards.push(`💰 ${option.critSuccessGold}`);
+                                if (option.critSuccessShards && option.critSuccessShards !== 0) critSuccessRewards.push(`💎 ${option.critSuccessShards}`);
+                                if (option.critSuccessExp && option.critSuccessExp !== 0) critSuccessRewards.push(`⭐ ${option.critSuccessExp}`);
+                                if (critSuccessRewards.length > 0) {
+                                    variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${critSuccessRewards.join(' ')}</div>`);
+                                }
+                                variantHtml.push(`</div>`);
+                            }
+                            
+                            if (option.onFail || option.failGold || option.failShards || option.failExp) {
+                                variantHtml.push(`
+                                    <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(251, 146, 60, 0.1); border-left: 3px solid #fb923c; border-radius: 4px;">
+                                        <div style="color: #fb923c; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">✗ Fail</div>
+                                `);
+                                if (option.onFail) {
+                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onFail}</div>`);
+                                }
+                                const failRewards = [];
+                                if (option.failGold && option.failGold !== 0) failRewards.push(`💰 ${option.failGold}`);
+                                if (option.failShards && option.failShards !== 0) failRewards.push(`💎 ${option.failShards}`);
+                                if (option.failExp && option.failExp !== 0) failRewards.push(`⭐ ${option.failExp}`);
+                                if (failRewards.length > 0) {
+                                    variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${failRewards.join(' ')}</div>`);
+                                }
+                                variantHtml.push(`</div>`);
+                            }
+                            
+                            if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp) {
+                                variantHtml.push(`
+                                    <div style="padding: 0.5rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; border-radius: 4px;">
+                                        <div style="color: #ef4444; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">☠ Critical Fail</div>
+                                `);
+                                if (option.onCritFail) {
+                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onCritFail}</div>`);
+                                }
+                                const critFailRewards = [];
+                                if (option.critFailGold && option.critFailGold !== 0) critFailRewards.push(`💰 ${option.critFailGold}`);
+                                if (option.critFailShards && option.critFailShards !== 0) critFailRewards.push(`💎 ${option.critFailShards}`);
+                                if (option.critFailExp && option.critFailExp !== 0) critFailRewards.push(`⭐ ${option.critFailExp}`);
+                                if (critFailRewards.length > 0) {
+                                    variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${critFailRewards.join(' ')}</div>`);
+                                }
+                                variantHtml.push(`</div>`);
+                            }
+                            
+                            variantHtml.push(`</div>`);
+                        }
+                        
+                        // Display general outcomes notes if present
                         if (option.outcomes && option.outcomes.trim()) {
                             variantHtml.push(`
                                 <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px; border-left: 3px solid var(--accent);">
                                     <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 0.5rem;">
-                                        📊 Outcomes
+                                        📝 Additional Notes
                                     </div>
                                     <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem; white-space: pre-wrap;">
                                         ${option.outcomes}
@@ -2489,6 +2611,12 @@
         function closeNodeViewer() {
             document.getElementById('nodeViewer').classList.remove('active');
             viewingNodeId = null;
+            
+            // Restore saved view position
+            translateX = savedTranslateX;
+            translateY = savedTranslateY;
+            scale = savedScale;
+            updateTransform();
         }
 
         function formatNodeType(type) {
@@ -2656,11 +2784,59 @@
                         <input type="number" class="form-input" placeholder="EXP" data-option="exp" value="${option?.exp !== undefined && option.exp !== 0 ? option.exp : ''}">
                     </div>
                     
+                    <!-- Expandable Success/Fail Outcomes -->
+                    <div style="margin-top: 1rem;">
+                        <button type="button" class="btn btn-secondary btn-small" onclick="toggleOutcomes(this)" style="width: 100%;">
+                            <span class="toggle-icon">▶</span> Success/Fail Outcomes
+                        </button>
+                        <div class="outcomes-section" style="display: none; margin-top: 0.75rem; padding: 1rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px;">
+                            <div style="margin-bottom: 1rem;">
+                                <label class="form-label" style="font-size: 0.9rem; color: #4ade80;">✓ On Success</label>
+                                <textarea class="form-textarea" placeholder="What happens on success..." data-option="onSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onSuccess || ''}</textarea>
+                                <div class="rewards-row" style="margin-top: 0.5rem;">
+                                    <input type="number" class="form-input" placeholder="Gold" data-option="successGold" value="${option?.successGold !== undefined && option.successGold !== 0 ? option.successGold : ''}">
+                                    <input type="number" class="form-input" placeholder="Shards" data-option="successShards" value="${option?.successShards !== undefined && option.successShards !== 0 ? option.successShards : ''}">
+                                    <input type="number" class="form-input" placeholder="EXP" data-option="successExp" value="${option?.successExp !== undefined && option.successExp !== 0 ? option.successExp : ''}">
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 1rem;">
+                                <label class="form-label" style="font-size: 0.9rem; color: #60a5fa;">★ On Critical Success</label>
+                                <textarea class="form-textarea" placeholder="What happens on critical success..." data-option="onCritSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritSuccess || ''}</textarea>
+                                <div class="rewards-row" style="margin-top: 0.5rem;">
+                                    <input type="number" class="form-input" placeholder="Gold" data-option="critSuccessGold" value="${option?.critSuccessGold !== undefined && option.critSuccessGold !== 0 ? option.critSuccessGold : ''}">
+                                    <input type="number" class="form-input" placeholder="Shards" data-option="critSuccessShards" value="${option?.critSuccessShards !== undefined && option.critSuccessShards !== 0 ? option.critSuccessShards : ''}">
+                                    <input type="number" class="form-input" placeholder="EXP" data-option="critSuccessExp" value="${option?.critSuccessExp !== undefined && option.critSuccessExp !== 0 ? option.critSuccessExp : ''}">
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 1rem;">
+                                <label class="form-label" style="font-size: 0.9rem; color: #fb923c;">✗ On Fail</label>
+                                <textarea class="form-textarea" placeholder="What happens on fail..." data-option="onFail" style="min-height: 60px; margin-top: 0.5rem;">${option?.onFail || ''}</textarea>
+                                <div class="rewards-row" style="margin-top: 0.5rem;">
+                                    <input type="number" class="form-input" placeholder="Gold" data-option="failGold" value="${option?.failGold !== undefined && option.failGold !== 0 ? option.failGold : ''}">
+                                    <input type="number" class="form-input" placeholder="Shards" data-option="failShards" value="${option?.failShards !== undefined && option.failShards !== 0 ? option.failShards : ''}">
+                                    <input type="number" class="form-input" placeholder="EXP" data-option="failExp" value="${option?.failExp !== undefined && option.failExp !== 0 ? option.failExp : ''}">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">☠ On Critical Fail</label>
+                                <textarea class="form-textarea" placeholder="What happens on critical fail..." data-option="onCritFail" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritFail || ''}</textarea>
+                                <div class="rewards-row" style="margin-top: 0.5rem;">
+                                    <input type="number" class="form-input" placeholder="Gold" data-option="critFailGold" value="${option?.critFailGold !== undefined && option.critFailGold !== 0 ? option.critFailGold : ''}">
+                                    <input type="number" class="form-input" placeholder="Shards" data-option="critFailShards" value="${option?.critFailShards !== undefined && option.critFailShards !== 0 ? option.critFailShards : ''}">
+                                    <input type="number" class="form-input" placeholder="EXP" data-option="critFailExp" value="${option?.critFailExp !== undefined && option.critFailExp !== 0 ? option.critFailExp : ''}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div style="margin-top: 1rem;">
                         <label class="form-label" style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">
-                            Outcomes (Success/Fail Results)
+                            General Outcomes Notes
                         </label>
-                        <textarea class="form-textarea" placeholder="Describe what happens on success, critical success, fail, or critical fail..." data-option="outcomes" style="min-height: 80px;">${option?.outcomes || ''}</textarea>
+                        <textarea class="form-textarea" placeholder="Additional notes or context about this option's outcomes..." data-option="outcomes" style="min-height: 80px;">${option?.outcomes || ''}</textarea>
                     </div>
                     
                     <div style="margin-top: 1rem;">
@@ -2701,6 +2877,19 @@
             `;
         }
 
+        function toggleOutcomes(btn) {
+            const outcomesSection = btn.nextElementSibling;
+            const toggleIcon = btn.querySelector('.toggle-icon');
+            
+            if (outcomesSection.style.display === 'none') {
+                outcomesSection.style.display = 'block';
+                toggleIcon.textContent = '▼';
+            } else {
+                outcomesSection.style.display = 'none';
+                toggleIcon.textContent = '▶';
+            }
+        }
+
         function addFollowupEvent(btn) {
             const optionItem = btn.closest('.option-item');
             const container = optionItem.querySelector('[data-followup-container]');
@@ -2731,6 +2920,19 @@
                 options: []
             }];
             currentVariantIndex = 0;
+            
+            // Clear all form fields
+            document.getElementById('nodeType').value = 'combat';
+            document.getElementById('nodeDescription').value = '';
+            
+            // Clear tags
+            const tagsContainer = document.getElementById('tagsContainer');
+            const existingTags = tagsContainer.querySelectorAll('.tag');
+            existingTags.forEach(tag => tag.remove());
+            
+            // Clear options
+            resetOptions();
+            
             renderVariantTabs();
         }
 
@@ -2947,6 +3149,23 @@
                     gold: parseInt(item.querySelector('[data-option="gold"]').value) || 0,
                     shards: parseInt(item.querySelector('[data-option="shards"]').value) || 0,
                     exp: parseInt(item.querySelector('[data-option="exp"]').value) || 0,
+                    // Success/Fail outcomes
+                    onSuccess: item.querySelector('[data-option="onSuccess"]')?.value || '',
+                    successGold: parseInt(item.querySelector('[data-option="successGold"]')?.value) || 0,
+                    successShards: parseInt(item.querySelector('[data-option="successShards"]')?.value) || 0,
+                    successExp: parseInt(item.querySelector('[data-option="successExp"]')?.value) || 0,
+                    onCritSuccess: item.querySelector('[data-option="onCritSuccess"]')?.value || '',
+                    critSuccessGold: parseInt(item.querySelector('[data-option="critSuccessGold"]')?.value) || 0,
+                    critSuccessShards: parseInt(item.querySelector('[data-option="critSuccessShards"]')?.value) || 0,
+                    critSuccessExp: parseInt(item.querySelector('[data-option="critSuccessExp"]')?.value) || 0,
+                    onFail: item.querySelector('[data-option="onFail"]')?.value || '',
+                    failGold: parseInt(item.querySelector('[data-option="failGold"]')?.value) || 0,
+                    failShards: parseInt(item.querySelector('[data-option="failShards"]')?.value) || 0,
+                    failExp: parseInt(item.querySelector('[data-option="failExp"]')?.value) || 0,
+                    onCritFail: item.querySelector('[data-option="onCritFail"]')?.value || '',
+                    critFailGold: parseInt(item.querySelector('[data-option="critFailGold"]')?.value) || 0,
+                    critFailShards: parseInt(item.querySelector('[data-option="critFailShards"]')?.value) || 0,
+                    critFailExp: parseInt(item.querySelector('[data-option="critFailExp"]')?.value) || 0,
                     outcomes: item.querySelector('[data-option="outcomes"]')?.value || '',
                     followupEvents: followupEvents
                 };
@@ -3195,8 +3414,52 @@
             const results = [];
             maps.forEach(map => {
                 map.nodes.forEach(node => {
-                    const searchText = `${node.name} ${node.description} ${node.tags.join(' ')}`.toLowerCase();
-                    if (searchText.includes(query)) {
+                    // Build comprehensive search text from all node fields
+                    let searchText = `${node.name} ${node.description || ''} ${node.tags ? node.tags.join(' ') : ''}`;
+                    
+                    // Search in variants
+                    if (node.variants && node.variants.length > 0) {
+                        node.variants.forEach(variant => {
+                            searchText += ` ${variant.name} ${variant.description || ''}`;
+                            searchText += ` ${variant.tags ? variant.tags.join(' ') : ''}`;
+                            
+                            // Search in variant options
+                            if (variant.options && variant.options.length > 0) {
+                                variant.options.forEach(option => {
+                                    searchText += ` ${option.label || ''} ${option.description || ''}`;
+                                    searchText += ` ${option.outcomes || ''}`;
+                                    searchText += ` ${option.onSuccess || ''} ${option.onCritSuccess || ''}`;
+                                    searchText += ` ${option.onFail || ''} ${option.onCritFail || ''}`;
+                                    
+                                    // Search in follow-up events
+                                    if (option.followupEvents && option.followupEvents.length > 0) {
+                                        option.followupEvents.forEach(event => {
+                                            searchText += ` ${event.name || ''} ${event.description || ''}`;
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        // Old format nodes without variants - search in options directly
+                        if (node.options && node.options.length > 0) {
+                            node.options.forEach(option => {
+                                searchText += ` ${option.label || ''} ${option.description || ''}`;
+                                searchText += ` ${option.outcomes || ''}`;
+                                searchText += ` ${option.onSuccess || ''} ${option.onCritSuccess || ''}`;
+                                searchText += ` ${option.onFail || ''} ${option.onCritFail || ''}`;
+                                
+                                if (option.followupEvents && option.followupEvents.length > 0) {
+                                    option.followupEvents.forEach(event => {
+                                        searchText += ` ${event.name || ''} ${event.description || ''}`;
+                                    });
+                                }
+                            });
+                        }
+                    }
+                    
+                    // Check if query matches anywhere in the comprehensive search text
+                    if (searchText.toLowerCase().includes(query)) {
                         results.push({ node, map });
                     }
                 });
@@ -3222,8 +3485,13 @@
                     <div class="result-meta">${map.name} • ${node.type}</div>
                 `;
                 item.addEventListener('click', () => {
-                    selectMap(map.id);
-                    highlightNode(node.id);
+                    // Switch to the node's map and wait for it to load
+                    selectMap(map.id, () => {
+                        // Map is now loaded, center on node and open viewer
+                        highlightNode(node.id);
+                        viewNode(node.id);
+                    });
+                    
                     searchResults.classList.remove('active');
                     searchInput.value = '';
                 });
@@ -3237,7 +3505,12 @@
             clearHighlights();
             const map = maps.find(m => m.id === currentMapId);
             const node = map?.nodes.find(n => n.id === nodeId);
-            if (!node) return;
+            if (!node) {
+                console.log('Node not found:', nodeId);
+                return;
+            }
+
+            console.log('Centering on node:', node.name, 'at position:', node.x, node.y);
 
             // Calculate where to position the view to center the node
             const rect = mapCanvas.getBoundingClientRect();
@@ -3249,19 +3522,16 @@
             translateY = centerY - (node.y * scale);
             updateTransform();
 
-            console.log('Highlighting node at:', node.x, node.y, 'View centered at:', translateX, translateY);
-
             // Add highlight after transform update
             setTimeout(() => {
                 const nodeElements = mapImageContainer.querySelectorAll('.node');
                 nodeElements.forEach(el => {
-                    const elX = parseFloat(el.style.left);
-                    const elY = parseFloat(el.style.top);
-                    if (Math.abs(elX - node.x) < 1 && Math.abs(elY - node.y) < 1) {
+                    if (el.dataset.nodeId === nodeId) {
                         el.classList.add('highlighted');
+                        console.log('Node highlighted:', nodeId);
                     }
                 });
-            }, 100);
+            }, 150);
         }
 
         function clearHighlights() {
