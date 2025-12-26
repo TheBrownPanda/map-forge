@@ -660,6 +660,19 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            cursor: grab;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        
+        .tag:active {
+            cursor: grabbing;
+        }
+        
+        .tag-drag-handle {
+            cursor: grab;
+            font-size: 0.7rem;
+            line-height: 1;
         }
 
         .tag-remove {
@@ -1429,6 +1442,7 @@
         let viewingNodeId = null;
         let isAddingNode = false;
         let pendingNodePosition = null;
+        let isSaving = false; // Flag to prevent real-time reload during saves
 
         // Pan and Zoom
         let scale = 1;
@@ -1544,6 +1558,13 @@
                     { event: '*', schema: 'public', table: 'maps' },
                     async () => {
                         console.log('Real-time update received');
+                        
+                        // Skip reload if we're currently saving (admin operation in progress)
+                        if (isSaving) {
+                            console.log('Skipping real-time reload - save in progress');
+                            return;
+                        }
+                        
                         await loadData();
                         renderMaps();
                         if (currentMapId) {
@@ -1761,6 +1782,13 @@
             // Node moving
             mapCanvas.addEventListener('mousemove', moveNode);
             mapCanvas.addEventListener('mouseup', endMoveNode);
+            
+            // Disable scroll wheel on number inputs (Fix #13)
+            document.addEventListener('wheel', (e) => {
+                if (e.target.type === 'number') {
+                    e.preventDefault();
+                }
+            }, { passive: false });
         }
 
         // Pan and Zoom Functions
@@ -1823,8 +1851,14 @@
             rootMaps.forEach(map => {
                 renderMapItem(map);
                 
-                // If this map is selected, show its submaps right after it
-                if (currentMapId === map.id) {
+                // Find the current map to determine which submaps to show
+                const currentMap = maps.find(m => m.id === currentMapId);
+                const currentMapParentId = currentMap?.parentId;
+                
+                // Show submaps if:
+                // 1. This map is selected (viewing parent)
+                // 2. OR we're viewing a submap of this parent (keep siblings visible)
+                if (currentMapId === map.id || currentMapParentId === map.id) {
                     renderSubmaps(map.id, 1);
                 }
             });
@@ -1992,17 +2026,25 @@
         }
 
         function reorderMaps(draggedId, targetId, insertBefore, parentId) {
+            console.log('=== REORDER MAPS ===');
+            console.log('Dragged:', draggedId, 'Target:', targetId, 'Insert before:', insertBefore, 'Parent:', parentId);
+            
             // Get all maps with the same parent
             const siblingMaps = maps.filter(m => (m.parentId || '') === parentId);
             
             // Sort by current display order
             siblingMaps.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
             
+            console.log('Before reorder:', siblingMaps.map(m => `${m.name}(${m.displayOrder})`).join(', '));
+            
             // Find indices
             const draggedIndex = siblingMaps.findIndex(m => m.id === draggedId);
             const targetIndex = siblingMaps.findIndex(m => m.id === targetId);
             
-            if (draggedIndex === -1 || targetIndex === -1) return;
+            if (draggedIndex === -1 || targetIndex === -1) {
+                console.error('Map not found in siblings');
+                return;
+            }
             
             // Remove dragged item
             const [draggedMap] = siblingMaps.splice(draggedIndex, 1);
@@ -2019,9 +2061,15 @@
                 map.displayOrder = index;
             });
             
+            console.log('After reorder:', siblingMaps.map(m => `${m.name}(${m.displayOrder})`).join(', '));
+            
             // Save to database
+            console.log('Saving to database...');
             saveData().then(() => {
+                console.log('Save complete, rendering maps...');
                 renderMaps();
+            }).catch(error => {
+                console.error('Save failed:', error);
             });
         }
 
@@ -2172,7 +2220,7 @@
                 } else {
                     // Convert old single-variant nodes to variant format
                     currentNodeVariants = [{
-                        name: 'Default',
+                        name: 'Combat',
                         chance: 100,
                         type: node.type,
                         description: node.description || '',
@@ -2203,6 +2251,12 @@
             }
 
             nodeModal.classList.add('active');
+            
+            // Scroll modal content to top
+            const modalContent = nodeModal.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.scrollTop = 0;
+            }
         }
 
         function closeNodeModal() {
@@ -2334,7 +2388,7 @@
             // Check if node has variants
             const hasVariants = node.variants && node.variants.length > 0;
             const variants = hasVariants ? node.variants : [{
-                name: 'Default',
+                name: 'Combat',
                 chance: 100,
                 type: node.type,
                 description: node.description,
@@ -2369,10 +2423,12 @@
                 
                 variantHtml.push(`<div class="viewer-variant-content" data-variant-idx="${variantIdx}" style="display: ${isVisible ? 'block' : 'none'};">`);
 
-                // Node Type
-                const typeClass = `node-${variant.type}`;
-                const typeIcon = getNodeIcon(variant.type);
-                variantHtml.push(`<div class="node-viewer-type ${typeClass}">${typeIcon} ${formatNodeType(variant.type)}</div>`);
+                // Node Type - only show for transitions (other types implied by options)
+                if (variant.type === 'transition') {
+                    const typeClass = `node-${variant.type}`;
+                    const typeIcon = getNodeIcon(variant.type);
+                    variantHtml.push(`<div class="node-viewer-type ${typeClass}">${typeIcon} ${formatNodeType(variant.type)}</div>`);
+                }
 
                 // Linked Map (for transitions)
                 if (variant.mapLink) {
@@ -2394,7 +2450,7 @@
                     variantHtml.push(`
                         <div class="node-viewer-section">
                             <div class="node-viewer-label">Description</div>
-                            <div class="node-viewer-content">${variant.description}</div>
+                            <div class="node-viewer-content" style="white-space: pre-wrap;">${variant.description}</div>
                         </div>
                     `);
                 }
@@ -2417,17 +2473,24 @@
                         <div class="node-viewer-label">Options</div>`);
                     
                     variant.options.forEach((option, index) => {
-                        variantHtml.push(`<div class="node-viewer-option">`);
-                        variantHtml.push(`<div class="node-viewer-option-label">${index + 1}. ${option.label || 'Unnamed Option'}</div>`);
+                        const optionId = `option-${index}-${Math.random().toString(36).substr(2, 9)}`;
+                        variantHtml.push(`
+                            <div class="node-viewer-option" style="cursor: pointer; border: 1px solid rgba(139, 115, 85, 0.3); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem;" onclick="toggleOptionContent('${optionId}')">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div class="node-viewer-option-label" style="margin: 0;">${index + 1}. ${option.label || 'Unnamed Option'}</div>
+                                    <span id="${optionId}-toggle" style="font-size: 0.9rem; opacity: 0.6;">▶</span>
+                                </div>
+                                <div id="${optionId}-content" style="display: none; margin-top: 0.75rem;">
+                        `);
                         
                         if (option.description) {
-                            variantHtml.push(`<div class="node-viewer-option-desc">${option.description}</div>`);
+                            variantHtml.push(`<div class="node-viewer-option-desc" style="word-wrap: break-word; overflow-wrap: break-word;">${option.description}</div>`);
                         }
                         
                         const rewards = [];
-                        if (option.gold && option.gold !== 0) rewards.push(`<span class="node-viewer-reward">💰 ${option.gold} Gold</span>`);
-                        if (option.shards && option.shards !== 0) rewards.push(`<span class="node-viewer-reward">💎 ${option.shards} Shards</span>`);
-                        if (option.exp && option.exp !== 0) rewards.push(`<span class="node-viewer-reward">⭐ ${option.exp} EXP</span>`);
+                        if (option.gold && option.gold !== 0) rewards.push(`<span class="node-viewer-reward">💰 ${option.gold}</span>`);
+                        if (option.shards && option.shards !== 0) rewards.push(`<span class="node-viewer-reward">💎 ${option.shards}</span>`);
+                        if (option.exp && option.exp !== 0) rewards.push(`<span class="node-viewer-reward">⭐ ${option.exp}</span>`);
                         
                         if (rewards.length > 0) {
                             variantHtml.push(`<div class="node-viewer-rewards">${rewards.join('')}</div>`);
@@ -2438,10 +2501,7 @@
                         
                         if (hasStructuredOutcomes) {
                             variantHtml.push(`
-                                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px;">
-                                    <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 0.75rem;">
-                                        📊 Success/Fail Outcomes
-                                    </div>
+                                <div style="margin-top: 0.75rem;">
                             `);
                             
                             if (option.onSuccess || option.successGold || option.successShards || option.successExp) {
@@ -2526,7 +2586,7 @@
                                     <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 0.5rem;">
                                         📝 Additional Notes
                                     </div>
-                                    <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem; white-space: pre-wrap;">
+                                    <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem; white-space: pre-wrap; padding-left: 0;">
                                         ${option.outcomes}
                                     </div>
                                 </div>
@@ -2559,9 +2619,9 @@
                                 }
                                 
                                 const eventRewards = [];
-                                if (event.gold && event.gold !== 0) eventRewards.push(`<span class="node-viewer-reward">💰 ${event.gold} Gold</span>`);
-                                if (event.shards && event.shards !== 0) eventRewards.push(`<span class="node-viewer-reward">💎 ${event.shards} Shards</span>`);
-                                if (event.exp && event.exp !== 0) eventRewards.push(`<span class="node-viewer-reward">⭐ ${event.exp} EXP</span>`);
+                                if (event.gold && event.gold !== 0) eventRewards.push(`<span class="node-viewer-reward">💰 ${event.gold}</span>`);
+                                if (event.shards && event.shards !== 0) eventRewards.push(`<span class="node-viewer-reward">💎 ${event.shards}</span>`);
+                                if (event.exp && event.exp !== 0) eventRewards.push(`<span class="node-viewer-reward">⭐ ${event.exp}</span>`);
                                 
                                 if (eventRewards.length > 0) {
                                     variantHtml.push(`<div class="node-viewer-rewards">${eventRewards.join('')}</div>`);
@@ -2573,7 +2633,7 @@
                             variantHtml.push(`</div>`);
                         }
                         
-                        variantHtml.push(`</div>`);
+                        variantHtml.push(`</div></div>`); // Close content div and option div
                     });
                     
                     variantHtml.push(`</div>`);
@@ -2629,6 +2689,21 @@
             translateY = savedTranslateY;
             scale = savedScale;
             updateTransform();
+        }
+
+        function toggleOptionContent(optionId) {
+            const content = document.getElementById(`${optionId}-content`);
+            const toggle = document.getElementById(`${optionId}-toggle`);
+            
+            if (content && toggle) {
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    toggle.textContent = '▼';
+                } else {
+                    content.style.display = 'none';
+                    toggle.textContent = '▶';
+                }
+            }
         }
 
         function formatNodeType(type) {
@@ -2754,18 +2829,97 @@
             
             const tag = document.createElement('div');
             tag.className = 'tag';
+            tag.draggable = true;
             tag.innerHTML = `
+                <span class="tag-drag-handle" style="opacity: 0.5; margin-right: 4px; cursor: grab;">⋮⋮</span>
                 ${tagText}
                 <span class="tag-remove" onclick="this.parentElement.remove()">×</span>
             `;
             
+            // Add drag event listeners
+            tag.addEventListener('dragstart', handleTagDragStart);
+            tag.addEventListener('dragend', handleTagDragEnd);
+            tag.addEventListener('dragover', handleTagDragOver);
+            tag.addEventListener('drop', handleTagDrop);
+            
             tagsContainer.insertBefore(tag, tagInput);
+        }
+        
+        let draggedTag = null;
+        
+        function handleTagDragStart(e) {
+            draggedTag = e.target;
+            e.target.style.opacity = '0.4';
+            e.dataTransfer.effectAllowed = 'move';
+        }
+        
+        function handleTagDragEnd(e) {
+            e.target.style.opacity = '1';
+            // Remove all drag-over indicators
+            document.querySelectorAll('.tag').forEach(tag => {
+                tag.style.borderLeft = '';
+                tag.style.borderRight = '';
+            });
+        }
+        
+        function handleTagDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            
+            const targetTag = e.target.closest('.tag');
+            if (!targetTag || targetTag === draggedTag) return;
+            
+            // Remove previous indicators
+            document.querySelectorAll('.tag').forEach(tag => {
+                tag.style.borderLeft = '';
+                tag.style.borderRight = '';
+            });
+            
+            // Determine if we should insert before or after
+            const rect = targetTag.getBoundingClientRect();
+            const midpoint = rect.left + rect.width / 2;
+            
+            if (e.clientX < midpoint) {
+                targetTag.style.borderLeft = '2px solid var(--primary)';
+            } else {
+                targetTag.style.borderRight = '2px solid var(--primary)';
+            }
+            
+            return false;
+        }
+        
+        function handleTagDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            const targetTag = e.target.closest('.tag');
+            if (!targetTag || !draggedTag || targetTag === draggedTag) return;
+            
+            const tagsContainer = document.getElementById('tagsContainer');
+            const rect = targetTag.getBoundingClientRect();
+            const midpoint = rect.left + rect.width / 2;
+            
+            // Insert before or after based on drop position
+            if (e.clientX < midpoint) {
+                tagsContainer.insertBefore(draggedTag, targetTag);
+            } else {
+                tagsContainer.insertBefore(draggedTag, targetTag.nextSibling);
+            }
+            
+            // Clean up styling
+            targetTag.style.borderLeft = '';
+            targetTag.style.borderRight = '';
+            
+            return false;
         }
 
         function getTags() {
             const tags = [];
             document.querySelectorAll('.tag').forEach(tag => {
-                const text = tag.textContent.replace('×', '').trim();
+                const text = tag.textContent.replace('×', '').replace('⋮⋮', '').trim();
                 if (text) tags.push(text);
             });
             return tags;
@@ -2923,7 +3077,7 @@
         // ==========================================
         function initializeVariants() {
             currentNodeVariants = [{
-                name: 'Default',
+                name: 'Combat',
                 chance: 100,
                 type: 'combat',
                 description: '',
@@ -3658,6 +3812,7 @@
 
         async function saveToSupabase() {
             try {
+                isSaving = true; // Set flag to prevent real-time reload
                 showLoading();
                 const { error } = await supabaseClient
                     .from('maps')
@@ -3674,8 +3829,14 @@
                 if (error) throw error;
                 console.log('Saved to Supabase');
                 hideLoading();
+                
+                // Wait a bit before clearing flag to ensure real-time event is skipped
+                setTimeout(() => {
+                    isSaving = false;
+                }, 500);
             } catch (error) {
                 hideLoading();
+                isSaving = false; // Clear flag on error
                 console.error('Error saving:', error);
                 alert('Error saving changes: ' + error.message);
                 throw error;
