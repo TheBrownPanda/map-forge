@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -1923,6 +1923,9 @@
         let saveDebounceTimer = null;
         const SAVE_DEBOUNCE_DELAY = 500; // ms
         
+        let searchDebounceTimer = null;
+        const SEARCH_DEBOUNCE_DELAY = 300; // ms - wait for user to stop typing
+        
         // Throttling utility  
         let lastPanUpdate = 0;
         const PAN_THROTTLE = 16; // ~60 FPS
@@ -2309,13 +2312,21 @@
                 if (onMapLoaded) onMapLoaded();
             }
 
-            // BATCH RENDERING: Render nodes in batches to prevent UI freeze on large maps
+            // OPTIMIZED RENDERING: Skip batching for small node counts
             if (map.nodes.length === 0) {
                 console.log('No nodes to render');
                 return;
             }
             
-            const BATCH_SIZE = 15; // Render 15 nodes per frame
+            // For small maps (< 30 nodes), render all at once for instant display
+            if (map.nodes.length < 30) {
+                console.log(`Rendering ${map.nodes.length} nodes instantly (no batching needed)`);
+                map.nodes.forEach(node => renderNode(node));
+                return;
+            }
+            
+            // BATCH RENDERING: For large maps, render nodes in batches to prevent UI freeze
+            const BATCH_SIZE = 20; // Render 20 nodes per frame
             let currentBatch = 0;
             
             function renderBatch() {
@@ -3832,61 +3843,97 @@
                 return;
             }
 
+            // DEBOUNCED SEARCH: Wait for user to stop typing before searching
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                executeSearch(query);
+            }, SEARCH_DEBOUNCE_DELAY);
+        }
+        
+        function executeSearch(query) {
             const results = [];
+            const currentMapResults = [];
+            const otherMapResults = [];
+            
+            // OPTIMIZED SEARCH: Search current map first, then other maps
             maps.forEach(map => {
+                const isCurrentMap = map.id === currentMapId;
+                
                 map.nodes.forEach(node => {
-                    // Build comprehensive search text from all node fields
-                    let searchText = `${node.name} ${node.description || ''} ${node.tags ? node.tags.join(' ') : ''}`;
-                    
-                    // Search in variants
-                    if (node.variants && node.variants.length > 0) {
-                        node.variants.forEach(variant => {
-                            searchText += ` ${variant.name} ${variant.description || ''}`;
-                            searchText += ` ${variant.tags ? variant.tags.join(' ') : ''}`;
-                            
-                            // Search in variant options
-                            if (variant.options && variant.options.length > 0) {
-                                variant.options.forEach(option => {
-                                    searchText += ` ${option.label || ''} ${option.description || ''}`;
-                                    searchText += ` ${option.outcomes || ''}`;
-                                    searchText += ` ${option.onSuccess || ''} ${option.onCritSuccess || ''}`;
-                                    searchText += ` ${option.onFail || ''} ${option.onCritFail || ''}`;
-                                    
-                                    // Search in follow-up events
-                                    if (option.followupEvents && option.followupEvents.length > 0) {
-                                        option.followupEvents.forEach(event => {
-                                            searchText += ` ${event.name || ''} ${event.description || ''}`;
-                                        });
-                                    }
-                                });
+                    // Quick check: search in basic fields first
+                    const basicText = `${node.name} ${node.description || ''}`.toLowerCase();
+                    if (!basicText.includes(query)) {
+                        // If not in basic fields, check tags
+                        const tagText = node.tags ? node.tags.join(' ').toLowerCase() : '';
+                        if (!tagText.includes(query)) {
+                            // Only do deep search if not found in basic fields or tags
+                            if (!deepSearchNode(node, query)) {
+                                return; // Skip this node
                             }
-                        });
-                    } else {
-                        // Old format nodes without variants - search in options directly
-                        if (node.options && node.options.length > 0) {
-                            node.options.forEach(option => {
-                                searchText += ` ${option.label || ''} ${option.description || ''}`;
-                                searchText += ` ${option.outcomes || ''}`;
-                                searchText += ` ${option.onSuccess || ''} ${option.onCritSuccess || ''}`;
-                                searchText += ` ${option.onFail || ''} ${option.onCritFail || ''}`;
-                                
-                                if (option.followupEvents && option.followupEvents.length > 0) {
-                                    option.followupEvents.forEach(event => {
-                                        searchText += ` ${event.name || ''} ${event.description || ''}`;
-                                    });
-                                }
-                            });
                         }
                     }
                     
-                    // Check if query matches anywhere in the comprehensive search text
-                    if (searchText.toLowerCase().includes(query)) {
-                        results.push({ node, map });
+                    // Node matches - add to appropriate results
+                    const result = { node, map };
+                    if (isCurrentMap) {
+                        currentMapResults.push(result);
+                    } else {
+                        otherMapResults.push(result);
                     }
                 });
             });
-
-            displaySearchResults(results);
+            
+            // PRIORITIZE: Show current map results first
+            const allResults = [...currentMapResults, ...otherMapResults];
+            displaySearchResults(allResults);
+        }
+        
+        // Deep search through variants and options (only called if basic search fails)
+        function deepSearchNode(node, query) {
+            let searchText = '';
+            
+            // Search in variants
+            if (node.variants && node.variants.length > 0) {
+                node.variants.forEach(variant => {
+                    searchText += ` ${variant.name} ${variant.description || ''}`;
+                    searchText += ` ${variant.tags ? variant.tags.join(' ') : ''}`;
+                    
+                    // Search in variant options
+                    if (variant.options && variant.options.length > 0) {
+                        variant.options.forEach(option => {
+                            searchText += ` ${option.label || ''} ${option.description || ''}`;
+                            searchText += ` ${option.outcomes || ''}`;
+                            searchText += ` ${option.onSuccess || ''} ${option.onCritSuccess || ''}`;
+                            searchText += ` ${option.onFail || ''} ${option.onCritFail || ''}`;
+                            
+                            // Search in follow-up events
+                            if (option.followupEvents && option.followupEvents.length > 0) {
+                                option.followupEvents.forEach(event => {
+                                    searchText += ` ${event.name || ''} ${event.description || ''}`;
+                                });
+                            }
+                        });
+                    }
+                });
+            } else {
+                // Old format nodes without variants - search in options directly
+                if (node.options && node.options.length > 0) {
+                    node.options.forEach(option => {
+                        searchText += ` ${option.label || ''} ${option.description || ''}`;
+                        searchText += ` ${option.outcomes || ''}`;
+                        searchText += ` ${option.onSuccess || ''} ${option.onCritSuccess || ''}`;
+                        searchText += ` ${option.onFail || ''} ${option.onCritFail || ''}`;
+                        
+                        if (option.followupEvents && option.followupEvents.length > 0) {
+                            option.followupEvents.forEach(event => {
+                                searchText += ` ${event.name || ''} ${event.description || ''}`;
+                            });
+                        }
+                    });
+                }
+            }
+            
+            return searchText.toLowerCase().includes(query);
         }
 
         function displaySearchResults(results) {
