@@ -1731,8 +1731,8 @@
                             nodeEl.classList.remove('highlighted');
                         }
                         
-                        // Save in background (silent, no loading overlay)
-                        saveData(true);
+                        // Save IMMEDIATELY (silent=true, immediate=true) to prevent rubberband effect
+                        saveData(true, true);
                         
                         console.log('Moved node to:', mapX, mapY);
                     }
@@ -4120,10 +4120,20 @@
             });
         }
 
-        async function saveData(silent = false) {
+        async function saveData(silent = false, immediate = false) {
             if (!isAdmin) {
                 alert('You must be an admin to make changes');
                 return Promise.reject('Not admin');
+            }
+            
+            // IMMEDIATE SAVE: Skip debounce for operations that need instant persistence (like node movement)
+            if (immediate) {
+                try {
+                    await saveToSupabase(silent);
+                } catch (error) {
+                    throw error;
+                }
+                return;
             }
             
             // DEBOUNCING: Prevent excessive saves during rapid edits
