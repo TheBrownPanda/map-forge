@@ -1228,7 +1228,7 @@
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
                 <h2 class="modal-title">Admin Login</h2>
-                <button class="close-btn" id="closeLoginModalBtn">Ã—</button>
+                <button class="close-btn" id="closeLoginModalBtn">×</button>
             </div>
             <form class="login-form" id="loginForm">
                 <input type="email" class="login-input" id="loginEmail" placeholder="Admin Email" required>
@@ -1253,7 +1253,7 @@
             </div>
             <div class="user-info">
                 <span id="userRole"></span>
-                <button class="btn btn-primary" id="loginBtn" style="display: none;">ðŸ” Admin Login</button>
+                <button class="btn btn-primary" id="loginBtn" style="display: none;">🔒 Admin Login</button>
                 <button class="logout-btn" id="logoutBtn" style="display: none;">Logout</button>
             </div>
         </div>
@@ -1274,15 +1274,15 @@
                 </div>
                 <div class="zoom-controls">
                     <button class="zoom-btn" id="zoomInBtn">+</button>
-                    <button class="zoom-btn" id="zoomResetBtn">âŠ™</button>
-                    <button class="zoom-btn" id="zoomOutBtn">âˆ’</button>
+                    <button class="zoom-btn" id="zoomResetBtn">⊙</button>
+                    <button class="zoom-btn" id="zoomOutBtn">−</button>
                 </div>
 
                 <!-- Node Viewer Panel -->
                 <div class="node-viewer" id="nodeViewer">
                     <div class="node-viewer-header">
                         <h3 class="node-viewer-title" id="viewerNodeName"></h3>
-                        <button class="node-viewer-close" id="closeViewerBtn">Ã—</button>
+                        <button class="node-viewer-close" id="closeViewerBtn">×</button>
                     </div>
                     <div id="viewerContent"></div>
                 </div>
@@ -1295,7 +1295,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" id="modalTitle">Create New Node</h2>
-                <button class="close-btn" id="closeModalBtn">Ã—</button>
+                <button class="close-btn" id="closeModalBtn">×</button>
             </div>
             <form id="nodeForm">
                 <div class="form-group">
@@ -1401,7 +1401,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Create New Map</h2>
-                <button class="close-btn" id="closeMapModalBtn">Ã—</button>
+                <button class="close-btn" id="closeMapModalBtn">×</button>
             </div>
             <form id="mapForm">
                 <div class="form-group">
@@ -1442,8 +1442,8 @@
     <!-- Context Menu -->
     <div class="context-menu" id="contextMenu">
         <div class="context-menu-item" id="contextEdit">👁️ View Node</div>
-        <div class="context-menu-item" id="contextMove">â†”ï¸ Move Node</div>
-        <div class="context-menu-item danger" id="contextDelete">ðŸ—‘ï¸ Delete Node</div>
+        <div class="context-menu-item" id="contextMove">→ï¸ Move Node</div>
+        <div class="context-menu-item danger" id="contextDelete">🗑️ Delete Node</div>
     </div>
 
     <!-- Hidden file input for import -->
@@ -1452,7 +1452,7 @@
         // ==========================================
         // SUPABASE CONFIGURATION
         // IMPORTANT: Replace these with your actual Supabase values!
-        // Get these from: Supabase Dashboard â†’ Settings â†’ API
+        // Get these from: Supabase Dashboard → Settings → API
         // ==========================================
         const SUPABASE_URL = 'https://sczwwgszicbwomriucuz.supabase.co'; // e.g., 'https://xxxxx.supabase.co'
         const SUPABASE_ANON_KEY = 'sb_publishable_7Zh2AuEoohMwZKFLdTZjHQ_9fmeso6p'; // Publishable key
@@ -1957,18 +1957,18 @@
                 li.classList.add('draggable');
             }
             
-            const dragHandleHtml = isAdmin ? '<span class="map-drag-handle">â‹®â‹®</span>' : '';
+            const dragHandleHtml = isAdmin ? '<span class="map-drag-handle">⋮⋮</span>' : '';
             
             const actionsHtml = isAdmin ? `
                 <div class="map-item-actions">
                     <button class="map-action-btn" onclick="event.stopPropagation(); editMap('${map.id}')" title="Edit Map">✏ï¸</button>
-                    <button class="map-action-btn" onclick="event.stopPropagation(); deleteMapFromSidebar('${map.id}')" title="Delete Map">ðŸ—‘ï¸</button>
+                    <button class="map-action-btn" onclick="event.stopPropagation(); deleteMapFromSidebar('${map.id}')" title="Delete Map">🗑️</button>
                 </div>
             ` : '';
             
             // Check if this map has submaps
             const hasSubmaps = maps.some(m => m.parentId === map.id);
-            const submapIndicator = hasSubmaps ? ' <span style="opacity: 0.6;">â–¼</span>' : '';
+            const submapIndicator = hasSubmaps ? ' <span style="opacity: 0.6;">▼</span>' : '';
             
             li.innerHTML = `
                 ${dragHandleHtml}
@@ -2578,7 +2578,7 @@
                             <div class="node-viewer-option" style="cursor: pointer; border: 1px solid rgba(139, 115, 85, 0.3); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem;" onclick="toggleOptionContent('${optionId}')">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <div class="node-viewer-option-label" style="margin: 0;">${index + 1}. ${option.label || 'Unnamed Option'}</div>
-                                    <span id="${optionId}-toggle" style="font-size: 0.9rem; opacity: 0.6;">â–¶</span>
+                                    <span id="${optionId}-toggle" style="font-size: 0.9rem; opacity: 0.6;">▶</span>
                                 </div>
                                 <div id="${optionId}-content" style="display: none; margin-top: 0.75rem;">
                         `);
@@ -2588,8 +2588,8 @@
                         }
                         
                         const rewards = [];
-                        if (option.gold && option.gold !== 0) rewards.push(`<span class="node-viewer-reward">ðŸ’° ${option.gold}</span>`);
-                        if (option.shards && option.shards !== 0) rewards.push(`<span class="node-viewer-reward">ðŸ’Ž ${option.shards}</span>`);
+                        if (option.gold && option.gold !== 0) rewards.push(`<span class="node-viewer-reward">💰 ${option.gold}</span>`);
+                        if (option.shards && option.shards !== 0) rewards.push(`<span class="node-viewer-reward">💎 ${option.shards}</span>`);
                         if (option.exp && option.exp !== 0) rewards.push(`<span class="node-viewer-reward">⭐ ${option.exp}</span>`);
                         
                         if (rewards.length > 0) {
@@ -2613,8 +2613,8 @@
                                     variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onSuccess}</div>`);
                                 }
                                 const successRewards = [];
-                                if (option.successGold && option.successGold !== 0) successRewards.push(`ðŸ’° ${option.successGold}`);
-                                if (option.successShards && option.successShards !== 0) successRewards.push(`ðŸ’Ž ${option.successShards}`);
+                                if (option.successGold && option.successGold !== 0) successRewards.push(`💰 ${option.successGold}`);
+                                if (option.successShards && option.successShards !== 0) successRewards.push(`💎 ${option.successShards}`);
                                 if (option.successExp && option.successExp !== 0) successRewards.push(`⭐ ${option.successExp}`);
                                 if (successRewards.length > 0) {
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${successRewards.join(' ')}</div>`);
@@ -2625,14 +2625,14 @@
                             if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp) {
                                 variantHtml.push(`
                                     <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(96, 165, 250, 0.1); border-left: 3px solid #60a5fa; border-radius: 4px;">
-                                        <div style="color: #60a5fa; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">â˜… Critical Success</div>
+                                        <div style="color: #60a5fa; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">✔… Critical Success</div>
                                 `);
                                 if (option.onCritSuccess) {
                                     variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onCritSuccess}</div>`);
                                 }
                                 const critSuccessRewards = [];
-                                if (option.critSuccessGold && option.critSuccessGold !== 0) critSuccessRewards.push(`ðŸ’° ${option.critSuccessGold}`);
-                                if (option.critSuccessShards && option.critSuccessShards !== 0) critSuccessRewards.push(`ðŸ’Ž ${option.critSuccessShards}`);
+                                if (option.critSuccessGold && option.critSuccessGold !== 0) critSuccessRewards.push(`💰 ${option.critSuccessGold}`);
+                                if (option.critSuccessShards && option.critSuccessShards !== 0) critSuccessRewards.push(`💎 ${option.critSuccessShards}`);
                                 if (option.critSuccessExp && option.critSuccessExp !== 0) critSuccessRewards.push(`⭐ ${option.critSuccessExp}`);
                                 if (critSuccessRewards.length > 0) {
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${critSuccessRewards.join(' ')}</div>`);
@@ -2649,8 +2649,8 @@
                                     variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onFail}</div>`);
                                 }
                                 const failRewards = [];
-                                if (option.failGold && option.failGold !== 0) failRewards.push(`ðŸ’° ${option.failGold}`);
-                                if (option.failShards && option.failShards !== 0) failRewards.push(`ðŸ’Ž ${option.failShards}`);
+                                if (option.failGold && option.failGold !== 0) failRewards.push(`💰 ${option.failGold}`);
+                                if (option.failShards && option.failShards !== 0) failRewards.push(`💎 ${option.failShards}`);
                                 if (option.failExp && option.failExp !== 0) failRewards.push(`⭐ ${option.failExp}`);
                                 if (failRewards.length > 0) {
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${failRewards.join(' ')}</div>`);
@@ -2661,14 +2661,14 @@
                             if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp) {
                                 variantHtml.push(`
                                     <div style="padding: 0.5rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; border-radius: 4px;">
-                                        <div style="color: #ef4444; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">â˜  Critical Fail</div>
+                                        <div style="color: #ef4444; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">✔  Critical Fail</div>
                                 `);
                                 if (option.onCritFail) {
                                     variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onCritFail}</div>`);
                                 }
                                 const critFailRewards = [];
-                                if (option.critFailGold && option.critFailGold !== 0) critFailRewards.push(`ðŸ’° ${option.critFailGold}`);
-                                if (option.critFailShards && option.critFailShards !== 0) critFailRewards.push(`ðŸ’Ž ${option.critFailShards}`);
+                                if (option.critFailGold && option.critFailGold !== 0) critFailRewards.push(`💰 ${option.critFailGold}`);
+                                if (option.critFailShards && option.critFailShards !== 0) critFailRewards.push(`💎 ${option.critFailShards}`);
                                 if (option.critFailExp && option.critFailExp !== 0) critFailRewards.push(`⭐ ${option.critFailExp}`);
                                 if (critFailRewards.length > 0) {
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${critFailRewards.join(' ')}</div>`);
@@ -2684,7 +2684,7 @@
                             variantHtml.push(`
                                 <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px; border-left: 3px solid var(--accent);">
                                     <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 0.5rem;">
-                                        ðŸ“ Additional Notes
+                                        📋 Additional Notes
                                     </div>
                                     <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem; white-space: pre-wrap; padding-left: 0;">
                                         ${option.outcomes}
@@ -2698,7 +2698,7 @@
                             variantHtml.push(`
                                 <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(139, 115, 85, 0.3);">
                                     <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">
-                                        â†“ Follow-up Events (${option.followupEvents.length})
+                                        ↔ Follow-up Events (${option.followupEvents.length})
                                     </div>
                             `);
                             
@@ -2719,8 +2719,8 @@
                                 }
                                 
                                 const eventRewards = [];
-                                if (event.gold && event.gold !== 0) eventRewards.push(`<span class="node-viewer-reward">ðŸ’° ${event.gold}</span>`);
-                                if (event.shards && event.shards !== 0) eventRewards.push(`<span class="node-viewer-reward">ðŸ’Ž ${event.shards}</span>`);
+                                if (event.gold && event.gold !== 0) eventRewards.push(`<span class="node-viewer-reward">💰 ${event.gold}</span>`);
+                                if (event.shards && event.shards !== 0) eventRewards.push(`<span class="node-viewer-reward">💎 ${event.shards}</span>`);
                                 if (event.exp && event.exp !== 0) eventRewards.push(`<span class="node-viewer-reward">⭐ ${event.exp}</span>`);
                                 
                                 if (eventRewards.length > 0) {
@@ -2748,8 +2748,8 @@
                 html += `
                     <div class="node-viewer-actions">
                         <button class="btn btn-primary btn-small" onclick="editNodeFromViewer()">✏ï¸ Edit</button>
-                        <button class="btn btn-secondary btn-small" onclick="moveNodeFromViewer()">â†”ï¸ Move</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteNodeFromViewer()">ðŸ—‘ï¸ Delete</button>
+                        <button class="btn btn-secondary btn-small" onclick="moveNodeFromViewer()">→ï¸ Move</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteNodeFromViewer()">🗑️ Delete</button>
                     </div>
                 `;
             }
@@ -2798,10 +2798,10 @@
             if (content && toggle) {
                 if (content.style.display === 'none') {
                     content.style.display = 'block';
-                    toggle.textContent = 'â–¼';
+                    toggle.textContent = '▼';
                 } else {
                     content.style.display = 'none';
-                    toggle.textContent = 'â–¶';
+                    toggle.textContent = '▶';
                 }
             }
         }
@@ -2931,9 +2931,9 @@
             tag.className = 'tag';
             tag.draggable = true;
             tag.innerHTML = `
-                <span class="tag-drag-handle" style="opacity: 0.5; margin-right: 4px; cursor: grab;">â‹®â‹®</span>
+                <span class="tag-drag-handle" style="opacity: 0.5; margin-right: 4px; cursor: grab;">⋮⋮</span>
                 ${tagText}
-                <span class="tag-remove" onclick="this.parentElement.remove()">Ã—</span>
+                <span class="tag-remove" onclick="this.parentElement.remove()">×</span>
             `;
             
             // Add drag event listeners
@@ -3019,7 +3019,7 @@
         function getTags() {
             const tags = [];
             document.querySelectorAll('.tag').forEach(tag => {
-                const text = tag.textContent.replace('Ã—', '').replace('â‹®â‹®', '').trim();
+                const text = tag.textContent.replace('×', '').replace('⋮⋮', '').trim();
                 if (text) tags.push(text);
             });
             return tags;
@@ -3053,7 +3053,7 @@
                     <!-- Expandable Success/Fail Outcomes -->
                     <div style="margin-top: 1rem;">
                         <button type="button" class="btn btn-secondary btn-small" onclick="toggleOutcomes(this)" style="width: 100%;">
-                            <span class="toggle-icon">â–¶</span> Success/Fail Outcomes
+                            <span class="toggle-icon">▶</span> Success/Fail Outcomes
                         </button>
                         <div class="outcomes-section" style="display: none; margin-top: 0.75rem; padding: 1rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px;">
                             <div style="margin-bottom: 1rem;">
@@ -3067,7 +3067,7 @@
                             </div>
                             
                             <div style="margin-bottom: 1rem;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #60a5fa;">â˜… On Critical Success</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #60a5fa;">✔… On Critical Success</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical success..." data-option="onCritSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritSuccess || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="critSuccessGold" value="${option?.critSuccessGold !== undefined && option.critSuccessGold !== 0 ? option.critSuccessGold : ""}">
@@ -3087,7 +3087,7 @@
                             </div>
                             
                             <div>
-                                <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">â˜  On Critical Fail</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">✔  On Critical Fail</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical fail..." data-option="onCritFail" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritFail || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="critFailGold" value="${option?.critFailGold !== undefined && option.critFailGold !== 0 ? option.critFailGold : ""}">
@@ -3109,7 +3109,7 @@
                         <label class="form-label" style="font-size: 0.9rem;">
                             Follow-up Events (sequential sub-events after this option)
                             <small style="display: block; font-weight: normal; color: rgba(245, 230, 211, 0.6); margin-top: 0.25rem;">
-                                Add events that happen in sequence (e.g., e_sen4_a1 â†’ e_sen4_a2)
+                                Add events that happen in sequence (e.g., e_sen4_a1 → e_sen4_a2)
                             </small>
                         </label>
                         <div class="followup-events-container" data-followup-container>
@@ -3125,7 +3125,7 @@
 
         function createFollowupEventHtml(index, event = null) {
             return `
-                ${index > 0 ? '<div class="followup-arrow">â†“</div>' : ''}
+                ${index > 0 ? '<div class="followup-arrow">↔</div>' : ''}
                 <div class="followup-event-item">
                     <div class="followup-event-header">
                         <span class="followup-event-label">Follow-up ${index + 1}</span>
@@ -3149,10 +3149,10 @@
             
             if (outcomesSection.style.display === 'none') {
                 outcomesSection.style.display = 'block';
-                toggleIcon.textContent = 'â–¼';
+                toggleIcon.textContent = '▼';
             } else {
                 outcomesSection.style.display = 'none';
-                toggleIcon.textContent = 'â–¶';
+                toggleIcon.textContent = '▶';
             }
         }
 
@@ -3757,7 +3757,7 @@
                 item.className = 'search-result-item';
                 item.innerHTML = `
                     <div class="result-name">${node.name}</div>
-                    <div class="result-meta">${map.name} â€¢ ${node.type}</div>
+                    <div class="result-meta">${map.name} • ${node.type}</div>
                 `;
                 item.addEventListener('click', () => {
                     // Switch to the node's map and wait for it to load
@@ -4157,7 +4157,7 @@
                 
                 // Check if it's a Supabase configuration error
                 if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE') {
-                    alert('âš ï¸ Supabase not configured!\n\nPlease update the SUPABASE_URL and SUPABASE_ANON_KEY in the HTML file.\n\nSee QUICK_START.md for setup instructions.');
+                    alert('⚔ ï¸ Supabase not configured!\n\nPlease update the SUPABASE_URL and SUPABASE_ANON_KEY in the HTML file.\n\nSee QUICK_START.md for setup instructions.');
                 } else {
                     alert('Error loading application:\n\n' + error.message + '\n\nCheck browser console (F12) for details.');
                 }
