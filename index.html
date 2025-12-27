@@ -1731,8 +1731,8 @@
                             nodeEl.classList.remove('highlighted');
                         }
                         
-                        // Save in background (debounced)
-                        saveData();
+                        // Save in background (silent, no loading overlay)
+                        saveData(true);
                         
                         console.log('Moved node to:', mapX, mapY);
                     }
@@ -4120,7 +4120,7 @@
             });
         }
 
-        async function saveData() {
+        async function saveData(silent = false) {
             if (!isAdmin) {
                 alert('You must be an admin to make changes');
                 return Promise.reject('Not admin');
@@ -4131,7 +4131,7 @@
                 clearTimeout(saveDebounceTimer);
                 saveDebounceTimer = setTimeout(async () => {
                     try {
-                        await saveToSupabase();
+                        await saveToSupabase(silent);
                         resolve();
                     } catch (error) {
                         reject(error);
@@ -4140,10 +4140,11 @@
             });
         }
 
-        async function saveToSupabase() {
+        async function saveToSupabase(silent = false) {
             try {
                 isSaving = true; // Set flag to prevent real-time reload
-                showLoading();
+                if (!silent) showLoading();
+                
                 const { error } = await supabaseClient
                     .from('maps')
                     .upsert(maps.map(map => ({
@@ -4157,18 +4158,19 @@
                     })));
                 
                 if (error) throw error;
-                console.log('Saved to Supabase');
-                hideLoading();
+                console.log(silent ? 'Saved to Supabase (silent)' : 'Saved to Supabase');
+                
+                if (!silent) hideLoading();
                 
                 // Wait a bit before clearing flag to ensure real-time event is skipped
                 setTimeout(() => {
                     isSaving = false;
                 }, 500);
             } catch (error) {
-                hideLoading();
+                if (!silent) hideLoading();
                 isSaving = false; // Clear flag on error
                 console.error('Error saving:', error);
-                alert('Error saving changes: ' + error.message);
+                if (!silent) alert('Error saving changes: ' + error.message);
                 throw error;
             }
         }
