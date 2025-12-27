@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -1442,7 +1442,7 @@
     <!-- Context Menu -->
     <div class="context-menu" id="contextMenu">
         <div class="context-menu-item" id="contextEdit">👁️ View Node</div>
-        <div class="context-menu-item" id="contextMove">↔️ Move Node</div>
+        <div class="context-menu-item" id="contextMove">↔️ Move Node</div>
         <div class="context-menu-item danger" id="contextDelete">🗑️ Delete Node</div>
     </div>
 
@@ -1722,8 +1722,18 @@
                     if (node) {
                         node.x = mapX;
                         node.y = mapY;
+                        
+                        // INSTANT VISUAL UPDATE: Move the DOM element immediately
+                        const nodeEl = mapImageContainer.querySelector(`[data-node-id="${draggedNodeId}"]`);
+                        if (nodeEl) {
+                            nodeEl.style.left = `${mapX}px`;
+                            nodeEl.style.top = `${mapY}px`;
+                            nodeEl.classList.remove('highlighted');
+                        }
+                        
+                        // Save in background (debounced)
                         saveData();
-                        renderMapCanvas();
+                        
                         console.log('Moved node to:', mapX, mapY);
                     }
                     isMovingMode = false;
@@ -2884,7 +2894,7 @@
                 html += `
                     <div class="node-viewer-actions">
                         <button class="btn btn-primary btn-small" onclick="editNodeFromViewer()">✏️ Edit</button>
-                        <button class="btn btn-secondary btn-small" onclick="moveNodeFromViewer()">↔️ Move</button>
+                        <button class="btn btn-secondary btn-small" onclick="moveNodeFromViewer()">↔️ Move</button>
                         <button class="btn btn-danger btn-small" onclick="deleteNodeFromViewer()">🗑️ Delete</button>
                     </div>
                 `;
