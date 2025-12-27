@@ -1905,9 +1905,6 @@
             }
         }
 
-        // Pan and Zoom Functions
-        function startDrag(e) {
-
         // ==========================================
         // PERFORMANCE OPTIMIZATION UTILITIES
         // ==========================================
@@ -1926,6 +1923,8 @@
         // Viewport culling margin
         const VIEWPORT_MARGIN = 150; // pixels
         
+        // Pan and Zoom Functions
+        function startDrag(e) {
             if (isAddingNode || isMovingMode || e.target.classList.contains('node') || e.target.closest('.node')) return;
             isDragging = true;
             dragStartX = e.clientX - translateX;
