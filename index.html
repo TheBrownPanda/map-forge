@@ -1567,7 +1567,7 @@
             // This will be called after authentication
         }
 
-        async function initializeApp() {
+        async function initializeApp(preserveView = false) {
             console.log('initializeApp: Starting...');
             showLoading();
             
@@ -1615,11 +1615,13 @@
                 setupRealtimeSync();
             }
 
-            // Center view
-            const rect = mapCanvas.getBoundingClientRect();
-            translateX = rect.width / 2;
-            translateY = rect.height / 2;
-            updateTransform();
+            // Center view only on first load (not on login)
+            if (!preserveView) {
+                const rect = mapCanvas.getBoundingClientRect();
+                translateX = rect.width / 2;
+                translateY = rect.height / 2;
+                updateTransform();
+            }
 
             console.log('initializeApp: Complete!');
             hideLoading();
@@ -1716,6 +1718,9 @@
                     mapCanvas.classList.remove('adding-node');
                     console.log('Creating node at:', mapX, mapY);
                 } else if (isMovingMode && draggedNodeId && currentMapId) {
+                    // PREVENT RUBBERBAND: Set isSaving flag BEFORE modifying data
+                    isSaving = true;
+                    
                     // Move the node to new position
                     const map = maps.find(m => m.id === currentMapId);
                     const node = map?.nodes.find(n => n.id === draggedNodeId);
@@ -2353,24 +2358,8 @@
         }
 
         function renderNode(node) {
-            // VIEWPORT CULLING: Skip rendering nodes that are off-screen
-            const nodeScreenX = (node.x * scale) + translateX;
-            const nodeScreenY = (node.y * scale) + translateY;
-            
-            const rect = mapCanvas.getBoundingClientRect();
-            
-            // Check if node is in viewport (with margin)
-            const inViewport = (
-                nodeScreenX >= -VIEWPORT_MARGIN &&
-                nodeScreenX <= rect.width + VIEWPORT_MARGIN &&
-                nodeScreenY >= -VIEWPORT_MARGIN &&
-                nodeScreenY <= rect.height + VIEWPORT_MARGIN
-            );
-            
-            if (!inViewport) {
-                // Skip rendering for off-screen nodes (huge performance boost!)
-                return;
-            }
+            // Viewport culling disabled - was causing nodes to disappear when panning/zooming
+            // Batch rendering + CSS transforms provide sufficient performance
             
             const nodeEl = document.createElement('div');
             nodeEl.className = 'node';
@@ -4219,10 +4208,11 @@
                 
                 if (!silent) hideLoading();
                 
-                // Wait a bit before clearing flag to ensure real-time event is skipped
+                // Wait longer before clearing flag to ensure real-time event is skipped
+                // Increased from 500ms to 1500ms to prevent rubberband effect
                 setTimeout(() => {
                     isSaving = false;
-                }, 500);
+                }, 1500);
             } catch (error) {
                 if (!silent) hideLoading();
                 isSaving = false; // Clear flag on error
@@ -4345,8 +4335,8 @@
                 errorEl.textContent = '';
                 document.getElementById('loginModal').classList.remove('active');
                 
-                // Re-initialize as admin
-                await initializeApp();
+                // Re-initialize as admin, preserving current view position
+                await initializeApp(true);
             } catch (error) {
                 errorEl.textContent = error.message;
                 hideLoading();
