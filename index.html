@@ -1760,6 +1760,20 @@
                 <button class="close-btn" id="closeImportModalBtn">×</button>
             </div>
             <div style="padding: 2rem;">
+                <!-- Target Map Indicator -->
+                <div id="importTargetMapInfo" style="display: none; background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(201, 169, 97, 0.2)); border: 2px solid var(--primary); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="font-size: 1.5rem;">🗺️</div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.25rem;">Importing to Map:</div>
+                            <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary);" id="importTargetMap"></div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.6); margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(212, 175, 55, 0.3);">
+                        ⚠️ Only nodes on this map will be updated. Nodes with the same name on other maps will not be affected.
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Upload Markdown File</label>
                     <input type="file" class="form-input" id="importFileInput" accept=".md,.txt" style="padding: 0.5rem;">
@@ -5161,6 +5175,21 @@
         let importMatchResults = null;
 
         function openImportModal() {
+            if (!currentMapId) {
+                alert('Please select a map first before importing node data');
+                return;
+            }
+            
+            const currentMap = maps.find(m => m.id === currentMapId);
+            if (!currentMap) {
+                alert('No map selected');
+                return;
+            }
+            
+            // Show which map will be updated
+            document.getElementById('importTargetMap').textContent = currentMap.name;
+            document.getElementById('importTargetMapInfo').style.display = 'block';
+            
             document.getElementById('importModal').classList.add('active');
             document.getElementById('importPreview').style.display = 'none';
             document.getElementById('importFileInput').value = '';
@@ -5552,14 +5581,22 @@
             return { data: followup, nextIndex: i };
         }
 
+        /**
+         * Match parsed nodes to nodes on a SPECIFIC map only
+         * IMPORTANT: This only searches the provided map parameter.
+         * Nodes with the same name on other maps are NOT affected.
+         */
         function matchNodesToMap(parsedNodes, map) {
             const results = {
                 matched: [],
                 unmatched: [],
                 nodesFound: parsedNodes.length,
-                nodesOnMap: map.nodes.length
+                nodesOnMap: map.nodes.length,
+                mapId: map.id,
+                mapName: map.name
             };
 
+            // Only search within the provided map's nodes
             parsedNodes.forEach(parsedNode => {
                 const existingNode = map.nodes.find(n => 
                     n.name.toLowerCase() === parsedNode.name.toLowerCase()
@@ -5579,6 +5616,9 @@
         }
 
         function displayImportPreview(results) {
+            const currentMap = maps.find(m => m.id === currentMapId);
+            const mapName = currentMap ? currentMap.name : 'Unknown Map';
+            
             document.getElementById('importPreview').style.display = 'block';
             document.getElementById('importNodesFound').textContent = results.nodesFound;
             document.getElementById('importNodesMatch').textContent = results.matched.length;
@@ -5589,7 +5629,7 @@
             if (results.matched.length > 0) {
                 matchList.innerHTML = `
                     <div style="font-weight: 600; color: var(--success); margin-bottom: 0.75rem;">
-                        ✓ ${results.matched.length} node${results.matched.length !== 1 ? 's' : ''} will be updated:
+                        ✓ ${results.matched.length} node${results.matched.length !== 1 ? 's' : ''} on "${mapName}" will be updated:
                     </div>
                     ${results.matched.map(match => `
                         <div style="padding: 0.5rem; background: rgba(56, 161, 105, 0.1); border-radius: 4px; margin-bottom: 0.5rem; border-left: 3px solid var(--success);">
@@ -5604,7 +5644,7 @@
             } else {
                 matchList.innerHTML = `
                     <div style="text-align: center; padding: 2rem; color: rgba(245, 230, 211, 0.5);">
-                        No matching nodes found on the map. Create nodes with matching names first.
+                        No matching nodes found on "${mapName}". Create nodes with matching names first.
                     </div>
                 `;
             }
@@ -5615,13 +5655,13 @@
                 unmatchedList.style.display = 'block';
                 unmatchedList.innerHTML = `
                     <div style="font-weight: 600; color: var(--danger); margin-bottom: 0.5rem;">
-                        ⚠ ${results.unmatched.length} node${results.unmatched.length !== 1 ? 's' : ''} not found on map:
+                        ⚠ ${results.unmatched.length} node${results.unmatched.length !== 1 ? 's' : ''} not found on "${mapName}":
                     </div>
                     <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.8);">
                         ${results.unmatched.map(n => n.name).join(', ')}
                     </div>
                     <div style="font-size: 0.8rem; color: rgba(245, 230, 211, 0.6); margin-top: 0.5rem;">
-                        Create nodes with these names first, then re-import.
+                        Create nodes with these names on "${mapName}" first, then re-import.
                     </div>
                 `;
             } else {
@@ -5636,13 +5676,34 @@
             }
 
             const map = maps.find(m => m.id === currentMapId);
-            if (!map) return;
+            if (!map) {
+                alert('Error: Map not found');
+                return;
+            }
+
+            // Final confirmation with map name
+            const confirmMsg = `⚠️ IMPORT CONFIRMATION\n\n` +
+                `This will update ${importMatchResults.matched.length} node${importMatchResults.matched.length !== 1 ? 's' : ''} on the map:\n\n` +
+                `   "${map.name}"\n\n` +
+                `Nodes on other maps will NOT be affected.\n\n` +
+                `Continue with import?`;
+            
+            if (!confirm(confirmMsg)) {
+                return;
+            }
 
             let updatedCount = 0;
 
+            // IMPORTANT: Only update nodes that belong to THIS specific map
             importMatchResults.matched.forEach(match => {
                 const node = match.mapNode;
                 const importData = match.importData;
+
+                // Double-check this node belongs to the current map
+                if (!map.nodes.find(n => n.id === node.id)) {
+                    console.error('Security check failed: Node does not belong to current map');
+                    return;
+                }
 
                 // Update node with imported data
                 node.variants = importData.variants.map(v => ({
@@ -5672,7 +5733,7 @@
             // Refresh display
             renderMapCanvas();
 
-            alert(`✅ Successfully imported data for ${updatedCount} node${updatedCount !== 1 ? 's' : ''}!`);
+            alert(`✅ Successfully imported data for ${updatedCount} node${updatedCount !== 1 ? 's' : ''} on map "${map.name}"!`);
             closeImportModal();
         }
 
