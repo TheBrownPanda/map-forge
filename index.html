@@ -307,7 +307,7 @@
             background: rgba(139, 115, 85, 0.5);
         }
 
-        /* Info Button & Divination Rewards Tooltip */
+        /* Info Button & Divination Rewards Modal */
         .info-button-container {
             position: relative;
             display: inline-block;
@@ -325,7 +325,7 @@
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
-            cursor: help;
+            cursor: pointer;
             transition: all 0.3s ease;
         }
 
@@ -335,41 +335,79 @@
             transform: scale(1.1);
         }
 
-        .info-tooltip {
-            position: absolute;
-            top: calc(100% + 10px);
-            left: 50%;
-            transform: translateX(-50%);
+        .info-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .info-modal-overlay.active {
+            display: flex;
+        }
+
+        .info-modal {
             background: linear-gradient(to bottom, var(--dark), var(--darker));
             border: 2px solid var(--primary);
             border-radius: 12px;
-            padding: 1.5rem;
-            min-width: 600px;
+            padding: 0;
+            width: 90%;
             max-width: 800px;
-            box-shadow: 0 8px 32px var(--shadow);
-            z-index: 3000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-            pointer-events: none;
+            max-height: 85vh;
+            box-shadow: 0 20px 60px var(--shadow);
+            display: flex;
+            flex-direction: column;
+            animation: modalSlideIn 0.3s ease;
         }
 
-        .info-button-container:hover .info-tooltip {
-            opacity: 1;
-            visibility: visible;
+        .info-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--secondary);
         }
 
-        .info-tooltip::before {
-            content: '';
-            position: absolute;
-            top: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-bottom: 8px solid var(--primary);
+        .info-modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .info-modal-close {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .info-modal-close:hover {
+            background: rgba(197, 48, 48, 0.2);
+            color: var(--danger);
+        }
+
+        .info-modal-content {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
         }
 
         .info-tooltip-title {
@@ -1409,31 +1447,40 @@
         </div>
     </div>
 
+    <!-- Divination Rewards Modal -->
+    <div class="info-modal-overlay" id="divinationModal">
+        <div class="info-modal">
+            <div class="info-modal-header">
+                <h2 class="info-modal-title">🔮 Divination Rewards</h2>
+                <button class="info-modal-close" id="closeDivinationBtn">×</button>
+            </div>
+            <div class="info-modal-content">
+                <table class="rewards-table">
+                    <thead>
+                        <tr>
+                            <th>Tier</th>
+                            <th class="rarity-common">Common</th>
+                            <th class="rarity-uncommon">Uncommon</th>
+                            <th class="rarity-rare">Rare</th>
+                            <th class="rarity-epic">Epic</th>
+                            <th class="rarity-mythic">Mythic</th>
+                            <th>Dust (Decline)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rewardsTierData">
+                        <!-- Tier data will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div class="app-container" id="appContainer">
         <!-- Header -->
         <div class="header">
             <div class="title">⚔ MAP FORGE v2.0 ⚔</div>
             <div class="info-button-container">
-                <div class="info-button">ℹ️</div>
-                <div class="info-tooltip">
-                    <div class="info-tooltip-title">🔮 Divination Rewards</div>
-                    <table class="rewards-table">
-                        <thead>
-                            <tr>
-                                <th>Tier</th>
-                                <th class="rarity-common">Common</th>
-                                <th class="rarity-uncommon">Uncommon</th>
-                                <th class="rarity-rare">Rare</th>
-                                <th class="rarity-epic">Epic</th>
-                                <th class="rarity-mythic">Mythic</th>
-                                <th>Dust (Decline)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="rewardsTierData">
-                            <!-- Tier data will be inserted here by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
+                <div class="info-button" id="infoButton">ℹ️</div>
             </div>
             <div class="search-container">
                 <input type="text" class="search-input" id="searchInput" placeholder="Search nodes, tags, or content...">
@@ -2199,6 +2246,30 @@
                     if (e.target === imageLibraryModal) {
                         e.stopPropagation();
                     }
+                });
+            }
+
+            // Divination Info Modal
+            document.getElementById('infoButton').addEventListener('click', () => {
+                document.getElementById('divinationModal').classList.add('active');
+            });
+            
+            document.getElementById('closeDivinationBtn').addEventListener('click', () => {
+                document.getElementById('divinationModal').classList.remove('active');
+            });
+            
+            // Close divination modal when clicking overlay
+            document.getElementById('divinationModal').addEventListener('click', (e) => {
+                if (e.target.id === 'divinationModal') {
+                    document.getElementById('divinationModal').classList.remove('active');
+                }
+            });
+            
+            // Prevent closing when clicking inside modal
+            const divinationModalContent = document.querySelector('.info-modal');
+            if (divinationModalContent) {
+                divinationModalContent.addEventListener('click', (e) => {
+                    e.stopPropagation();
                 });
             }
 
