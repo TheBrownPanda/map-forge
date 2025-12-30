@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -1347,6 +1347,43 @@
         .btn-small {
             padding: 0.6rem 1.2rem;
             font-size: 0.9rem;
+        }
+
+        .modal-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(13, 10, 8, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 12px;
+        }
+
+        .modal-loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--secondary);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        .modal-loading-text {
+            color: var(--primary);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .modal-loading-details {
+            color: rgba(245, 230, 211, 0.6);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
         }
     </style>
 </head>
@@ -2934,7 +2971,7 @@
         }
 
         // Node Modal Functions
-        function openNodeModal(node = null) {
+        async function openNodeModal(node = null) {
             if (!isAdmin) {
                 alert('Admin access required to edit nodes');
                 return;
@@ -2945,91 +2982,122 @@
             savedTranslateY = translateY;
             savedScale = scale;
 
-            editingNodeId = node ? node.id : null;
-            const modalTitle = document.getElementById('modalTitle');
-            const deleteBtn = document.getElementById('deleteNodeBtn');
-            const mapLinkGroup = document.getElementById('mapLinkGroup');
-
-            // PROGRESSIVE LOADING: Show modal immediately, load content async
+            // Show modal immediately with loading state
             nodeModal.classList.add('active');
+            const modalContent = nodeModal.querySelector('.modal-content');
             
-            // Show loading state if editing complex node
-            const isComplexNode = node && ((node.variants && node.variants.length > 3) || (node.options && node.options.length > 10));
-            
-            if (isComplexNode) {
-                const modalContent = nodeModal.querySelector('.modal-content');
-                const loadingHtml = `
-                    <div style="padding: 3rem; text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem; color: var(--primary);">⚙️</div>
-                        <div style="color: var(--primary); font-size: 1.2rem;">Loading node data...</div>
-                        <div style="color: var(--light); font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.7;">
-                            ${node.variants?.length || 0} variants, ${node.options?.length || 0} options
-                        </div>
-                    </div>
-                `;
-                modalContent.innerHTML = loadingHtml;
-            }
-            
-            // Load actual content in next frame(s) to prevent UI freeze
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    // Now populate the modal
-                    if (node) {
-                        modalTitle.textContent = 'Edit Node';
-                        deleteBtn.style.display = 'block';
-                        
-                        // Populate node name
-                        document.getElementById('nodeName').value = node.name;
-                        
-                        // Load variants from node (use faster deep copy if available)
-                        if (node.variants && node.variants.length > 0) {
-                            // Use structuredClone if available (5x faster), fallback to JSON
+            // Add loading overlay
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'modal-loading';
+            loadingOverlay.innerHTML = `
+                <div class="modal-loading-spinner"></div>
+                <div class="modal-loading-text">Loading node data...</div>
+                <div class="modal-loading-details" id="modalLoadingDetails"></div>
+            `;
+            modalContent.appendChild(loadingOverlay);
+
+            try {
+                editingNodeId = node ? node.id : null;
+                const modalTitle = document.getElementById('modalTitle');
+                const deleteBtn = document.getElementById('deleteNodeBtn');
+                const mapLinkGroup = document.getElementById('mapLinkGroup');
+
+                if (node) {
+                    // Update loading details
+                    const variantCount = node.variants?.length || 1;
+                    const optionCount = node.options?.length || 0;
+                    document.getElementById('modalLoadingDetails').textContent = 
+                        `${variantCount} variant${variantCount !== 1 ? 's' : ''}, ${optionCount} option${optionCount !== 1 ? 's' : ''}`;
+
+                    modalTitle.textContent = 'Edit Node';
+                    deleteBtn.style.display = 'block';
+                    
+                    // Populate node name
+                    document.getElementById('nodeName').value = node.name;
+                    
+                    // Load variants with error handling
+                    if (node.variants && node.variants.length > 0) {
+                        // Deep copy with error handling for corrupted data
+                        try {
+                            // Use structuredClone if available (faster), fallback to JSON
                             currentNodeVariants = typeof structuredClone !== 'undefined' 
                                 ? structuredClone(node.variants)
                                 : JSON.parse(JSON.stringify(node.variants));
-                            currentVariantIndex = 0;
-                        } else {
-                            // Convert old single-variant nodes to variant format
-                            currentNodeVariants = [{
-                                name: 'Combat',
-                                chance: 100,
-                                type: node.type,
-                                description: node.description || '',
-                                mapLink: node.mapLink || null,
-                                tags: [...(node.tags || [])],
-                                options: typeof structuredClone !== 'undefined'
-                                    ? structuredClone(node.options || [])
-                                    : JSON.parse(JSON.stringify(node.options || []))
-                            }];
-                            currentVariantIndex = 0;
+                        } catch (e) {
+                            console.error('Error parsing variants:', e);
+                            // Fallback: create clean variants
+                            currentNodeVariants = node.variants.map(v => ({
+                                name: v.name || 'Variant',
+                                chance: v.chance || 100,
+                                type: v.type || 'combat',
+                                description: v.description || '',
+                                mapLink: v.mapLink || null,
+                                tags: Array.isArray(v.tags) ? [...v.tags] : [],
+                                options: Array.isArray(v.options) ? JSON.parse(JSON.stringify(v.options)) : []
+                            }));
                         }
-                        
-                        renderVariantTabs();
-                        switchToVariant(0, true); // Skip save on initial load
-                        
-                        // Show map link if current variant is a transition
-                        if (currentNodeVariants[0].type === 'transition') {
-                            mapLinkGroup.style.display = 'block';
-                            populateMapLinkDropdown();
-                        } else {
-                            mapLinkGroup.style.display = 'none';
-                        }
+                        currentVariantIndex = 0;
                     } else {
-                        modalTitle.textContent = 'Create New Node';
-                        deleteBtn.style.display = 'none';
-                        nodeForm.reset();
-                        document.getElementById('nodeName').value = ''; // Clear node name
-                        initializeVariants();
-                        mapLinkGroup.style.display = 'none';
+                        // Convert old single-variant nodes to variant format
+                        currentNodeVariants = [{
+                            name: 'Combat',
+                            chance: 100,
+                            type: node.type,
+                            description: node.description || '',
+                            mapLink: node.mapLink || null,
+                            tags: [...(node.tags || [])],
+                            options: node.options ? (typeof structuredClone !== 'undefined' 
+                                ? structuredClone(node.options)
+                                : JSON.parse(JSON.stringify(node.options))) : []
+                        }];
+                        currentVariantIndex = 0;
                     }
                     
-                    // Scroll modal content to top
-                    const modalContent = nodeModal.querySelector('.modal-content');
-                    if (modalContent) {
-                        modalContent.scrollTop = 0;
+                    // Use setTimeout to allow UI to update before heavy rendering
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                    
+                    renderVariantTabs();
+                    
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                    
+                    switchToVariant(0, true); // Skip save on initial load
+                    
+                    // Show map link if current variant is a transition
+                    if (currentNodeVariants[0].type === 'transition') {
+                        mapLinkGroup.style.display = 'block';
+                        populateMapLinkDropdown();
+                    } else {
+                        mapLinkGroup.style.display = 'none';
                     }
-                });
-            });
+                } else {
+                    modalTitle.textContent = 'Create New Node';
+                    deleteBtn.style.display = 'none';
+                    nodeForm.reset();
+                    document.getElementById('nodeName').value = '';
+                    initializeVariants();
+                    mapLinkGroup.style.display = 'none';
+                }
+
+                // Scroll modal content to top
+                if (modalContent) {
+                    modalContent.scrollTop = 0;
+                }
+
+                // Remove loading overlay after everything is loaded
+                await new Promise(resolve => setTimeout(resolve, 100));
+                loadingOverlay.remove();
+
+            } catch (error) {
+                console.error('Error opening node modal:', error);
+                loadingOverlay.innerHTML = `
+                    <div style="color: var(--danger); text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">⚠️</div>
+                        <div style="font-weight: 600; margin-bottom: 0.5rem;">Error Loading Node</div>
+                        <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem;">${error.message}</div>
+                        <button class="btn btn-primary" onclick="closeNodeModal()">Close</button>
+                    </div>
+                `;
+            }
         }
 
         function closeNodeModal() {
@@ -3705,7 +3773,8 @@
         }
 
         function createOptionHtml(number, option = null) {
-            const followupEventsHtml = option?.followupEvents && option.followupEvents.length > 0
+            try {
+            const followupEventsHtml = option?.followupEvents && Array.isArray(option.followupEvents) && option.followupEvents.length > 0
                 ? option.followupEvents.map((event, idx) => createFollowupEventHtml(idx, event)).join('')
                 : '';
             
@@ -3794,6 +3863,20 @@
                     </div>
                 </div>
             `; 
+            } catch (error) {
+                console.error('Error creating option HTML:', error, option);
+                return `
+                    <div class="option-item" style="border: 2px solid var(--danger);">
+                        <div class="option-header">
+                            <span class="option-number">Option ${number} (Error)</span>
+                            <button type="button" class="option-remove" onclick="removeOption(this)">Remove</button>
+                        </div>
+                        <div style="color: var(--danger); padding: 1rem; text-align: center;">
+                            Failed to load option data. Please remove and recreate.
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         function createFollowupEventHtml(index, event = null) {
