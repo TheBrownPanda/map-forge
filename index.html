@@ -1487,6 +1487,7 @@
                 <div class="search-results" id="searchResults"></div>
             </div>
             <div class="header-actions">
+                <button class="btn btn-secondary" id="importNodesBtn">📥 Import Data</button>
                 <button class="btn btn-secondary" id="manageImagesBtn">🖼️ Image Library</button>
                 <button class="btn btn-secondary" id="addMapBtn">+ New Map</button>
                 <button class="btn btn-primary" id="addNodeBtn">+ Add Node</button>
@@ -1746,6 +1747,55 @@
                 <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.1rem;">📚 Your Images</h3>
                 <div id="imageLibraryGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; max-height: 60vh; overflow-y: auto;">
                     <!-- Images will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Node Data Import Modal -->
+    <div class="modal" id="importModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 class="modal-title">📥 Import Node Data</h2>
+                <button class="close-btn" id="closeImportModalBtn">×</button>
+            </div>
+            <div style="padding: 2rem;">
+                <div class="form-group">
+                    <label class="form-label">Upload Markdown File</label>
+                    <input type="file" class="form-input" id="importFileInput" accept=".md,.txt" style="padding: 0.5rem;">
+                    <small style="color: rgba(245, 230, 211, 0.6); display: block; margin-top: 0.5rem;">
+                        Upload your node data file (e.g., Faeborg_Nodes_By_Location.md)
+                    </small>
+                </div>
+
+                <div id="importPreview" style="display: none; margin-top: 1.5rem;">
+                    <div style="background: rgba(42, 35, 26, 0.5); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--secondary);">
+                        <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.1rem;">Import Preview</h3>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; color: var(--primary);" id="importNodesFound">0</div>
+                                <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">Nodes in File</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; color: var(--success);" id="importNodesMatch">0</div>
+                                <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">Will Update</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; color: rgba(245, 230, 211, 0.5);" id="importNodesUnmatched">0</div>
+                                <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">Not on Map</div>
+                            </div>
+                        </div>
+
+                        <div id="importMatchList" style="max-height: 300px; overflow-y: auto; margin-bottom: 1rem;"></div>
+                        
+                        <div id="importUnmatchedList" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(197, 48, 48, 0.1); border-radius: 6px; border: 1px solid var(--danger);"></div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end;">
+                        <button class="btn btn-secondary" onclick="cancelImport()">Cancel</button>
+                        <button class="btn btn-primary" id="executeImportBtn">Import Data</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2257,6 +2307,30 @@
             document.getElementById('closeDivinationBtn').addEventListener('click', () => {
                 document.getElementById('divinationModal').classList.remove('active');
             });
+
+            // Import Nodes Button
+            document.getElementById('importNodesBtn').addEventListener('click', () => {
+                if (!isAdmin) {
+                    alert('Admin access required');
+                    return;
+                }
+                openImportModal();
+            });
+            
+            // Import Modal
+            document.getElementById('closeImportModalBtn').addEventListener('click', closeImportModal);
+            document.getElementById('importFileInput').addEventListener('change', handleImportFile);
+            document.getElementById('executeImportBtn').addEventListener('click', executeImport);
+            
+            // Prevent closing import modal when clicking outside
+            const importModal = document.getElementById('importModal');
+            if (importModal) {
+                importModal.addEventListener('click', (e) => {
+                    if (e.target === importModal) {
+                        e.stopPropagation();
+                    }
+                });
+            }
             
             // Close divination modal when clicking overlay
             document.getElementById('divinationModal').addEventListener('click', (e) => {
@@ -5078,6 +5152,529 @@
             }
             location.reload();
         });
+
+        // ==========================================
+        // NODE DATA IMPORT SYSTEM
+        // ==========================================
+        
+        let parsedImportData = null;
+        let importMatchResults = null;
+
+        function openImportModal() {
+            document.getElementById('importModal').classList.add('active');
+            document.getElementById('importPreview').style.display = 'none';
+            document.getElementById('importFileInput').value = '';
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').classList.remove('active');
+            parsedImportData = null;
+            importMatchResults = null;
+        }
+
+        function cancelImport() {
+            closeImportModal();
+        }
+
+        async function handleImportFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                parsedImportData = parseNodeMarkdown(text);
+                
+                // Match with existing nodes on map
+                const map = maps.find(m => m.id === currentMapId);
+                if (!map) {
+                    alert('Please select a map first');
+                    return;
+                }
+
+                importMatchResults = matchNodesToMap(parsedImportData, map);
+                displayImportPreview(importMatchResults);
+                
+            } catch (error) {
+                console.error('Error parsing import file:', error);
+                alert('Error reading file: ' + error.message);
+            }
+        }
+
+        function parseNodeMarkdown(text) {
+            const nodes = [];
+            const lines = text.split('\n');
+            let i = 0;
+
+            while (i < lines.length) {
+                const line = lines[i];
+                
+                // Match node header: ## faen_2: North Path
+                const nodeMatch = line.match(/^##\s+([^:]+):\s+(.+)$/);
+                if (nodeMatch) {
+                    const nodeId = nodeMatch[1].trim();
+                    const nodeName = nodeMatch[2].trim();
+                    
+                    // Skip "No events or combats" nodes
+                    i++;
+                    if (i < lines.length && lines[i].includes('*No events or combats*')) {
+                        i++;
+                        continue;
+                    }
+                    
+                    const nodeData = {
+                        id: nodeId,
+                        name: nodeName,
+                        variants: [],
+                        type: 'event',
+                        spawnChance: 100
+                    };
+
+                    // Parse node spawn chance if present
+                    while (i < lines.length && !lines[i].startsWith('##') && !lines[i].startsWith('###')) {
+                        if (lines[i].includes('Spawn Chance:')) {
+                            const chanceMatch = lines[i].match(/Spawn Chance:\s*([\d.]+)%/);
+                            if (chanceMatch) {
+                                nodeData.spawnChance = parseFloat(chanceMatch[1]);
+                            }
+                        }
+                        i++;
+                    }
+
+                    // Parse variants (events)
+                    while (i < lines.length && lines[i].startsWith('###') && !lines[i+1]?.startsWith('##')) {
+                        const variant = parseVariant(lines, i);
+                        if (variant) {
+                            nodeData.variants.push(variant.data);
+                            i = variant.nextIndex;
+                        } else {
+                            i++;
+                        }
+                    }
+
+                    // Determine node type
+                    if (nodeName.toLowerCase().includes('rift')) {
+                        nodeData.type = 'rift';
+                    } else if (nodeName.toLowerCase().includes('portal') || nodeName.toLowerCase().includes('transition')) {
+                        nodeData.type = 'transition';
+                    } else if (nodeData.variants.some(v => v.name.toLowerCase().includes('combat'))) {
+                        nodeData.type = 'combat';
+                    }
+
+                    nodes.push(nodeData);
+                } else {
+                    i++;
+                }
+            }
+
+            return nodes;
+        }
+
+        function parseVariant(lines, startIndex) {
+            let i = startIndex;
+            const variantLine = lines[i];
+            
+            // ### The wounded thief (e_faen2_a) - Common - 60%
+            const variantMatch = variantLine.match(/^###\s+(.+?)\s+\(([^)]+)\)\s+-\s+(\w+)\s+-\s+([\d.]+)%/);
+            if (!variantMatch) return null;
+
+            const variant = {
+                name: variantMatch[1].trim(),
+                eventId: variantMatch[2].trim(),
+                rarity: variantMatch[3].trim(),
+                chance: parseFloat(variantMatch[4]),
+                type: 'event',
+                description: '',
+                tags: [],
+                options: [],
+                requirements: []
+            };
+
+            i++;
+
+            // Parse event requirements
+            while (i < lines.length && lines[i].includes('**Event Requirements:**')) {
+                i++;
+                while (i < lines.length && lines[i].startsWith('- ')) {
+                    variant.requirements.push(lines[i].substring(2).trim());
+                    i++;
+                }
+            }
+
+            // Parse options
+            while (i < lines.length && lines[i].includes('**Options:**')) {
+                i++;
+                break;
+            }
+
+            // Parse each option
+            while (i < lines.length && lines[i].startsWith('####')) {
+                const option = parseOption(lines, i);
+                if (option) {
+                    variant.options.push(option.data);
+                    i = option.nextIndex;
+                } else {
+                    i++;
+                }
+            }
+
+            // Consolidate duplicate character options
+            variant.options = consolidateOptions(variant.options);
+
+            return { data: variant, nextIndex: i };
+        }
+
+        function consolidateOptions(options) {
+            if (!options || options.length === 0) return options;
+
+            const groups = [];
+            const consolidated = [];
+
+            // Group options by similarity
+            options.forEach(option => {
+                // Extract base label (remove character name)
+                const baseLabel = option.label.replace(/^CharacterName\s*-\s*/, '').trim();
+                
+                // Create signature for grouping (including roll info)
+                const signature = JSON.stringify({
+                    baseLabel: baseLabel,
+                    description: option.description,
+                    successExp: option.successExp,
+                    successGold: option.successGold,
+                    successShards: option.successShards,
+                    onSuccess: option.onSuccess,
+                    onFail: option.onFail,
+                    outcomes: option.outcomes, // Include roll info
+                    onCritSuccess: option.onCritSuccess,
+                    onCritFail: option.onCritFail
+                });
+
+                let group = groups.find(g => g.signature === signature);
+                if (!group) {
+                    group = { signature, options: [], baseLabel };
+                    groups.push(group);
+                }
+                group.options.push(option);
+            });
+
+            // Consolidate groups with 3+ identical options
+            groups.forEach(group => {
+                if (group.options.length >= 3) {
+                    // Extract character names
+                    const characters = group.options
+                        .map(opt => {
+                            if (opt.requirements) {
+                                const charMatch = opt.requirements.match(/Character:\s*(\w+)/);
+                                return charMatch ? charMatch[1] : null;
+                            }
+                            return null;
+                        })
+                        .filter(Boolean);
+
+                    // Determine category based on context
+                    let categoryLabel = 'Any Hero';
+                    
+                    // Check if all are healers/priests (has healing spell roll)
+                    if (group.options[0].outcomes?.toLowerCase().includes('healing_spell') ||
+                        group.baseLabel.toLowerCase().match(/heal|cure/)) {
+                        categoryLabel = 'Any Priest';
+                    }
+                    // Check if it's a learning action
+                    else if (group.baseLabel.toLowerCase().includes('learn')) {
+                        categoryLabel = 'Any Hero';
+                    }
+                    // Check if it's a combat/sacrifice/weapon action
+                    else if (group.baseLabel.toLowerCase().match(/sacrifice|weapon|fight/)) {
+                        categoryLabel = 'Any Hero';
+                    }
+
+                    // Create more descriptive label
+                    let finalDescription = group.baseLabel;
+                    if (categoryLabel === 'Any Priest' && group.baseLabel.toLowerCase().includes('heal')) {
+                        finalDescription = group.baseLabel + ' (requires healing spell)';
+                    }
+
+                    // Create consolidated option
+                    const consolidatedOption = {
+                        ...group.options[0],
+                        label: categoryLabel,
+                        description: finalDescription,
+                        requirements: undefined, // Remove individual requirement
+                        outcomes: (group.options[0].outcomes || '') + 
+                                  `\n\nAvailable to ${characters.length} characters: ${characters.slice(0, 5).join(', ')}${characters.length > 5 ? `, +${characters.length - 5} more` : ''}`
+                    };
+
+                    consolidated.push(consolidatedOption);
+                } else {
+                    // Keep individual options if fewer than 3
+                    consolidated.push(...group.options);
+                }
+            });
+
+            return consolidated;
+        }
+
+        function parseOption(lines, startIndex) {
+            let i = startIndex;
+            const optionLine = lines[i];
+            
+            // #### 1. Leave - Ignore him, he deserves to die here.
+            const optionMatch = optionLine.match(/^####\s+\d+\.\s+(.+?)\s+-\s+(.+)$/);
+            if (!optionMatch) return null;
+
+            const option = {
+                label: optionMatch[1].trim(),
+                description: optionMatch[2].trim(),
+                gold: 0,
+                shards: 0,
+                exp: 0,
+                onSuccess: '',
+                onFail: '',
+                successGold: 0,
+                successShards: 0,
+                successExp: 0,
+                failGold: 0,
+                failShards: 0,
+                failExp: 0,
+                outcomes: '',
+                followupEvents: []
+            };
+
+            i++;
+
+            // Parse option details
+            while (i < lines.length && !lines[i].startsWith('####') && !lines[i].startsWith('###') && !lines[i].startsWith('##')) {
+                const line = lines[i].trim();
+                
+                // Requirements
+                if (line.startsWith('**Requirements:**')) {
+                    option.requirements = line.substring(18).trim();
+                }
+                
+                // Success line
+                if (line.startsWith('**Success:**')) {
+                    const successData = line.substring(12);
+                    const expMatch = successData.match(/EXP:\s*([\d.]+)/);
+                    const goldMatch = successData.match(/Gold:\s*([\d.]+)/);
+                    const shardsMatch = successData.match(/Shards:\s*([\d.]+)/);
+                    const dustMatch = successData.match(/Dust:\s*([\d.]+)/);
+                    const unlocksMatch = successData.match(/Unlocks:\s*(\w+)/);
+                    const cardMatch = successData.match(/Card:\s*(\w+)/);
+                    const combatMatch = successData.match(/Combat\s*\(([^)]+)\)/);
+                    
+                    if (expMatch) option.successExp = parseFloat(expMatch[1]);
+                    if (goldMatch) option.successGold = parseFloat(goldMatch[1]);
+                    if (shardsMatch) option.successShards = parseFloat(shardsMatch[1]);
+                    if (dustMatch) option.successShards = parseFloat(dustMatch[1]); // Dust = Shards
+                    if (unlocksMatch) option.onSuccess = (option.onSuccess ? option.onSuccess + ' | ' : '') + 'Unlocks: ' + unlocksMatch[1];
+                    if (cardMatch) option.onSuccess = (option.onSuccess ? option.onSuccess + ' | ' : '') + 'Card: ' + cardMatch[1];
+                    if (combatMatch) option.onSuccess = (option.onSuccess ? option.onSuccess + ' | ' : '') + 'Combat: ' + combatMatch[1];
+                }
+                
+                // Roll line
+                if (line.startsWith('**Roll:**')) {
+                    const rollData = line.substring(9).trim();
+                    option.outcomes = (option.outcomes ? option.outcomes + '\n' : '') + 'Roll: ' + rollData;
+                }
+                
+                // Fail line
+                if (line.startsWith('**Fail:**')) {
+                    const failData = line.substring(9).trim();
+                    const cardMatch = failData.match(/Cards?:\s*(\w+)/);
+                    if (cardMatch) {
+                        option.onFail = 'Card: ' + cardMatch[1];
+                    } else {
+                        option.onFail = failData;
+                    }
+                }
+                
+                // Success Critical
+                if (line.startsWith('**Success Critical:**')) {
+                    const critData = line.substring(21);
+                    option.onCritSuccess = critData.trim();
+                }
+                
+                // Fail Critical
+                if (line.startsWith('**Fail Critical:**')) {
+                    const critFailData = line.substring(18);
+                    option.onCritFail = critFailData.trim();
+                }
+                
+                // Reveals Card
+                if (line.startsWith('**Reveals Card:**')) {
+                    const cardData = line.substring(17).trim();
+                    option.outcomes = (option.outcomes ? option.outcomes + '\n' : '') + 'Reveals: ' + cardData;
+                }
+                
+                // Follow-up event indicator
+                if (line.includes('→ On Success, leads to:')) {
+                    i++;
+                    // Parse follow-up event
+                    const followup = parseFollowupEvent(lines, i);
+                    if (followup) {
+                        option.followupEvents.push(followup.data);
+                        i = followup.nextIndex - 1;
+                    }
+                }
+                
+                i++;
+            }
+
+            return { data: option, nextIndex: i };
+        }
+
+        function parseFollowupEvent(lines, startIndex) {
+            let i = startIndex;
+            
+            // ##### The remove stains spell (e_faen2_b1) - Rare
+            const eventLine = lines[i];
+            const eventMatch = eventLine.match(/^#####\s+(.+?)\s+\(([^)]+)\)/);
+            if (!eventMatch) return null;
+
+            const followup = {
+                name: eventMatch[1].trim(),
+                description: '',
+                gold: 0,
+                shards: 0,
+                exp: 0
+            };
+
+            i++;
+            
+            // Parse follow-up event details (simplified - can be expanded)
+            while (i < lines.length && lines[i].startsWith('######')) {
+                // Skip sub-options for now
+                i++;
+                while (i < lines.length && !lines[i].startsWith('######') && !lines[i].startsWith('####') && !lines[i].startsWith('###')) {
+                    i++;
+                }
+            }
+
+            return { data: followup, nextIndex: i };
+        }
+
+        function matchNodesToMap(parsedNodes, map) {
+            const results = {
+                matched: [],
+                unmatched: [],
+                nodesFound: parsedNodes.length,
+                nodesOnMap: map.nodes.length
+            };
+
+            parsedNodes.forEach(parsedNode => {
+                const existingNode = map.nodes.find(n => 
+                    n.name.toLowerCase() === parsedNode.name.toLowerCase()
+                );
+
+                if (existingNode) {
+                    results.matched.push({
+                        mapNode: existingNode,
+                        importData: parsedNode
+                    });
+                } else {
+                    results.unmatched.push(parsedNode);
+                }
+            });
+
+            return results;
+        }
+
+        function displayImportPreview(results) {
+            document.getElementById('importPreview').style.display = 'block';
+            document.getElementById('importNodesFound').textContent = results.nodesFound;
+            document.getElementById('importNodesMatch').textContent = results.matched.length;
+            document.getElementById('importNodesUnmatched').textContent = results.unmatched.length;
+
+            // Display matched nodes
+            const matchList = document.getElementById('importMatchList');
+            if (results.matched.length > 0) {
+                matchList.innerHTML = `
+                    <div style="font-weight: 600; color: var(--success); margin-bottom: 0.75rem;">
+                        ✓ ${results.matched.length} node${results.matched.length !== 1 ? 's' : ''} will be updated:
+                    </div>
+                    ${results.matched.map(match => `
+                        <div style="padding: 0.5rem; background: rgba(56, 161, 105, 0.1); border-radius: 4px; margin-bottom: 0.5rem; border-left: 3px solid var(--success);">
+                            <strong>${match.importData.name}</strong>
+                            <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-top: 0.25rem;">
+                                ${match.importData.variants.length} variant${match.importData.variants.length !== 1 ? 's' : ''}, 
+                                ${match.importData.variants.reduce((sum, v) => sum + v.options.length, 0)} total options
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            } else {
+                matchList.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: rgba(245, 230, 211, 0.5);">
+                        No matching nodes found on the map. Create nodes with matching names first.
+                    </div>
+                `;
+            }
+
+            // Display unmatched nodes
+            const unmatchedList = document.getElementById('importUnmatchedList');
+            if (results.unmatched.length > 0) {
+                unmatchedList.style.display = 'block';
+                unmatchedList.innerHTML = `
+                    <div style="font-weight: 600; color: var(--danger); margin-bottom: 0.5rem;">
+                        ⚠ ${results.unmatched.length} node${results.unmatched.length !== 1 ? 's' : ''} not found on map:
+                    </div>
+                    <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.8);">
+                        ${results.unmatched.map(n => n.name).join(', ')}
+                    </div>
+                    <div style="font-size: 0.8rem; color: rgba(245, 230, 211, 0.6); margin-top: 0.5rem;">
+                        Create nodes with these names first, then re-import.
+                    </div>
+                `;
+            } else {
+                unmatchedList.style.display = 'none';
+            }
+        }
+
+        async function executeImport() {
+            if (!importMatchResults || importMatchResults.matched.length === 0) {
+                alert('No nodes to import');
+                return;
+            }
+
+            const map = maps.find(m => m.id === currentMapId);
+            if (!map) return;
+
+            let updatedCount = 0;
+
+            importMatchResults.matched.forEach(match => {
+                const node = match.mapNode;
+                const importData = match.importData;
+
+                // Update node with imported data
+                node.variants = importData.variants.map(v => ({
+                    name: v.name,
+                    chance: v.chance,
+                    type: importData.type,
+                    description: v.description || '',
+                    mapLink: null,
+                    tags: v.tags || [],
+                    options: v.options || []
+                }));
+
+                // Update legacy fields for backward compatibility
+                if (node.variants.length > 0) {
+                    node.type = node.variants[0].type;
+                    node.description = node.variants[0].description;
+                    node.tags = node.variants[0].tags;
+                    node.options = node.variants[0].options;
+                }
+
+                updatedCount++;
+            });
+
+            // Save to database
+            await saveData();
+            
+            // Refresh display
+            renderMapCanvas();
+
+            alert(`✅ Successfully imported data for ${updatedCount} node${updatedCount !== 1 ? 's' : ''}!`);
+            closeImportModal();
+        }
 
         // Populate Divination Rewards Table
         function populateDivinationRewards() {
