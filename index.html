@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0 - OPTIMIZED</title>
+    <title>Map Forge v2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -305,6 +305,139 @@
 
         .btn-secondary:hover {
             background: rgba(139, 115, 85, 0.5);
+        }
+
+        /* Info Button & Divination Rewards Tooltip */
+        .info-button-container {
+            position: relative;
+            display: inline-block;
+            margin-left: 1rem;
+        }
+
+        .info-button {
+            background: rgba(139, 115, 85, 0.3);
+            color: var(--primary);
+            border: 1px solid var(--secondary);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: help;
+            transition: all 0.3s ease;
+        }
+
+        .info-button:hover {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .info-tooltip {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(to bottom, var(--dark), var(--darker));
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            min-width: 600px;
+            max-width: 800px;
+            box-shadow: 0 8px 32px var(--shadow);
+            z-index: 3000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            pointer-events: none;
+        }
+
+        .info-button-container:hover .info-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .info-tooltip::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid var(--primary);
+        }
+
+        .info-tooltip-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .rewards-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .rewards-table th,
+        .rewards-table td {
+            padding: 0.75rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(139, 115, 85, 0.3);
+        }
+
+        .rewards-table th {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .rewards-table td {
+            color: var(--light);
+            font-size: 0.95rem;
+        }
+
+        .rewards-table tr:hover td {
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .rarity-common { color: #9ca3af; }
+        .rarity-uncommon { color: #10b981; }
+        .rarity-rare { color: #3b82f6; }
+        .rarity-epic { color: #a855f7; }
+        .rarity-mythic { color: #f59e0b; }
+        .dust-amount { color: var(--accent); font-weight: 600; }
+
+        /* Image Source Tabs */
+        .image-source-tab {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .image-source-tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--darker);
+            border-color: var(--primary);
+        }
+
+        .image-source-content {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         /* Main Content */
@@ -1243,11 +1376,34 @@
         <!-- Header -->
         <div class="header">
             <div class="title">⚔ MAP FORGE v2.0 ⚔</div>
+            <div class="info-button-container">
+                <div class="info-button">ℹ️</div>
+                <div class="info-tooltip">
+                    <div class="info-tooltip-title">🔮 Divination Rewards</div>
+                    <table class="rewards-table">
+                        <thead>
+                            <tr>
+                                <th>Tier</th>
+                                <th class="rarity-common">Common</th>
+                                <th class="rarity-uncommon">Uncommon</th>
+                                <th class="rarity-rare">Rare</th>
+                                <th class="rarity-epic">Epic</th>
+                                <th class="rarity-mythic">Mythic</th>
+                                <th>Dust (Decline)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rewardsTierData">
+                            <!-- Tier data will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             <div class="search-container">
                 <input type="text" class="search-input" id="searchInput" placeholder="Search nodes, tags, or content...">
                 <div class="search-results" id="searchResults"></div>
             </div>
             <div class="header-actions">
+                <button class="btn btn-secondary" id="manageImagesBtn">🖼️ Image Library</button>
                 <button class="btn btn-secondary" id="addMapBtn">+ New Map</button>
                 <button class="btn btn-primary" id="addNodeBtn">+ Add Node</button>
             </div>
@@ -1418,15 +1574,51 @@
 
                 <div class="form-group">
                     <label class="form-label">Map Image</label>
-                    <input type="file" class="form-input" id="mapImageFile" accept="image/*" style="padding: 0.5rem;">
-                    <input type="text" class="form-input" id="mapImageUrl" placeholder="Or enter image URL" style="margin-top: 0.5rem;">
+                    
+                    <!-- Image Source Tabs -->
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                        <button type="button" class="btn btn-secondary btn-small image-source-tab active" data-source="storage" style="flex: 1;">
+                            📚 From Library
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-small image-source-tab" data-source="upload" style="flex: 1;">
+                            📤 Upload File
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-small image-source-tab" data-source="url" style="flex: 1;">
+                            🔗 URL
+                        </button>
+                    </div>
+                    
+                    <!-- Storage Selection -->
+                    <div id="imageSourceStorage" class="image-source-content">
+                        <select class="form-select" id="mapImageStorage">
+                            <option value="">Loading images...</option>
+                        </select>
+                        <small style="color: rgba(245, 230, 211, 0.6); display: block; margin-top: 0.5rem;">
+                            Select from uploaded images
+                        </small>
+                    </div>
+                    
+                    <!-- File Upload -->
+                    <div id="imageSourceUpload" class="image-source-content" style="display: none;">
+                        <input type="file" class="form-input" id="mapImageFile" accept="image/*" style="padding: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" id="uploadToStorage" checked style="cursor: pointer;">
+                            <span style="font-size: 0.9rem;">Save to library for reuse</span>
+                        </label>
+                    </div>
+                    
+                    <!-- URL Input -->
+                    <div id="imageSourceUrl" class="image-source-content" style="display: none;">
+                        <input type="text" class="form-input" id="mapImageUrl" placeholder="Enter image URL">
+                    </div>
+                    
                     <div id="imagePreviewContainer" style="margin-top: 1rem; display: none;">
                         <div style="font-size: 0.9rem; color: var(--primary); margin-bottom: 0.5rem;">Preview:</div>
                         <img id="imagePreview" style="max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid var(--secondary);">
                         <div id="imageStats" style="margin-top: 0.5rem; font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);"></div>
                     </div>
                     <small style="color: rgba(245, 230, 211, 0.6); display: block; margin-top: 0.5rem;">
-                        ✏¨ Images are automatically compressed to 85% quality and max 3000x3000px
+                        💡 Images are automatically compressed to 85% quality and max 3000x3000px
                     </small>
                 </div>
 
@@ -1436,6 +1628,42 @@
                     <button type="submit" class="btn btn-primary">Save Map</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Image Library Modal -->
+    <div class="modal" id="imageLibraryModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2 class="modal-title">🖼️ Image Library</h2>
+                <button class="close-btn" id="closeImageLibraryBtn">×</button>
+            </div>
+            
+            <!-- Upload Section -->
+            <div style="background: rgba(42, 35, 26, 0.5); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.1rem;">📤 Upload New Images</h3>
+                <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                    <input type="file" class="form-input" id="libraryUploadInput" accept="image/*" multiple style="flex: 1; padding: 0.5rem;">
+                    <button class="btn btn-primary" id="uploadToLibraryBtn">Upload</button>
+                </div>
+                <small style="display: block; margin-top: 0.5rem; color: rgba(245, 230, 211, 0.6);">
+                    💡 You can select multiple images at once. Images will be compressed to 85% quality and max 3000x3000px.
+                </small>
+                <div id="uploadProgress" style="display: none; margin-top: 1rem;">
+                    <div style="background: rgba(42, 35, 26, 0.8); border-radius: 4px; height: 24px; overflow: hidden;">
+                        <div id="uploadProgressBar" style="background: linear-gradient(135deg, var(--primary), var(--accent)); height: 100%; width: 0%; transition: width 0.3s ease; display: flex; align-items: center; justify-content: center; color: var(--darker); font-weight: 600; font-size: 0.85rem;"></div>
+                    </div>
+                    <div id="uploadStatus" style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--light);"></div>
+                </div>
+            </div>
+            
+            <!-- Images Grid -->
+            <div>
+                <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.1rem;">📚 Your Images</h3>
+                <div id="imageLibraryGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; max-height: 60vh; overflow-y: auto;">
+                    <!-- Images will be loaded here -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1506,6 +1734,7 @@
         // ==========================================
         const SUPABASE_URL = 'https://sczwwgszicbwomriucuz.supabase.co'; // e.g., 'https://xxxxx.supabase.co'
         const SUPABASE_ANON_KEY = 'sb_publishable_7Zh2AuEoohMwZKFLdTZjHQ_9fmeso6p'; // Publishable key
+        const SUPABASE_STORAGE_BUCKET = 'map-images'; // Storage bucket name for map images
 
         // Initialize Supabase client
         const { createClient } = supabase;
@@ -1527,6 +1756,21 @@
         let isAddingNode = false;
         let pendingNodePosition = null;
         let isSaving = false; // Flag to prevent real-time reload during saves
+
+        // Divination Tier Rewards Data
+        // TO UPDATE: Edit these values with your actual tier reward data from the Excel sheet
+        const divinationTierRewards = [
+            { tier: 1, common: '75%', uncommon: '20%', rare: '4%', epic: '0.9%', mythic: '0.1%', dust: 50 },
+            { tier: 2, common: '70%', uncommon: '23%', rare: '5%', epic: '1.8%', mythic: '0.2%', dust: 100 },
+            { tier: 3, common: '65%', uncommon: '25%', rare: '7%', epic: '2.7%', mythic: '0.3%', dust: 150 },
+            { tier: 4, common: '60%', uncommon: '27%', rare: '9%', epic: '3.6%', mythic: '0.4%', dust: 200 },
+            { tier: 5, common: '55%', uncommon: '29%', rare: '11%', epic: '4.5%', mythic: '0.5%', dust: 250 },
+            { tier: 6, common: '50%', uncommon: '30%', rare: '14%', epic: '5.4%', mythic: '0.6%', dust: 300 },
+            { tier: 7, common: '45%', uncommon: '30%', rare: '17%', epic: '7.2%', mythic: '0.8%', dust: 400 },
+            { tier: 8, common: '40%', uncommon: '30%', rare: '20%', epic: '9%', mythic: '1%', dust: 500 },
+            { tier: 9, common: '35%', uncommon: '30%', rare: '23%', epic: '10.8%', mythic: '1.2%', dust: 600 },
+            { tier: 10, common: '30%', uncommon: '30%', rare: '26%', epic: '12.6%', mythic: '1.4%', dust: 750 }
+        ];
 
         // Pan and Zoom
         let scale = 1;
@@ -1630,11 +1874,13 @@
         function enableAdminFeatures() {
             document.getElementById('addNodeBtn').style.display = 'block';
             document.getElementById('addMapBtn').style.display = 'block';
+            document.getElementById('manageImagesBtn').style.display = 'block';
         }
 
         function disableAdminFeatures() {
             document.getElementById('addNodeBtn').style.display = 'none';
             document.getElementById('addMapBtn').style.display = 'none';
+            document.getElementById('manageImagesBtn').style.display = 'none';
         }
 
         function setupRealtimeSync() {
@@ -1673,6 +1919,215 @@
             saveData();
         }
 
+        // ==========================================
+        // SUPABASE STORAGE FUNCTIONS
+        // ==========================================
+        
+        // Upload image to Supabase Storage
+        async function uploadImageToStorage(file) {
+            try {
+                const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+                const { data, error } = await supabaseClient.storage
+                    .from(SUPABASE_STORAGE_BUCKET)
+                    .upload(fileName, file, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+                
+                if (error) {
+                    throw new Error(error.message || 'Failed to upload image');
+                }
+                
+                // Get public URL
+                const { data: urlData } = supabaseClient.storage
+                    .from(SUPABASE_STORAGE_BUCKET)
+                    .getPublicUrl(fileName);
+                
+                return urlData.publicUrl;
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                throw error;
+            }
+        }
+        
+        // List all images from Supabase Storage
+        async function listStorageImages() {
+            try {
+                const { data, error } = await supabaseClient.storage
+                    .from(SUPABASE_STORAGE_BUCKET)
+                    .list('', {
+                        limit: 100,
+                        sortBy: { column: 'created_at', order: 'desc' }
+                    });
+                
+                if (error) {
+                    throw new Error(error.message || 'Failed to list images');
+                }
+                
+                // Get public URLs for all images
+                return data.map(file => {
+                    const { data: urlData } = supabaseClient.storage
+                        .from(SUPABASE_STORAGE_BUCKET)
+                        .getPublicUrl(file.name);
+                    return {
+                        name: file.name,
+                        url: urlData.publicUrl,
+                        created_at: file.created_at
+                    };
+                });
+            } catch (error) {
+                console.error('Error listing images:', error);
+                return [];
+            }
+        }
+        
+        // Populate storage dropdown
+        async function populateStorageDropdown() {
+            const dropdown = document.getElementById('mapImageStorage');
+            if (!dropdown) return;
+            
+            try {
+                dropdown.innerHTML = '<option value="">Loading images...</option>';
+                const images = await listStorageImages();
+                
+                if (images.length === 0) {
+                    dropdown.innerHTML = '<option value="">No images uploaded yet</option>';
+                } else {
+                    dropdown.innerHTML = '<option value="">-- Select an image --</option>' +
+                        images.map(img => `<option value="${img.url}">${img.name}</option>`).join('');
+                }
+            } catch (error) {
+                dropdown.innerHTML = '<option value="">Error loading images</option>';
+                console.error('Error populating dropdown:', error);
+            }
+        }
+
+        // ==========================================
+        // IMAGE LIBRARY MANAGEMENT
+        // ==========================================
+        
+        // Open image library modal
+        function openImageLibrary() {
+            document.getElementById('imageLibraryModal').classList.add('active');
+            loadImageLibrary();
+        }
+        
+        // Close image library modal
+        function closeImageLibrary() {
+            document.getElementById('imageLibraryModal').classList.remove('active');
+        }
+        
+        // Load and display images in library
+        async function loadImageLibrary() {
+            const grid = document.getElementById('imageLibraryGrid');
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: rgba(245, 230, 211, 0.6);">Loading images...</div>';
+            
+            try {
+                const images = await listStorageImages();
+                
+                if (images.length === 0) {
+                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: rgba(245, 230, 211, 0.6);">No images uploaded yet. Upload some images above to get started!</div>';
+                    return;
+                }
+                
+                grid.innerHTML = images.map(img => `
+                    <div class="image-library-item" style="position: relative; background: rgba(42, 35, 26, 0.5); border-radius: 8px; overflow: hidden; border: 1px solid var(--secondary); transition: all 0.3s ease;" onmouseenter="this.style.borderColor='var(--primary)'" onmouseleave="this.style.borderColor='var(--secondary)'">
+                        <img src="${img.url}" alt="${img.name}" style="width: 100%; height: 150px; object-fit: cover;">
+                        <div style="padding: 0.75rem;">
+                            <div style="font-size: 0.85rem; color: var(--light); margin-bottom: 0.5rem; word-break: break-all;">${img.name}</div>
+                            <button class="btn btn-danger btn-small" onclick="deleteImageFromLibrary('${img.name}')" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--danger);">Error loading images: ' + error.message + '</div>';
+            }
+        }
+        
+        // Upload images to library
+        async function uploadImagesToLibrary() {
+            const input = document.getElementById('libraryUploadInput');
+            const files = input.files;
+            
+            if (!files || files.length === 0) {
+                alert('Please select at least one image');
+                return;
+            }
+            
+            const progress = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const status = document.getElementById('uploadStatus');
+            
+            progress.style.display = 'block';
+            let completed = 0;
+            const total = files.length;
+            
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    status.textContent = `Uploading ${i + 1}/${total}: ${file.name}`;
+                    
+                    // Compress image
+                    const compressedDataUrl = await compressImage(file, 3000, 3000, 0.85);
+                    const blob = await (await fetch(compressedDataUrl)).blob();
+                    const compressedFile = new File([blob], file.name, { type: file.type });
+                    
+                    // Upload to storage
+                    await uploadImageToStorage(compressedFile);
+                    
+                    completed++;
+                    const percent = Math.round((completed / total) * 100);
+                    progressBar.style.width = percent + '%';
+                    progressBar.textContent = percent + '%';
+                }
+                
+                status.textContent = `✅ Successfully uploaded ${total} image(s)!`;
+                
+                // Clear input and reload library
+                input.value = '';
+                await loadImageLibrary();
+                await populateStorageDropdown(); // Refresh dropdown too
+                
+                // Hide progress after 2 seconds
+                setTimeout(() => {
+                    progress.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }, 2000);
+                
+            } catch (error) {
+                status.textContent = '❌ Error: ' + error.message;
+                console.error('Upload error:', error);
+            }
+        }
+        
+        // Delete image from library
+        async function deleteImageFromLibrary(fileName) {
+            if (!confirm(`Delete "${fileName}" from library?\n\nNote: Maps using this image will not be affected (they have their own copy).`)) {
+                return;
+            }
+            
+            try {
+                const { error } = await supabaseClient.storage
+                    .from(SUPABASE_STORAGE_BUCKET)
+                    .remove([fileName]);
+                
+                if (error) {
+                    throw new Error(error.message || 'Failed to delete image');
+                }
+                
+                // Reload library
+                await loadImageLibrary();
+                await populateStorageDropdown();
+                
+            } catch (error) {
+                alert('Error deleting image: ' + error.message);
+                console.error('Delete error:', error);
+            }
+        }
+
         function setupEventListeners() {
             // Add Node Button
             document.getElementById('addNodeBtn').addEventListener('click', () => {
@@ -1684,6 +2139,29 @@
                 modeIndicator.classList.add('active');
                 mapCanvas.classList.add('adding-node');
             });
+
+            // Image Library Button
+            document.getElementById('manageImagesBtn').addEventListener('click', () => {
+                if (!isAdmin) {
+                    alert('Admin access required');
+                    return;
+                }
+                openImageLibrary();
+            });
+            
+            // Image Library Modal
+            document.getElementById('closeImageLibraryBtn').addEventListener('click', closeImageLibrary);
+            document.getElementById('uploadToLibraryBtn').addEventListener('click', uploadImagesToLibrary);
+            
+            // Prevent closing image library modal when clicking outside
+            const imageLibraryModal = document.getElementById('imageLibraryModal');
+            if (imageLibraryModal) {
+                imageLibraryModal.addEventListener('click', (e) => {
+                    if (e.target === imageLibraryModal) {
+                        e.stopPropagation();
+                    }
+                });
+            }
 
             // Add Map Button
             document.getElementById('addMapBtn').addEventListener('click', () => {
@@ -1889,6 +2367,37 @@
                 }
             }, { passive: false });
             
+            // Image source tabs
+            document.querySelectorAll('.image-source-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Update active tab
+                    document.querySelectorAll('.image-source-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show corresponding content
+                    const source = tab.dataset.source;
+                    document.querySelectorAll('.image-source-content').forEach(content => {
+                        content.style.display = 'none';
+                    });
+                    document.getElementById(`imageSource${source.charAt(0).toUpperCase() + source.slice(1)}`).style.display = 'block';
+                    
+                    // Load storage images when switching to storage tab
+                    if (source === 'storage') {
+                        populateStorageDropdown();
+                    }
+                });
+            });
+            
+            // Storage dropdown change
+            const storageDropdown = document.getElementById('mapImageStorage');
+            if (storageDropdown) {
+                storageDropdown.addEventListener('change', (e) => {
+                    if (e.target.value) {
+                        showImagePreview(e.target.value);
+                    }
+                });
+            }
+            
             // Image preview for map upload
             const mapImageFileInput = document.getElementById('mapImageFile');
             if (mapImageFileInput) {
@@ -2029,19 +2538,29 @@
             // Sort by displayOrder
             rootMaps.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
             
+            // Helper function to get all ancestor IDs of a map
+            function getAncestors(mapId) {
+                const ancestors = [];
+                let currentMap = maps.find(m => m.id === mapId);
+                while (currentMap && currentMap.parentId) {
+                    ancestors.push(currentMap.parentId);
+                    currentMap = maps.find(m => m.id === currentMap.parentId);
+                }
+                return ancestors;
+            }
+            
+            // Get all ancestors of the currently selected map
+            const ancestorIds = currentMapId ? getAncestors(currentMapId) : [];
+            
             // Render all root maps
             rootMaps.forEach(map => {
                 renderMapItem(map);
                 
-                // Find the current map to determine which submaps to show
-                const currentMap = maps.find(m => m.id === currentMapId);
-                const currentMapParentId = currentMap?.parentId;
-                
                 // Show submaps if:
-                // 1. This map is selected (viewing parent)
-                // 2. OR we're viewing a submap of this parent (keep siblings visible)
-                if (currentMapId === map.id || currentMapParentId === map.id) {
-                    renderSubmaps(map.id, 1);
+                // 1. This map is selected (viewing this root map)
+                // 2. OR this map is an ancestor of the selected map (keep hierarchy visible)
+                if (currentMapId === map.id || ancestorIds.includes(map.id)) {
+                    renderSubmaps(map.id, 1, ancestorIds);
                 }
             });
         }
@@ -2099,13 +2618,19 @@
             mapList.appendChild(li);
         }
 
-        function renderSubmaps(parentId, level) {
+        function renderSubmaps(parentId, level, ancestorIds = []) {
             const submaps = maps.filter(m => m.parentId === parentId);
             // Sort by displayOrder if it exists
             submaps.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
             submaps.forEach(map => {
                 renderMapItem(map, level);
-                renderSubmaps(map.id, level + 1);
+                
+                // Recursively render submaps if this map is:
+                // 1. The currently selected map, OR
+                // 2. An ancestor of the selected map (to keep the path visible)
+                if (currentMapId === map.id || ancestorIds.includes(map.id)) {
+                    renderSubmaps(map.id, level + 1, ancestorIds);
+                }
             });
         }
 
@@ -3754,17 +4279,19 @@
             editingMapId = null;
         }
 
-        function saveMap(e) {
+        async function saveMap(e) {
             e.preventDefault();
             
             const mapName = document.getElementById('mapName').value;
             const parentId = document.getElementById('parentMap').value || null;
-            const imageUrl = document.getElementById('mapImageUrl').value;
-            const imageFile = document.getElementById('mapImageFile').files[0];
             
-            console.log('Saving map:', { mapName, parentId, imageUrl, imageFile, editingMapId });
+            // Determine which image source is active
+            const activeTab = document.querySelector('.image-source-tab.active');
+            const activeSource = activeTab ? activeTab.dataset.source : 'upload';
             
-            function finalizeMap(finalImageUrl) {
+            console.log('Saving map:', { mapName, parentId, activeSource, editingMapId });
+            
+            async function finalizeMap(finalImageUrl) {
                 if (editingMapId) {
                     // Update existing map
                     const map = maps.find(m => m.id === editingMapId);
@@ -3774,7 +4301,7 @@
                         map.imageUrl = finalImageUrl;
                         console.log('Updated map:', map);
                     }
-                    saveData();
+                    await saveData();
                     renderMaps();
                     renderMapCanvas();
                 } else {
@@ -3788,7 +4315,7 @@
                     };
                     maps.push(newMap);
                     console.log('Created new map:', newMap);
-                    saveData();
+                    await saveData();
                     renderMaps();
                     selectMap(newMap.id);
                 }
@@ -3796,29 +4323,66 @@
                 closeMapModal();
             }
             
-            // Handle file upload with compression
-            if (imageFile) {
+            try {
                 showLoading();
-                compressImage(imageFile, 3000, 3000, 0.85)
-                    .then(compressedDataUrl => {
+                
+                if (activeSource === 'storage') {
+                    // Use selected image from storage
+                    const storageUrl = document.getElementById('mapImageStorage').value;
+                    if (!storageUrl) {
                         hideLoading();
-                        console.log('Image compressed successfully');
-                        finalizeMap(compressedDataUrl);
-                    })
-                    .catch(error => {
+                        alert('Please select an image from the library');
+                        return;
+                    }
+                    await finalizeMap(storageUrl);
+                    
+                } else if (activeSource === 'upload') {
+                    // Handle file upload
+                    const imageFile = document.getElementById('mapImageFile').files[0];
+                    const uploadToStorage = document.getElementById('uploadToStorage').checked;
+                    
+                    if (!imageFile) {
                         hideLoading();
-                        console.error('Compression error:', error);
-                        alert('Error processing image. Using original...');
+                        alert('Please select a file to upload');
+                        return;
+                    }
+                    
+                    // Compress image first
+                    const compressedDataUrl = await compressImage(imageFile, 3000, 3000, 0.85);
+                    
+                    if (uploadToStorage && isAdmin) {
+                        // Convert data URL back to file for Supabase Storage
+                        const blob = await (await fetch(compressedDataUrl)).blob();
+                        const compressedFile = new File([blob], imageFile.name, { type: imageFile.type });
                         
-                        // Fallback to original method
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            finalizeMap(event.target.result);
-                        };
-                        reader.readAsDataURL(imageFile);
-                    });
-            } else {
-                finalizeMap(imageUrl);
+                        // Upload to storage
+                        const storageUrl = await uploadImageToStorage(compressedFile);
+                        await finalizeMap(storageUrl);
+                        
+                        // Refresh storage dropdown
+                        await populateStorageDropdown();
+                    } else {
+                        // Use data URL directly
+                        await finalizeMap(compressedDataUrl);
+                    }
+                    
+                } else if (activeSource === 'url') {
+                    // Use URL
+                    const imageUrl = document.getElementById('mapImageUrl').value;
+                    if (!imageUrl) {
+                        hideLoading();
+                        alert('Please enter an image URL');
+                        return;
+                    }
+                    await finalizeMap(imageUrl);
+                }
+                
+                hideLoading();
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Error saving map:', error);
+                alert('Error saving map: ' + (error.message || 'Unknown error'));
             }
         }
 
@@ -4203,7 +4767,10 @@
                         updated_at: new Date().toISOString()
                     })));
                 
-                if (error) throw error;
+                if (error) {
+                    // Create a clean error object without Headers
+                    throw new Error(error.message || 'Failed to save data to Supabase');
+                }
                 console.log(silent ? 'Saved to Supabase (silent)' : 'Saved to Supabase');
                 
                 if (!silent) hideLoading();
@@ -4216,9 +4783,10 @@
             } catch (error) {
                 if (!silent) hideLoading();
                 isSaving = false; // Clear flag on error
-                console.error('Error saving:', error);
-                if (!silent) alert('Error saving changes: ' + error.message);
-                throw error;
+                console.error('Error saving:', error.message || error);
+                if (!silent) alert('Error saving changes: ' + (error.message || 'Unknown error'));
+                // Don't re-throw, just log - prevents DataCloneError
+                return Promise.reject(error.message || error);
             }
         }
 
@@ -4235,7 +4803,8 @@
                 
                 if (error) {
                     console.error('Supabase error:', error);
-                    throw error;
+                    // Create a clean error object without Headers
+                    throw new Error(error.message || 'Failed to load data from Supabase');
                 }
                 
                 if (data && data.length > 0) {
@@ -4251,7 +4820,7 @@
                     maps = [];
                 }
             } catch (error) {
-                console.error('Error loading from Supabase:', error);
+                console.error('Error loading from Supabase:', error.message || error);
                 
                 // Check for network errors
                 if (error.message && error.message.includes('Failed to fetch')) {
@@ -4328,7 +4897,10 @@
                     password
                 });
                 
-                if (error) throw error;
+                if (error) {
+                    // Create a clean error object without Headers
+                    throw new Error(error.message || 'Authentication failed');
+                }
                 
                 currentUser = data.user;
                 isAdmin = true;
@@ -4338,7 +4910,7 @@
                 // Re-initialize as admin, preserving current view position
                 await initializeApp(true);
             } catch (error) {
-                errorEl.textContent = error.message;
+                errorEl.textContent = error.message || 'Login failed';
                 hideLoading();
             }
         });
@@ -4350,6 +4922,27 @@
             }
             location.reload();
         });
+
+        // Populate Divination Rewards Table
+        function populateDivinationRewards() {
+            const tbody = document.getElementById('rewardsTierData');
+            if (!tbody) return;
+            
+            tbody.innerHTML = divinationTierRewards.map(tier => `
+                <tr>
+                    <td><strong>Tier ${tier.tier}</strong></td>
+                    <td class="rarity-common">${tier.common}</td>
+                    <td class="rarity-uncommon">${tier.uncommon}</td>
+                    <td class="rarity-rare">${tier.rare}</td>
+                    <td class="rarity-epic">${tier.epic}</td>
+                    <td class="rarity-mythic">${tier.mythic}</td>
+                    <td class="dust-amount">${tier.dust} 💎</td>
+                </tr>
+            `).join('');
+        }
+        
+        // Initialize rewards table immediately
+        populateDivinationRewards();
 
         // Start app as viewer by default
         (async function() {
