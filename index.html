@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -2334,6 +2334,9 @@
             // Import Modal
             document.getElementById('closeImportModalBtn').addEventListener('click', closeImportModal);
             document.getElementById('importFileInput').addEventListener('change', handleImportFile);
+            
+            // Test that event listener is working
+            console.log('Import file input event listener registered successfully');
             document.getElementById('executeImportBtn').addEventListener('click', executeImport);
             
             // Prevent closing import modal when clicking outside
@@ -5207,29 +5210,53 @@
 
         async function handleImportFile(e) {
             const file = e.target.files[0];
-            if (!file) return;
+            if (!file) {
+                console.log('No file selected');
+                return;
+            }
+
+            // IMMEDIATE VISIBLE CONFIRMATION
+            alert('File selected: ' + file.name + '\nSize: ' + file.size + ' bytes\n\nCheck console for parsing details.');
+
+            console.log('=== IMPORT FILE SELECTED ===');
+            console.log('File name:', file.name);
+            console.log('File size:', file.size);
 
             try {
+                console.log('Reading file...');
                 const text = await file.text();
+                console.log('File read successfully, length:', text.length);
+                
+                console.log('Starting parseNodeMarkdown...');
                 parsedImportData = parseNodeMarkdown(text);
+                console.log('Parsing complete, nodes found:', parsedImportData.length);
                 
                 // Match with existing nodes on map
                 const map = maps.find(m => m.id === currentMapId);
                 if (!map) {
+                    console.error('No map selected!');
                     alert('Please select a map first');
                     return;
                 }
 
+                console.log('Matching nodes to map:', map.name);
                 importMatchResults = matchNodesToMap(parsedImportData, map);
+                console.log('Match results:', importMatchResults);
+                
                 displayImportPreview(importMatchResults);
                 
             } catch (error) {
-                console.error('Error parsing import file:', error);
-                alert('Error reading file: ' + error.message);
+                console.error('=== IMPORT ERROR ===');
+                console.error('Error:', error);
+                console.error('Stack:', error.stack);
+                alert('Error reading file: ' + error.message + '\n\nCheck console (F12) for details.');
             }
         }
 
         function parseNodeMarkdown(text) {
+            console.log('=== parseNodeMarkdown CALLED ===');
+            console.log('Text length:', text ? text.length : 'NULL');
+            
             const nodes = [];
             const lines = text.split('\n');
             let i = 0;
