@@ -1775,10 +1775,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Upload Markdown File</label>
-                    <input type="file" class="form-input" id="importFileInput" accept=".md,.txt" style="padding: 0.5rem;">
+                    <label class="form-label">Upload Data File</label>
+                    <input type="file" class="form-input" id="importFileInput" accept=".js,.md,.txt" style="padding: 0.5rem;">
                     <small style="color: rgba(245, 230, 211, 0.6); display: block; margin-top: 0.5rem;">
-                        Upload your node data file (e.g., Faeborg_Nodes_By_Location.md)
+                        Upload faeborg_nodes.js (recommended) or markdown file
                     </small>
                 </div>
 
@@ -5215,9 +5215,6 @@
                 return;
             }
 
-            // IMMEDIATE VISIBLE CONFIRMATION
-            alert('File selected: ' + file.name + '\nSize: ' + file.size + ' bytes\n\nCheck console for parsing details.');
-
             console.log('=== IMPORT FILE SELECTED ===');
             console.log('File name:', file.name);
             console.log('File size:', file.size);
@@ -5227,8 +5224,17 @@
                 const text = await file.text();
                 console.log('File read successfully, length:', text.length);
                 
-                console.log('Starting parseNodeMarkdown...');
-                parsedImportData = parseNodeMarkdown(text);
+                // Detect file type
+                const isJavaScript = file.name.endsWith('.js');
+                
+                if (isJavaScript) {
+                    console.log('Parsing as JavaScript...');
+                    parsedImportData = parseJavaScriptNodes(text);
+                } else {
+                    console.log('Parsing as Markdown...');
+                    parsedImportData = parseNodeMarkdown(text);
+                }
+                
                 console.log('Parsing complete, nodes found:', parsedImportData.length);
                 
                 // Match with existing nodes on map
@@ -5251,6 +5257,23 @@
                 console.error('Stack:', error.stack);
                 alert('Error reading file: ' + error.message + '\n\nCheck console (F12) for details.');
             }
+        }
+        
+        function parseJavaScriptNodes(jsText) {
+            console.log('=== PARSING JAVASCRIPT ===');
+            
+            // Extract the FAEBORG_NODES array
+            // Execute the JavaScript in a safe way
+            const nodes = eval(`(function() { ${jsText}; return FAEBORG_NODES; })()`);
+            
+            if (!Array.isArray(nodes)) {
+                throw new Error('JavaScript file must export FAEBORG_NODES array');
+            }
+            
+            console.log(`Loaded ${nodes.length} nodes from JavaScript`);
+            
+            // Return in same format as markdown parser
+            return nodes;
         }
 
         function parseNodeMarkdown(text) {
@@ -5376,31 +5399,43 @@
                 }
             }
 
+            console.log(`  After requirements, at line ${i}: "${lines[i]?.substring(0, 50)}"`);
+
             // Skip until we find Options header or hit next variant/node
             while (i < lines.length && !lines[i].includes('**Options:**') && 
                    !lines[i].startsWith('###') && !lines[i].startsWith('##')) {
                 i++;
             }
             
+            console.log(`  Found Options at line ${i}: "${lines[i]?.substring(0, 50)}"`);
+            
             // Skip the **Options:** line if present
             if (i < lines.length && lines[i].includes('**Options:**')) {
                 i++;
             }
 
+            console.log(`  Starting option parse at line ${i}: "${lines[i]?.substring(0, 50)}"`);
+
             // Parse each option - continue until we hit next variant or node
+            let optionCount = 0;
             while (i < lines.length) {
                 // Stop if we hit next variant or next node
                 if (lines[i].startsWith('###') || lines[i].startsWith('##')) {
+                    console.log(`  Hit boundary at line ${i}: "${lines[i].substring(0, 50)}"`);
                     break;
                 }
                 
                 // Parse option if line starts with ####
                 if (lines[i].startsWith('####')) {
+                    console.log(`  Parsing option at line ${i}: "${lines[i].substring(0, 60)}"`);
                     const option = parseOption(lines, i);
                     if (option) {
                         variant.options.push(option.data);
+                        optionCount++;
+                        console.log(`    Option ${optionCount} parsed: "${option.data.label}"`);
                         i = option.nextIndex;
                     } else {
+                        console.warn(`    Failed to parse option at line ${i}`);
                         i++;
                     }
                 } else {
@@ -5411,10 +5446,8 @@
 
             console.log(`Parsed variant "${variant.name}" with ${variant.options.length} options`);
 
-            // Consolidate duplicate character options
-            variant.options = consolidateOptions(variant.options);
-            
-            console.log(`After consolidation: ${variant.options.length} options`);
+            // CONSOLIDATION DISABLED - user will handle manually
+            // variant.options = consolidateOptions(variant.options);
 
             return { data: variant, nextIndex: i };
         }
