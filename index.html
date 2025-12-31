@@ -5234,6 +5234,8 @@
             const lines = text.split('\n');
             let i = 0;
 
+            console.log(`=== PARSING MARKDOWN: ${lines.length} lines ===`);
+
             while (i < lines.length) {
                 const line = lines[i];
                 
@@ -5243,9 +5245,12 @@
                     const nodeId = nodeMatch[1].trim();
                     const nodeName = nodeMatch[2].trim();
                     
+                    console.log(`\nFound node: ${nodeName} (${nodeId})`);
+                    
                     // Skip "No events or combats" nodes
                     i++;
                     if (i < lines.length && lines[i].includes('*No events or combats*')) {
+                        console.log(`  Skipping (no events)`);
                         i++;
                         continue;
                     }
@@ -5264,19 +5269,29 @@
                             const chanceMatch = lines[i].match(/Spawn Chance:\s*([\d.]+)%/);
                             if (chanceMatch) {
                                 nodeData.spawnChance = parseFloat(chanceMatch[1]);
+                                console.log(`  Spawn chance: ${nodeData.spawnChance}%`);
                             }
                         }
                         i++;
                     }
 
                     // Parse variants (events)
-                    while (i < lines.length && lines[i].startsWith('###') && !lines[i+1]?.startsWith('##')) {
+                    while (i < lines.length && lines[i].startsWith('###')) {
+                        console.log(`  Parsing variant at line ${i}: ${lines[i].substring(0, 50)}...`);
                         const variant = parseVariant(lines, i);
                         if (variant) {
                             nodeData.variants.push(variant.data);
                             i = variant.nextIndex;
+                            console.log(`  Variant parsed, now at line ${i}`);
                         } else {
+                            // If parsing failed, skip this line
+                            console.warn(`  Failed to parse variant at line ${i}`);
                             i++;
+                        }
+                        
+                        // Stop if we hit the next node
+                        if (i < lines.length && lines[i].startsWith('##')) {
+                            break;
                         }
                     }
 
@@ -5289,12 +5304,14 @@
                         nodeData.type = 'combat';
                     }
 
+                    console.log(`  Node complete: ${nodeData.variants.length} variants, type: ${nodeData.type}`);
                     nodes.push(nodeData);
                 } else {
                     i++;
                 }
             }
 
+            console.log(`\n=== PARSING COMPLETE: ${nodes.length} nodes found ===`);
             return nodes;
         }
 
@@ -5304,7 +5321,10 @@
             
             // ### The wounded thief (e_faen2_a) - Common - 60%
             const variantMatch = variantLine.match(/^###\s+(.+?)\s+\(([^)]+)\)\s+-\s+(\w+)\s+-\s+([\d.]+)%/);
-            if (!variantMatch) return null;
+            if (!variantMatch) {
+                console.warn('Could not parse variant line:', variantLine);
+                return null;
+            }
 
             const variant = {
                 name: variantMatch[1].trim(),
@@ -5329,25 +5349,45 @@
                 }
             }
 
-            // Parse options
-            while (i < lines.length && lines[i].includes('**Options:**')) {
+            // Skip until we find Options header or hit next variant/node
+            while (i < lines.length && !lines[i].includes('**Options:**') && 
+                   !lines[i].startsWith('###') && !lines[i].startsWith('##')) {
                 i++;
-                break;
+            }
+            
+            // Skip the **Options:** line if present
+            if (i < lines.length && lines[i].includes('**Options:**')) {
+                i++;
             }
 
-            // Parse each option
-            while (i < lines.length && lines[i].startsWith('####')) {
-                const option = parseOption(lines, i);
-                if (option) {
-                    variant.options.push(option.data);
-                    i = option.nextIndex;
+            // Parse each option - continue until we hit next variant or node
+            while (i < lines.length) {
+                // Stop if we hit next variant or next node
+                if (lines[i].startsWith('###') || lines[i].startsWith('##')) {
+                    break;
+                }
+                
+                // Parse option if line starts with ####
+                if (lines[i].startsWith('####')) {
+                    const option = parseOption(lines, i);
+                    if (option) {
+                        variant.options.push(option.data);
+                        i = option.nextIndex;
+                    } else {
+                        i++;
+                    }
                 } else {
+                    // Skip blank lines or other content
                     i++;
                 }
             }
 
+            console.log(`Parsed variant "${variant.name}" with ${variant.options.length} options`);
+
             // Consolidate duplicate character options
             variant.options = consolidateOptions(variant.options);
+            
+            console.log(`After consolidation: ${variant.options.length} options`);
 
             return { data: variant, nextIndex: i };
         }
@@ -5447,12 +5487,28 @@
             const optionLine = lines[i];
             
             // #### 1. Leave - Ignore him, he deserves to die here.
-            const optionMatch = optionLine.match(/^####\s+\d+\.\s+(.+?)\s+-\s+(.+)$/);
-            if (!optionMatch) return null;
+            // Or: #### 1. Leave
+            let optionMatch = optionLine.match(/^####\s+\d+\.\s+(.+?)\s+-\s+(.+)$/);
+            let label, description;
+            
+            if (optionMatch) {
+                label = optionMatch[1].trim();
+                description = optionMatch[2].trim();
+            } else {
+                // Try without description
+                optionMatch = optionLine.match(/^####\s+\d+\.\s+(.+)$/);
+                if (optionMatch) {
+                    label = optionMatch[1].trim();
+                    description = '';
+                } else {
+                    console.warn('Could not parse option line:', optionLine);
+                    return null;
+                }
+            }
 
             const option = {
-                label: optionMatch[1].trim(),
-                description: optionMatch[2].trim(),
+                label: label,
+                description: description,
                 gold: 0,
                 shards: 0,
                 exp: 0,
