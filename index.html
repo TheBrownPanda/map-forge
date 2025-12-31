@@ -5488,12 +5488,20 @@
             
             // #### 1. Leave - Ignore him, he deserves to die here.
             // Or: #### 1. Leave
+            // Or: #### 1. CharacterName - Description
             let optionMatch = optionLine.match(/^####\s+\d+\.\s+(.+?)\s+-\s+(.+)$/);
             let label, description;
             
             if (optionMatch) {
                 label = optionMatch[1].trim();
                 description = optionMatch[2].trim();
+                
+                // If label is "CharacterName", use the description as the label for now
+                // It will be consolidated later
+                if (label === 'CharacterName') {
+                    label = description;
+                    description = '';
+                }
             } else {
                 // Try without description
                 optionMatch = optionLine.match(/^####\s+\d+\.\s+(.+)$/);
@@ -5514,6 +5522,8 @@
                 exp: 0,
                 onSuccess: '',
                 onFail: '',
+                onCritSuccess: '',
+                onCritFail: '',
                 successGold: 0,
                 successShards: 0,
                 successExp: 0,
@@ -5521,38 +5531,70 @@
                 failShards: 0,
                 failExp: 0,
                 outcomes: '',
-                followupEvents: []
+                followupEvents: [],
+                requirements: ''
             };
 
             i++;
 
-            // Parse option details
+            // Parse option details - look at indented lines
             while (i < lines.length && !lines[i].startsWith('####') && !lines[i].startsWith('###') && !lines[i].startsWith('##')) {
                 const line = lines[i].trim();
                 
-                // Requirements
-                if (line.startsWith('**Requirements:**')) {
-                    option.requirements = line.substring(18).trim();
+                // Skip empty lines
+                if (!line) {
+                    i++;
+                    continue;
                 }
                 
-                // Success line
-                if (line.startsWith('**Success:**')) {
-                    const successData = line.substring(12);
-                    const expMatch = successData.match(/EXP:\s*([\d.]+)/);
-                    const goldMatch = successData.match(/Gold:\s*([\d.]+)/);
-                    const shardsMatch = successData.match(/Shards:\s*([\d.]+)/);
-                    const dustMatch = successData.match(/Dust:\s*([\d.]+)/);
-                    const unlocksMatch = successData.match(/Unlocks:\s*(\w+)/);
-                    const cardMatch = successData.match(/Card:\s*(\w+)/);
-                    const combatMatch = successData.match(/Combat\s*\(([^)]+)\)/);
+                // Requirements
+                if (line.startsWith('**Requirements:**')) {
+                    const reqData = line.substring(18).trim();
                     
+                    // Parse Character: Name
+                    const charMatch = reqData.match(/Character:\s*(\w+)/);
+                    if (charMatch) {
+                        option.requirements = 'Character: ' + charMatch[1];
+                    }
+                    
+                    // Parse Gold Cost
+                    const goldCostMatch = reqData.match(/Gold Cost:\s*([\d.]+)/);
+                    if (goldCostMatch) {
+                        option.gold = -parseFloat(goldCostMatch[1]); // Negative for cost
+                    }
+                }
+                
+                // Success line - can have multiple values separated by |
+                if (line.startsWith('**Success:**')) {
+                    const successData = line.substring(12).trim();
+                    
+                    // Parse EXP
+                    const expMatch = successData.match(/EXP:\s*([\d.]+)/);
                     if (expMatch) option.successExp = parseFloat(expMatch[1]);
+                    
+                    // Parse Gold
+                    const goldMatch = successData.match(/Gold:\s*([\d.]+)/);
                     if (goldMatch) option.successGold = parseFloat(goldMatch[1]);
+                    
+                    // Parse Shards
+                    const shardsMatch = successData.match(/Shards:\s*([\d.]+)/);
                     if (shardsMatch) option.successShards = parseFloat(shardsMatch[1]);
-                    if (dustMatch) option.successShards = parseFloat(dustMatch[1]); // Dust = Shards
-                    if (unlocksMatch) option.onSuccess = (option.onSuccess ? option.onSuccess + ' | ' : '') + 'Unlocks: ' + unlocksMatch[1];
-                    if (cardMatch) option.onSuccess = (option.onSuccess ? option.onSuccess + ' | ' : '') + 'Card: ' + cardMatch[1];
-                    if (combatMatch) option.onSuccess = (option.onSuccess ? option.onSuccess + ' | ' : '') + 'Combat: ' + combatMatch[1];
+                    
+                    // Parse Dust (convert to shards)
+                    const dustMatch = successData.match(/Dust:\s*([\d.]+)/);
+                    if (dustMatch) option.successShards = parseFloat(dustMatch[1]);
+                    
+                    // Parse Unlocks
+                    const unlocksMatch = successData.match(/Unlocks:\s*(\w+)/);
+                    if (unlocksMatch) {
+                        option.onSuccess = (option.onSuccess ? option.onSuccess + '\n' : '') + 'Unlocks: ' + unlocksMatch[1];
+                    }
+                    
+                    // Parse Card
+                    const cardMatch = successData.match(/Cards?:\s*(\w+)/);
+                    if (cardMatch) {
+                        option.onSuccess = (option.onSuccess ? option.onSuccess + '\n' : '') + 'Card: ' + cardMatch[1];
+                    }
                 }
                 
                 // Roll line
@@ -5564,6 +5606,8 @@
                 // Fail line
                 if (line.startsWith('**Fail:**')) {
                     const failData = line.substring(9).trim();
+                    
+                    // Parse Cards
                     const cardMatch = failData.match(/Cards?:\s*(\w+)/);
                     if (cardMatch) {
                         option.onFail = 'Card: ' + cardMatch[1];
@@ -5572,22 +5616,22 @@
                     }
                 }
                 
-                // Success Critical
-                if (line.startsWith('**Success Critical:**')) {
-                    const critData = line.substring(21);
-                    option.onCritSuccess = critData.trim();
-                }
-                
-                // Fail Critical
-                if (line.startsWith('**Fail Critical:**')) {
-                    const critFailData = line.substring(18);
-                    option.onCritFail = critFailData.trim();
-                }
-                
                 // Reveals Card
                 if (line.startsWith('**Reveals Card:**')) {
                     const cardData = line.substring(17).trim();
                     option.outcomes = (option.outcomes ? option.outcomes + '\n' : '') + 'Reveals: ' + cardData;
+                }
+                
+                // Success Critical
+                if (line.startsWith('**Success Critical:**')) {
+                    const critData = line.substring(21).trim();
+                    option.onCritSuccess = critData;
+                }
+                
+                // Fail Critical
+                if (line.startsWith('**Fail Critical:**')) {
+                    const critFailData = line.substring(18).trim();
+                    option.onCritFail = critFailData;
                 }
                 
                 // Follow-up event indicator
@@ -5606,6 +5650,7 @@
 
             return { data: option, nextIndex: i };
         }
+
 
         function parseFollowupEvent(lines, startIndex) {
             let i = startIndex;
