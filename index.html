@@ -3500,8 +3500,21 @@
                         }
                         
                         
+                        // Display Card Roll BEFORE success/fail (it determines the outcome)
+                        if (option.cardRoll) {
+                            variantHtml.push(`
+                                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border-left: 3px solid var(--primary);">
+                                    <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">
+                                        &#x1F4CA; Card Roll
+                                    </div>
+                                    <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem;">
+                                        Roll: ${option.cardRoll}
+                                    </div>
+                                </div>
+                            `);
+                        }
+                        
                         // Display structured success/fail outcomes if present
-                        // (Card Roll, Combat Effects, Combat Loot moved inside Success container)
                         // Helper function to extract Combat Effects and Combat Loot from text
                         function extractCombatInfo(text) {
                             if (!text) return { cleanText: text, combatEffects: null, combatLoot: null };
@@ -3546,20 +3559,6 @@
                                     <div style="margin-bottom: 0.75rem; padding: 1rem; background: rgba(74, 222, 128, 0.05); border: 2px solid #4ade80; border-radius: 8px;">
                                         <div style="color: #4ade80; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">&#x2714;&#x201C; SUCCESS</div>
                                 `);
-                                
-                                // Card Roll (if present)
-                                if (option.cardRoll) {
-                                    variantHtml.push(`
-                                        <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border-left: 3px solid var(--primary); margin-bottom: 0.75rem;">
-                                            <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">
-                                                &#x1F4CA; Card Roll
-                                            </div>
-                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem;">
-                                                Roll: ${option.cardRoll}
-                                            </div>
-                                        </div>
-                                    `);
-                                }
                                 
                                 // Main Combat Effects (if present and no extracted effects)
                                 if (option.combatEffects) {
