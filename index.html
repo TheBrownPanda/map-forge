@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -3500,49 +3500,8 @@
                         }
                         
                         
-                        // Display Card Roll if present (ABOVE success/fail)
-                        if (option.cardRoll) {
-                            variantHtml.push(`
-                                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border-left: 3px solid var(--primary);">
-                                    <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">
-                                        &#x1F4CA; Card Roll
-                                    </div>
-                                   <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem;">
-                                       Roll: ${option.cardRoll}
-                                   </div>
-                                </div>
-                            `);
-                        }
-                        
-                        // Display Combat Effects if present
-                        if (option.combatEffects) {
-                            variantHtml.push(`
-                                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(197, 48, 48, 0.1); border-radius: 6px; border-left: 3px solid #c53030;">
-                                    <div style="font-size: 0.85rem; color: #c53030; font-weight: 600; margin-bottom: 0.5rem;">
-                                        &#x2694;&#xFE0F; Combat Effects
-                                    </div>
-                                   <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem;">
-                                       ${option.combatEffects}
-                                   </div>
-                                </div>
-                            `);
-                        }
-                        
-                        // Display Combat Loot if present
-                        if (option.combatLoot) {
-                            variantHtml.push(`
-                                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border-left: 3px solid var(--accent);">
-                                    <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 0.5rem;">
-                                        &#x1F4B0; Combat Loot
-                                    </div>
-                                   <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; line-height: 1.6;">
-                                       ${option.combatLoot}
-                                   </div>
-                                </div>
-                            `);
-                        }
-                        
                         // Display structured success/fail outcomes if present
+                        // (Card Roll, Combat Effects, Combat Loot moved inside Success container)
                         // Helper function to extract Combat Effects and Combat Loot from text
                         function extractCombatInfo(text) {
                             if (!text) return { cleanText: text, combatEffects: null, combatLoot: null };
@@ -3587,6 +3546,49 @@
                                     <div style="margin-bottom: 0.75rem; padding: 1rem; background: rgba(74, 222, 128, 0.05); border: 2px solid #4ade80; border-radius: 8px;">
                                         <div style="color: #4ade80; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">&#x2714;&#x201C; SUCCESS</div>
                                 `);
+                                
+                                // Card Roll (if present)
+                                if (option.cardRoll) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border-left: 3px solid var(--primary); margin-bottom: 0.75rem;">
+                                            <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">
+                                                &#x1F4CA; Card Roll
+                                            </div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem;">
+                                                Roll: ${option.cardRoll}
+                                            </div>
+                                        </div>
+                                    `);
+                                }
+                                
+                                // Main Combat Effects (if present and no extracted effects)
+                                if (option.combatEffects) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.75rem; background: rgba(197, 48, 48, 0.1); border-radius: 6px; border-left: 3px solid #c53030; margin-bottom: 0.75rem;">
+                                            <div style="font-size: 0.85rem; color: #c53030; font-weight: 600; margin-bottom: 0.5rem;">
+                                                &#x2694;&#xFE0F; Combat Effects
+                                            </div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem;">
+                                                ${option.combatEffects}
+                                            </div>
+                                        </div>
+                                    `);
+                                }
+                                
+                                // Main Combat Loot (if present and no extracted loot)
+                                if (option.combatLoot) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border-left: 3px solid var(--accent); margin-bottom: 0.75rem;">
+                                            <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 0.5rem;">
+                                                &#x1F4B0; Combat Loot
+                                            </div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; line-height: 1.6;">
+                                                ${option.combatLoot}
+                                            </div>
+                                        </div>
+                                    `);
+                                }
+                                
                                 variantHtml.push(`
                                     <div style="padding: 0.75rem; background: rgba(74, 222, 128, 0.15); border-left: 3px solid #4ade80; border-radius: 4px; margin-bottom: 0.75rem;">
                                 `);
