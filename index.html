@@ -3543,7 +3543,37 @@
                         }
                         
                         // Display structured success/fail outcomes if present
-                        const hasStructuredOutcomes = option.onSuccess || option.onCritSuccess || option.onFail || option.onCritFail;
+                        // Helper function to extract Combat Effects and Combat Loot from text
+                        function extractCombatInfo(text) {
+                            if (!text) return { cleanText: text, combatEffects: null, combatLoot: null };
+                            
+                            let cleanText = text;
+                            let combatEffects = null;
+                            let combatLoot = null;
+                            
+                            // Extract Combat Effects
+                            const effectsMatch = text.match(/Combat Effects:\s*([^|]+)/);
+                            if (effectsMatch) {
+                                combatEffects = effectsMatch[1].trim();
+                                // Remove from text
+                                cleanText = cleanText.replace(/\s*\|?\s*Combat Effects:[^|]+\|?\s*/, ' | ').trim();
+                            }
+                            
+                            // Extract Combat Loot
+                            const lootMatch = text.match(/Combat Loot:\s*(.+?)(?=\s*$|\s*\|\s*Gold:)/);
+                            if (lootMatch) {
+                                combatLoot = lootMatch[1].trim();
+                                // Remove from text
+                                cleanText = cleanText.replace(/\s*\|?\s*Combat Loot:[^|]+(?=\s*\|\s*Gold:|$)/, '').trim();
+                            }
+                            
+                            // Clean up extra pipes and spaces
+                            cleanText = cleanText.replace(/\|\s*\|/g, '|').replace(/^\s*\|\s*/, '').replace(/\s*\|\s*$/, '').trim();
+                            
+                            return { cleanText, combatEffects, combatLoot };
+                        }
+
+                                                const hasStructuredOutcomes = option.onSuccess || option.onCritSuccess || option.onFail || option.onCritFail;
                         
                         if (hasStructuredOutcomes) {
                             variantHtml.push(`
@@ -3551,12 +3581,13 @@
                             `);
                             
                             if (option.onSuccess || option.successGold || option.successShards || option.successExp) {
+                                const successInfo = extractCombatInfo(option.onSuccess);
                                 variantHtml.push(`
                                     <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(74, 222, 128, 0.1); border-left: 3px solid #4ade80; border-radius: 4px;">
                                         <div style="color: #4ade80; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x2714;&#x201C; Success</div>
                                 `);
-                                if (option.onSuccess) {
-                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onSuccess}</div>`);
+                                if (successInfo.cleanText) {
+                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${successInfo.cleanText}</div>`);
                                 }
                                 const successRewards = [];
                                 if (option.successGold && option.successGold !== 0) successRewards.push(`&#x1F4B0; ${option.successGold}`);
@@ -3566,15 +3597,36 @@
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${successRewards.join(' ')}</div>`);
                                 }
                                 variantHtml.push(`</div>`);
+                                
+                                // Display Combat Effects if extracted
+                                if (successInfo.combatEffects) {
+                                    variantHtml.push(`
+                                        <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(197, 48, 48, 0.1); border-left: 3px solid #c53030; border-radius: 4px;">
+                                            <div style="color: #c53030; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x2694;&#xFE0F; Combat Effects</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${successInfo.combatEffects}</div>
+                                        </div>
+                                    `);
+                                }
+                                
+                                // Display Combat Loot if extracted
+                                if (successInfo.combatLoot) {
+                                    variantHtml.push(`
+                                        <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
+                                            <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F4B0; Combat Loot</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${successInfo.combatLoot}</div>
+                                        </div>
+                                    `);
+                                }
                             }
                             
                             if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp) {
+                                const critSuccessInfo = extractCombatInfo(option.onCritSuccess);
                                 variantHtml.push(`
                                     <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(96, 165, 250, 0.1); border-left: 3px solid #60a5fa; border-radius: 4px;">
                                         <div style="color: #60a5fa; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x2714;&#x2026; Critical Success</div>
                                 `);
-                                if (option.onCritSuccess) {
-                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onCritSuccess}</div>`);
+                                if (critSuccessInfo.cleanText) {
+                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${critSuccessInfo.cleanText}</div>`);
                                 }
                                 const critSuccessRewards = [];
                                 if (option.critSuccessGold && option.critSuccessGold !== 0) critSuccessRewards.push(`&#x1F4B0; ${option.critSuccessGold}`);
@@ -3584,15 +3636,34 @@
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${critSuccessRewards.join(' ')}</div>`);
                                 }
                                 variantHtml.push(`</div>`);
+                                
+                                if (critSuccessInfo.combatEffects) {
+                                    variantHtml.push(`
+                                        <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(197, 48, 48, 0.1); border-left: 3px solid #c53030; border-radius: 4px;">
+                                            <div style="color: #c53030; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x2694;&#xFE0F; Combat Effects</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${critSuccessInfo.combatEffects}</div>
+                                        </div>
+                                    `);
+                                }
+                                
+                                if (critSuccessInfo.combatLoot) {
+                                    variantHtml.push(`
+                                        <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
+                                            <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F4B0; Combat Loot</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${critSuccessInfo.combatLoot}</div>
+                                        </div>
+                                    `);
+                                }
                             }
                             
                             if (option.onFail || option.failGold || option.failShards || option.failExp) {
+                                const failInfo = extractCombatInfo(option.onFail);
                                 variantHtml.push(`
                                     <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(251, 146, 60, 0.1); border-left: 3px solid #fb923c; border-radius: 4px;">
                                         <div style="color: #fb923c; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x2714;&#x2014; Fail</div>
                                 `);
-                                if (option.onFail) {
-                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onFail}</div>`);
+                                if (failInfo.cleanText) {
+                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${failInfo.cleanText}</div>`);
                                 }
                                 const failRewards = [];
                                 if (option.failGold && option.failGold !== 0) failRewards.push(`&#x1F4B0; ${option.failGold}`);
@@ -3602,15 +3673,34 @@
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${failRewards.join(' ')}</div>`);
                                 }
                                 variantHtml.push(`</div>`);
+                                
+                                if (failInfo.combatEffects) {
+                                    variantHtml.push(`
+                                        <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(197, 48, 48, 0.1); border-left: 3px solid #c53030; border-radius: 4px;">
+                                            <div style="color: #c53030; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x2694;&#xFE0F; Combat Effects</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${failInfo.combatEffects}</div>
+                                        </div>
+                                    `);
+                                }
+                                
+                                if (failInfo.combatLoot) {
+                                    variantHtml.push(`
+                                        <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
+                                            <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F4B0; Combat Loot</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${failInfo.combatLoot}</div>
+                                        </div>
+                                    `);
+                                }
                             }
                             
                             if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp) {
+                                const critFailInfo = extractCombatInfo(option.onCritFail);
                                 variantHtml.push(`
                                     <div style="padding: 0.5rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; border-radius: 4px;">
-                                        <div style="color: #ef4444; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">\u2714  Critical Fail</div>
+                                        <div style="color: #ef4444; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x2714; Critical Fail</div>
                                 `);
-                                if (option.onCritFail) {
-                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onCritFail}</div>`);
+                                if (critFailInfo.cleanText) {
+                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${critFailInfo.cleanText}</div>`);
                                 }
                                 const critFailRewards = [];
                                 if (option.critFailGold && option.critFailGold !== 0) critFailRewards.push(`&#x1F4B0; ${option.critFailGold}`);
@@ -3620,6 +3710,24 @@
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${critFailRewards.join(' ')}</div>`);
                                 }
                                 variantHtml.push(`</div>`);
+                                
+                                if (critFailInfo.combatEffects) {
+                                    variantHtml.push(`
+                                        <div style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(197, 48, 48, 0.1); border-left: 3px solid #c53030; border-radius: 4px;">
+                                            <div style="color: #c53030; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x2694;&#xFE0F; Combat Effects</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${critFailInfo.combatEffects}</div>
+                                        </div>
+                                    `);
+                                }
+                                
+                                if (critFailInfo.combatLoot) {
+                                    variantHtml.push(`
+                                        <div style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
+                                            <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F4B0; Combat Loot</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${critFailInfo.combatLoot}</div>
+                                        </div>
+                                    `);
+                                }
                             }
                             
                             variantHtml.push(`</div>`);
@@ -4034,7 +4142,7 @@
                             </div>
                             
                             <div>
-                                <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">\u2714  On Critical Fail</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">&#x2714;  On Critical Fail</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical fail..." data-option="onCritFail" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritFail || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="critFailGold" value="${option?.critFailGold !== undefined && option.critFailGold !== 0 ? option.critFailGold : ""}">
