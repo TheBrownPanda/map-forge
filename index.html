@@ -2234,7 +2234,7 @@
                     progressBar.textContent = percent + '%';
                 }
                 
-                status.textContent = `&#x2714;&#x2026; Successfully uploaded ${total} image(s)!`;
+                status.innerHTML = `&#x2714;&#x2026; Successfully uploaded ${total} image(s)!`;
                 
                 // Clear input and reload library
                 input.value = '';
@@ -2248,7 +2248,7 @@
                 }, 2000);
                 
             } catch (error) {
-                status.textContent = '&#x274C;Œ Error: ' + error.message;
+                status.innerHTML = '&#x274C; Error: ' + error.message;
                 console.error('Upload error:', error);
             }
         }
@@ -3744,10 +3744,10 @@
             if (content && toggle) {
                 if (content.style.display === 'none') {
                     content.style.display = 'block';
-                    toggle.textContent = '&#x25BC;';
+                    toggle.innerHTML = '&#x25BC;';
                 } else {
                     content.style.display = 'none';
-                    toggle.textContent = '&#x25B6;';
+                    toggle.innerHTML = '&#x25B6;';
                 }
             }
         }
@@ -4110,10 +4110,10 @@
             
             if (outcomesSection.style.display === 'none') {
                 outcomesSection.style.display = 'block';
-                toggleIcon.textContent = '&#x25BC;';
+                toggleIcon.innerHTML = '&#x25BC;';
             } else {
                 outcomesSection.style.display = 'none';
-                toggleIcon.textContent = '&#x25B6;';
+                toggleIcon.innerHTML = '&#x25B6;';
             }
         }
 
