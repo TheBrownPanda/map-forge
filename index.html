@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0 - OPTIMIZED</title>
+    <title>Map Forge v2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -1436,7 +1436,7 @@
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
                 <h2 class="modal-title">Admin Login</h2>
-                <button class="close-btn" id="closeLoginModalBtn">×</button>
+                <button class="close-btn" id="closeLoginModalBtn">&#xD7;</button>
             </div>
             <form class="login-form" id="loginForm">
                 <input type="email" class="login-input" id="loginEmail" placeholder="Admin Email" required>
@@ -1451,8 +1451,8 @@
     <div class="info-modal-overlay" id="divinationModal">
         <div class="info-modal">
             <div class="info-modal-header">
-                <h2 class="info-modal-title">🔮 Divination Rewards</h2>
-                <button class="info-modal-close" id="closeDivinationBtn">×</button>
+                <h2 class="info-modal-title">&#x1F52E; Divination Rewards</h2>
+                <button class="info-modal-close" id="closeDivinationBtn">&#xD7;</button>
             </div>
             <div class="info-modal-content">
                 <table class="rewards-table">
@@ -1478,23 +1478,23 @@
     <div class="app-container" id="appContainer">
         <!-- Header -->
         <div class="header">
-            <div class="title">⚔ MAP FORGE v2.0 ⚔</div>
+            <div class="title">&#x2694;&#xFE0F; MAP FORGE v2.0 &#x2694;&#xFE0F;</div>
             <div class="info-button-container">
-                <div class="info-button" id="infoButton">ℹ️</div>
+                <div class="info-button" id="infoButton">&#x2139;&#xFE0F;</div>
             </div>
             <div class="search-container">
                 <input type="text" class="search-input" id="searchInput" placeholder="Search nodes, tags, or content...">
                 <div class="search-results" id="searchResults"></div>
             </div>
             <div class="header-actions">
-                <button class="btn btn-secondary" id="importNodesBtn">📥 Import Data</button>
-                <button class="btn btn-secondary" id="manageImagesBtn">🖼️ Image Library</button>
+                <button class="btn btn-secondary" id="importNodesBtn">&#x1F4E5; Import Data</button>
+                <button class="btn btn-secondary" id="manageImagesBtn">&#x1F5BC;&#xFE0F; Image Library</button>
                 <button class="btn btn-secondary" id="addMapBtn">+ New Map</button>
                 <button class="btn btn-primary" id="addNodeBtn">+ Add Node</button>
             </div>
             <div class="user-info">
                 <span id="userRole"></span>
-                <button class="btn btn-primary" id="loginBtn" style="display: none;">🔒 Admin Login</button>
+                <button class="btn btn-primary" id="loginBtn" style="display: none;">&#x1F512; Admin Login</button>
                 <button class="logout-btn" id="logoutBtn" style="display: none;">Logout</button>
             </div>
         </div>
@@ -1515,15 +1515,15 @@
                 </div>
                 <div class="zoom-controls">
                     <button class="zoom-btn" id="zoomInBtn">+</button>
-                    <button class="zoom-btn" id="zoomResetBtn">⊙</button>
-                    <button class="zoom-btn" id="zoomOutBtn">−</button>
+                    <button class="zoom-btn" id="zoomResetBtn">&#x2299;</button>
+                    <button class="zoom-btn" id="zoomOutBtn">&#x2212;</button>
                 </div>
 
                 <!-- Node Viewer Panel -->
                 <div class="node-viewer" id="nodeViewer">
                     <div class="node-viewer-header">
                         <h3 class="node-viewer-title" id="viewerNodeName"></h3>
-                        <button class="node-viewer-close" id="closeViewerBtn">×</button>
+                        <button class="node-viewer-close" id="closeViewerBtn">&#xD7;</button>
                     </div>
                     <div id="viewerContent"></div>
                 </div>
@@ -1536,7 +1536,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" id="modalTitle">Create New Node</h2>
-                <button class="close-btn" id="closeModalBtn">×</button>
+                <button class="close-btn" id="closeModalBtn">&#xD7;</button>
             </div>
             <form id="nodeForm">
                 <div class="form-group">
@@ -1642,7 +1642,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Create New Map</h2>
-                <button class="close-btn" id="closeMapModalBtn">×</button>
+                <button class="close-btn" id="closeMapModalBtn">&#xD7;</button>
             </div>
             <form id="mapForm">
                 <div class="form-group">
@@ -1663,13 +1663,13 @@
                     <!-- Image Source Tabs -->
                     <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
                         <button type="button" class="btn btn-secondary btn-small image-source-tab active" data-source="storage" style="flex: 1;">
-                            📚 From Library
+                            &#x1F4DA; From Library
                         </button>
                         <button type="button" class="btn btn-secondary btn-small image-source-tab" data-source="upload" style="flex: 1;">
-                            📤 Upload File
+                            &#x1F524; Upload File
                         </button>
                         <button type="button" class="btn btn-secondary btn-small image-source-tab" data-source="url" style="flex: 1;">
-                            🔗 URL
+                            &#x1F517; URL
                         </button>
                     </div>
                     
@@ -1703,7 +1703,7 @@
                         <div id="imageStats" style="margin-top: 0.5rem; font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);"></div>
                     </div>
                     <small style="color: rgba(245, 230, 211, 0.6); display: block; margin-top: 0.5rem;">
-                        💡 Images are automatically compressed to 85% quality and max 3000x3000px
+                        &#x1F4B0; Images are automatically compressed to 85% quality and max 3000x3000px
                     </small>
                 </div>
 
@@ -1720,19 +1720,19 @@
     <div class="modal" id="imageLibraryModal">
         <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
-                <h2 class="modal-title">🖼️ Image Library</h2>
-                <button class="close-btn" id="closeImageLibraryBtn">×</button>
+                <h2 class="modal-title">&#x1F5BC;&#xFE0F; Image Library</h2>
+                <button class="close-btn" id="closeImageLibraryBtn">&#xD7;</button>
             </div>
             
             <!-- Upload Section -->
             <div style="background: rgba(42, 35, 26, 0.5); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.1rem;">📤 Upload New Images</h3>
+                <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.1rem;">&#x1F524; Upload New Images</h3>
                 <div style="display: flex; gap: 1rem; align-items: flex-start;">
                     <input type="file" class="form-input" id="libraryUploadInput" accept="image/*" multiple style="flex: 1; padding: 0.5rem;">
                     <button class="btn btn-primary" id="uploadToLibraryBtn">Upload</button>
                 </div>
                 <small style="display: block; margin-top: 0.5rem; color: rgba(245, 230, 211, 0.6);">
-                    💡 You can select multiple images at once. Images will be compressed to 85% quality and max 3000x3000px.
+                    &#x1F4B0; You can select multiple images at once. Images will be compressed to 85% quality and max 3000x3000px.
                 </small>
                 <div id="uploadProgress" style="display: none; margin-top: 1rem;">
                     <div style="background: rgba(42, 35, 26, 0.8); border-radius: 4px; height: 24px; overflow: hidden;">
@@ -1744,7 +1744,7 @@
             
             <!-- Images Grid -->
             <div>
-                <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.1rem;">📚 Your Images</h3>
+                <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.1rem;">&#x1F4DA; Your Images</h3>
                 <div id="imageLibraryGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; max-height: 60vh; overflow-y: auto;">
                     <!-- Images will be loaded here -->
                 </div>
@@ -1756,21 +1756,21 @@
     <div class="modal" id="importModal">
         <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
-                <h2 class="modal-title">📥 Import Node Data</h2>
-                <button class="close-btn" id="closeImportModalBtn">×</button>
+                <h2 class="modal-title">&#x1F4E5; Import Node Data</h2>
+                <button class="close-btn" id="closeImportModalBtn">&#xD7;</button>
             </div>
             <div style="padding: 2rem;">
                 <!-- Target Map Indicator -->
                 <div id="importTargetMapInfo" style="display: none; background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(201, 169, 97, 0.2)); border: 2px solid var(--primary); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="font-size: 1.5rem;">🗺️</div>
+                        <div style="font-size: 1.5rem;">&#x1F5FA;¸</div>
                         <div style="flex: 1;">
                             <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.25rem;">Importing to Map:</div>
                             <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary);" id="importTargetMap"></div>
                         </div>
                     </div>
                     <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.6); margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(212, 175, 55, 0.3);">
-                        ⚠️ Only nodes on this map will be updated. Nodes with the same name on other maps will not be affected.
+                        &#x2699; ï¸ Only nodes on this map will be updated. Nodes with the same name on other maps will not be affected.
                     </div>
                 </div>
 
@@ -1817,9 +1817,9 @@
 
     <!-- Context Menu -->
     <div class="context-menu" id="contextMenu">
-        <div class="context-menu-item" id="contextEdit">👁️ View Node</div>
-        <div class="context-menu-item" id="contextMove">↔️ Move Node</div>
-        <div class="context-menu-item danger" id="contextDelete">🗑️ Delete Node</div>
+        <div class="context-menu-item" id="contextEdit">&#x1F441;&#xFE0F; View Node</div>
+        <div class="context-menu-item" id="contextMove">&#x2193;ï¸ Move Node</div>
+        <div class="context-menu-item danger" id="contextDelete">&#x1F5D1;&#xFE0F; Delete Node</div>
     </div>
 
     <!-- Hidden file input for import -->
@@ -1867,8 +1867,8 @@
         //    - Optimized CSS transforms
         //
         // Expected Performance Improvements:
-        // - Edit modal: 95% faster (20s → <1s)
-        // - Node movement: 80% faster (5s → <1s)
+        // - Edit modal: 95% faster (20s &#x2191; <1s)
+        // - Node movement: 80% faster (5s &#x2191; <1s)
         // - Map rendering: 75-90% faster with viewport culling
         // - Overall smoother, more responsive experience
         //
@@ -1878,7 +1878,7 @@
         // ==========================================
         // SUPABASE CONFIGURATION
         // IMPORTANT: Replace these with your actual Supabase values!
-        // Get these from: Supabase Dashboard → Settings → API
+        // Get these from: Supabase Dashboard &#x2191; Settings &#x2191; API
         // ==========================================
         const SUPABASE_URL = 'https://sczwwgszicbwomriucuz.supabase.co'; // e.g., 'https://xxxxx.supabase.co'
         const SUPABASE_ANON_KEY = 'sb_publishable_7Zh2AuEoohMwZKFLdTZjHQ_9fmeso6p'; // Publishable key
@@ -1970,13 +1970,13 @@
             // Update UI based on role
             if (isAdmin) {
                 console.log('initializeApp: Setting up admin UI');
-                document.getElementById('userRole').innerHTML = '<span class="admin-badge">🛡️ ADMIN</span>';
+                document.getElementById('userRole').innerHTML = '<span class="admin-badge">&#x1F6E1;&#xFE0F; ADMIN</span>';
                 document.getElementById('loginBtn').style.display = 'none';
                 document.getElementById('logoutBtn').style.display = 'block';
                 enableAdminFeatures();
             } else {
                 console.log('initializeApp: Setting up viewer UI');
-                document.getElementById('userRole').innerHTML = '<span class="viewer-badge">👁️ VIEWER</span>';
+                document.getElementById('userRole').innerHTML = '<span class="viewer-badge">&#x1F441;&#xFE0F; VIEWER</span>';
                 document.getElementById('loginBtn').style.display = 'block';
                 document.getElementById('logoutBtn').style.display = 'none';
                 disableAdminFeatures();
@@ -2186,7 +2186,7 @@
                         <div style="padding: 0.75rem;">
                             <div style="font-size: 0.85rem; color: var(--light); margin-bottom: 0.5rem; word-break: break-all;">${img.name}</div>
                             <button class="btn btn-danger btn-small" onclick="deleteImageFromLibrary('${img.name}')" style="width: 100%; font-size: 0.85rem; padding: 0.4rem;">
-                                🗑️ Delete
+                                &#x1F5D1;&#xFE0F; Delete
                             </button>
                         </div>
                     </div>
@@ -2234,7 +2234,7 @@
                     progressBar.textContent = percent + '%';
                 }
                 
-                status.textContent = `✅ Successfully uploaded ${total} image(s)!`;
+                status.textContent = `âœ&#x2026; Successfully uploaded ${total} image(s)!`;
                 
                 // Clear input and reload library
                 input.value = '';
@@ -2248,7 +2248,7 @@
                 }, 2000);
                 
             } catch (error) {
-                status.textContent = '❌ Error: ' + error.message;
+                status.textContent = '&#x274C;Œ Error: ' + error.message;
                 console.error('Upload error:', error);
             }
         }
@@ -2622,7 +2622,7 @@
                         const originalSize = (file.size / 1024 / 1024).toFixed(2);
                         stats.innerHTML = `
                             Original: ${originalSize} MB<br>
-                            <span style="color: var(--primary);">⚡ Will be compressed on upload</span>
+                            <span style="color: var(--primary);">&#x2699;¡ Will be compressed on upload</span>
                         `;
                     };
                     reader.readAsDataURL(file);
@@ -2779,18 +2779,18 @@
                 li.classList.add('draggable');
             }
             
-            const dragHandleHtml = isAdmin ? '<span class="map-drag-handle">⋮⋮</span>' : '';
+            const dragHandleHtml = isAdmin ? '<span class="map-drag-handle">&#x22EE;&#x22EE;</span>' : '';
             
             const actionsHtml = isAdmin ? `
                 <div class="map-item-actions">
-                    <button class="map-action-btn" onclick="event.stopPropagation(); editMap('${map.id}')" title="Edit Map">✏️</button>
-                    <button class="map-action-btn" onclick="event.stopPropagation(); deleteMapFromSidebar('${map.id}')" title="Delete Map">🗑️</button>
+                    <button class="map-action-btn" onclick="event.stopPropagation(); editMap('${map.id}')" title="Edit Map">&#x270F;ï¸</button>
+                    <button class="map-action-btn" onclick="event.stopPropagation(); deleteMapFromSidebar('${map.id}')" title="Delete Map">&#x1F5D1;&#xFE0F;</button>
                 </div>
             ` : '';
             
             // Check if this map has submaps
             const hasSubmaps = maps.some(m => m.parentId === map.id);
-            const submapIndicator = hasSubmaps ? ' <span style="opacity: 0.6;">▼</span>' : '';
+            const submapIndicator = hasSubmaps ? ' <span style="opacity: 0.6;">&#x25BC;</span>' : '';
             
             li.innerHTML = `
                 ${dragHandleHtml}
@@ -3075,7 +3075,7 @@
                 if (end < map.nodes.length) {
                     requestAnimationFrame(renderBatch);
                 } else {
-                    console.log(`✓ Rendered ${map.nodes.length} nodes in ${currentBatch} batches`);
+                    console.log(`&#x2714; Rendered ${map.nodes.length} nodes in ${currentBatch} batches`);
                 }
             }
             
@@ -3114,21 +3114,21 @@
 
                 function getNodeIcon(type) {
             const icons = {
-                combat: '⚔️',
-                event: '📜',
-                card: '🎴',
-                crafter: '🔨',
-                rest: '🛏️',
-                character: '👤',
-                transition: '🚪',
-                shop: '🪙',
-                quest: '❓',
-                rift: '🌀',
-                boss: '👹',
-                information: 'ℹ️'
+                combat: '&#x2694;&#xFE0F;ï¸',
+                event: '&#x1F4DC;',
+                card: '&#x1F3B4;',
+                crafter: '&#x1F528;',
+                rest: '&#x1F6CF;&#xFE0F;',
+                character: '&#x1F464;',
+                transition: '&#x1F6AA;',
+                shop: '&#x1FA99;',
+                quest: '&#x274C;“',
+                rift: '&#x1F300;',
+                boss: '&#x1F479;',
+                information: '&#x2139;&#xFE0F;'
             };
-            const icon = icons[type] || '⭐';
-            console.log('Getting icon for type:', type, '→', icon);
+            const icon = icons[type] || 'â­';
+            console.log('Getting icon for type:', type, '&#x2191;', icon);
             return icon;
         }
 
@@ -3253,7 +3253,7 @@
                 console.error('Error opening node modal:', error);
                 loadingOverlay.innerHTML = `
                     <div style="color: var(--danger); text-align: center;">
-                        <div style="font-size: 2rem; margin-bottom: 1rem;">⚠️</div>
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">&#x2699; ï¸</div>
                         <div style="font-weight: 600; margin-bottom: 0.5rem;">Error Loading Node</div>
                         <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem;">${error.message}</div>
                         <button class="btn btn-primary" onclick="closeNodeModal()">Close</button>
@@ -3441,7 +3441,7 @@
                             <div class="node-viewer-section">
                                 <div class="node-viewer-label">Transitions To</div>
                                 <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="goToLinkedMap('${variant.mapLink}')">
-                                    🚪 Go to ${linkedMap.name}
+                                    &#x1F6AA; Go to ${linkedMap.name}
                                 </button>
                             </div>
                         `);
@@ -3481,7 +3481,7 @@
                             <div class="node-viewer-option" style="cursor: pointer; border: 1px solid rgba(139, 115, 85, 0.3); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem;" onclick="toggleOptionContent('${optionId}')">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <div class="node-viewer-option-label" style="margin: 0;">${index + 1}. ${option.label || 'Unnamed Option'}</div>
-                                    <span id="${optionId}-toggle" style="font-size: 0.9rem; opacity: 0.6;">▶</span>
+                                    <span id="${optionId}-toggle" style="font-size: 0.9rem; opacity: 0.6;">&#x25B6;</span>
                                 </div>
                                 <div id="${optionId}-content" style="display: none; margin-top: 0.75rem;">
                         `);
@@ -3491,12 +3491,55 @@
                         }
                         
                         const rewards = [];
-                        if (option.gold && option.gold !== 0) rewards.push(`<span class="node-viewer-reward">💰 ${option.gold}</span>`);
-                        if (option.shards && option.shards !== 0) rewards.push(`<span class="node-viewer-reward">💎 ${option.shards}</span>`);
-                        if (option.exp && option.exp !== 0) rewards.push(`<span class="node-viewer-reward">⭐ ${option.exp}</span>`);
+                        if (option.gold && option.gold !== 0) rewards.push(`<span class="node-viewer-reward">&#x1F4B0; ${option.gold}</span>`);
+                        if (option.shards && option.shards !== 0) rewards.push(`<span class="node-viewer-reward">&#x1F48E; ${option.shards}</span>`);
+                        if (option.exp && option.exp !== 0) rewards.push(`<span class="node-viewer-reward">&#x2B50; ${option.exp}</span>`);
                         
                         if (rewards.length > 0) {
                             variantHtml.push(`<div class="node-viewer-rewards">${rewards.join('')}</div>`);
+                        }
+                        
+                        
+                        // Display Card Roll if present (ABOVE success/fail)
+                        if (option.cardRoll) {
+                            variantHtml.push(`
+                                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border-left: 3px solid var(--primary);">
+                                    <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">
+                                        &#x1F4CA; Card Roll
+                                    </div>
+                                   <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem;">
+                                       Roll: ${option.cardRoll}
+                                   </div>
+                                </div>
+                            `);
+                        }
+                        
+                        // Display Combat Effects if present
+                        if (option.combatEffects) {
+                            variantHtml.push(`
+                                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(197, 48, 48, 0.1); border-radius: 6px; border-left: 3px solid #c53030;">
+                                    <div style="font-size: 0.85rem; color: #c53030; font-weight: 600; margin-bottom: 0.5rem;">
+                                        &#x2694;&#xFE0F; Combat Effects
+                                    </div>
+                                   <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem;">
+                                       ${option.combatEffects}
+                                   </div>
+                                </div>
+                            `);
+                        }
+                        
+                        // Display Combat Loot if present
+                        if (option.combatLoot) {
+                            variantHtml.push(`
+                                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border-left: 3px solid var(--accent);">
+                                    <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 0.5rem;">
+                                        &#x1F4B0; Combat Loot
+                                    </div>
+                                   <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; line-height: 1.6;">
+                                       ${option.combatLoot}
+                                   </div>
+                                </div>
+                            `);
                         }
                         
                         // Display structured success/fail outcomes if present
@@ -3510,15 +3553,15 @@
                             if (option.onSuccess || option.successGold || option.successShards || option.successExp) {
                                 variantHtml.push(`
                                     <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(74, 222, 128, 0.1); border-left: 3px solid #4ade80; border-radius: 4px;">
-                                        <div style="color: #4ade80; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">✏“ Success</div>
+                                        <div style="color: #4ade80; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x270F;â€œ Success</div>
                                 `);
                                 if (option.onSuccess) {
                                     variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onSuccess}</div>`);
                                 }
                                 const successRewards = [];
-                                if (option.successGold && option.successGold !== 0) successRewards.push(`💰 ${option.successGold}`);
-                                if (option.successShards && option.successShards !== 0) successRewards.push(`💎 ${option.successShards}`);
-                                if (option.successExp && option.successExp !== 0) successRewards.push(`⭐ ${option.successExp}`);
+                                if (option.successGold && option.successGold !== 0) successRewards.push(`&#x1F4B0; ${option.successGold}`);
+                                if (option.successShards && option.successShards !== 0) successRewards.push(`&#x1F48E; ${option.successShards}`);
+                                if (option.successExp && option.successExp !== 0) successRewards.push(`&#x2B50; ${option.successExp}`);
                                 if (successRewards.length > 0) {
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${successRewards.join(' ')}</div>`);
                                 }
@@ -3528,15 +3571,15 @@
                             if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp) {
                                 variantHtml.push(`
                                     <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(96, 165, 250, 0.1); border-left: 3px solid #60a5fa; border-radius: 4px;">
-                                        <div style="color: #60a5fa; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">✔… Critical Success</div>
+                                        <div style="color: #60a5fa; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">âœ”â€¦ Critical Success</div>
                                 `);
                                 if (option.onCritSuccess) {
                                     variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onCritSuccess}</div>`);
                                 }
                                 const critSuccessRewards = [];
-                                if (option.critSuccessGold && option.critSuccessGold !== 0) critSuccessRewards.push(`💰 ${option.critSuccessGold}`);
-                                if (option.critSuccessShards && option.critSuccessShards !== 0) critSuccessRewards.push(`💎 ${option.critSuccessShards}`);
-                                if (option.critSuccessExp && option.critSuccessExp !== 0) critSuccessRewards.push(`⭐ ${option.critSuccessExp}`);
+                                if (option.critSuccessGold && option.critSuccessGold !== 0) critSuccessRewards.push(`&#x1F4B0; ${option.critSuccessGold}`);
+                                if (option.critSuccessShards && option.critSuccessShards !== 0) critSuccessRewards.push(`&#x1F48E; ${option.critSuccessShards}`);
+                                if (option.critSuccessExp && option.critSuccessExp !== 0) critSuccessRewards.push(`&#x2B50; ${option.critSuccessExp}`);
                                 if (critSuccessRewards.length > 0) {
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${critSuccessRewards.join(' ')}</div>`);
                                 }
@@ -3546,15 +3589,15 @@
                             if (option.onFail || option.failGold || option.failShards || option.failExp) {
                                 variantHtml.push(`
                                     <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(251, 146, 60, 0.1); border-left: 3px solid #fb923c; border-radius: 4px;">
-                                        <div style="color: #fb923c; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">✏— Fail</div>
+                                        <div style="color: #fb923c; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x270F;â€” Fail</div>
                                 `);
                                 if (option.onFail) {
                                     variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onFail}</div>`);
                                 }
                                 const failRewards = [];
-                                if (option.failGold && option.failGold !== 0) failRewards.push(`💰 ${option.failGold}`);
-                                if (option.failShards && option.failShards !== 0) failRewards.push(`💎 ${option.failShards}`);
-                                if (option.failExp && option.failExp !== 0) failRewards.push(`⭐ ${option.failExp}`);
+                                if (option.failGold && option.failGold !== 0) failRewards.push(`&#x1F4B0; ${option.failGold}`);
+                                if (option.failShards && option.failShards !== 0) failRewards.push(`&#x1F48E; ${option.failShards}`);
+                                if (option.failExp && option.failExp !== 0) failRewards.push(`&#x2B50; ${option.failExp}`);
                                 if (failRewards.length > 0) {
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${failRewards.join(' ')}</div>`);
                                 }
@@ -3564,15 +3607,15 @@
                             if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp) {
                                 variantHtml.push(`
                                     <div style="padding: 0.5rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; border-radius: 4px;">
-                                        <div style="color: #ef4444; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">✔  Critical Fail</div>
+                                        <div style="color: #ef4444; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">âœ”Â  Critical Fail</div>
                                 `);
                                 if (option.onCritFail) {
                                     variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onCritFail}</div>`);
                                 }
                                 const critFailRewards = [];
-                                if (option.critFailGold && option.critFailGold !== 0) critFailRewards.push(`💰 ${option.critFailGold}`);
-                                if (option.critFailShards && option.critFailShards !== 0) critFailRewards.push(`💎 ${option.critFailShards}`);
-                                if (option.critFailExp && option.critFailExp !== 0) critFailRewards.push(`⭐ ${option.critFailExp}`);
+                                if (option.critFailGold && option.critFailGold !== 0) critFailRewards.push(`&#x1F4B0; ${option.critFailGold}`);
+                                if (option.critFailShards && option.critFailShards !== 0) critFailRewards.push(`&#x1F48E; ${option.critFailShards}`);
+                                if (option.critFailExp && option.critFailExp !== 0) critFailRewards.push(`&#x2B50; ${option.critFailExp}`);
                                 if (critFailRewards.length > 0) {
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${critFailRewards.join(' ')}</div>`);
                                 }
@@ -3587,7 +3630,7 @@
                             variantHtml.push(`
                                 <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px; border-left: 3px solid var(--accent);">
                                     <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 0.5rem;">
-                                        📋 Additional Notes
+                                        &#x1F4CB; Additional Notes
                                     </div>
                                    <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem; white-space: pre-line;">
                                        ${option.outcomes.trim()}
@@ -3601,7 +3644,7 @@
                             variantHtml.push(`
                                 <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(139, 115, 85, 0.3);">
                                     <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">
-                                        ↔ Follow-up Events (${option.followupEvents.length})
+                                        &#x2193; Follow-up Events (${option.followupEvents.length})
                                     </div>
                             `);
                             
@@ -3622,9 +3665,9 @@
                                 }
                                 
                                 const eventRewards = [];
-                                if (event.gold && event.gold !== 0) eventRewards.push(`<span class="node-viewer-reward">💰 ${event.gold}</span>`);
-                                if (event.shards && event.shards !== 0) eventRewards.push(`<span class="node-viewer-reward">💎 ${event.shards}</span>`);
-                                if (event.exp && event.exp !== 0) eventRewards.push(`<span class="node-viewer-reward">⭐ ${event.exp}</span>`);
+                                if (event.gold && event.gold !== 0) eventRewards.push(`<span class="node-viewer-reward">&#x1F4B0; ${event.gold}</span>`);
+                                if (event.shards && event.shards !== 0) eventRewards.push(`<span class="node-viewer-reward">&#x1F48E; ${event.shards}</span>`);
+                                if (event.exp && event.exp !== 0) eventRewards.push(`<span class="node-viewer-reward">&#x2B50; ${event.exp}</span>`);
                                 
                                 if (eventRewards.length > 0) {
                                     variantHtml.push(`<div class="node-viewer-rewards">${eventRewards.join('')}</div>`);
@@ -3650,9 +3693,9 @@
             if (isAdmin) {
                 html += `
                     <div class="node-viewer-actions">
-                        <button class="btn btn-primary btn-small" onclick="editNodeFromViewer()">✏️ Edit</button>
-                        <button class="btn btn-secondary btn-small" onclick="moveNodeFromViewer()">↔️ Move</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteNodeFromViewer()">🗑️ Delete</button>
+                        <button class="btn btn-primary btn-small" onclick="editNodeFromViewer()">&#x270F;ï¸ Edit</button>
+                        <button class="btn btn-secondary btn-small" onclick="moveNodeFromViewer()">&#x2193;ï¸ Move</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteNodeFromViewer()">&#x1F5D1;&#xFE0F; Delete</button>
                     </div>
                 `;
             }
@@ -3701,10 +3744,10 @@
             if (content && toggle) {
                 if (content.style.display === 'none') {
                     content.style.display = 'block';
-                    toggle.textContent = '▼';
+                    toggle.textContent = '&#x25BC;';
                 } else {
                     content.style.display = 'none';
-                    toggle.textContent = '▶';
+                    toggle.textContent = '&#x25B6;';
                 }
             }
         }
@@ -3834,9 +3877,9 @@
             tag.className = 'tag';
             tag.draggable = true;
             tag.innerHTML = `
-                <span class="tag-drag-handle" style="opacity: 0.5; margin-right: 4px; cursor: grab;">⋮⋮</span>
+                <span class="tag-drag-handle" style="opacity: 0.5; margin-right: 4px; cursor: grab;">&#x22EE;&#x22EE;</span>
                 ${tagText}
-                <span class="tag-remove" onclick="this.parentElement.remove()">×</span>
+                <span class="tag-remove" onclick="this.parentElement.remove()">&#xD7;</span>
             `;
             
             // Add drag event listeners
@@ -3922,7 +3965,7 @@
         function getTags() {
             const tags = [];
             document.querySelectorAll('.tag').forEach(tag => {
-                const text = tag.textContent.replace('×', '').replace('⋮⋮', '').trim();
+                const text = tag.textContent.replace('&#xD7;', '').replace('&#x22EE;&#x22EE;', '').trim();
                 if (text) tags.push(text);
             });
             return tags;
@@ -3957,11 +4000,11 @@
                     <!-- Expandable Success/Fail Outcomes -->
                     <div style="margin-top: 1rem;">
                         <button type="button" class="btn btn-secondary btn-small" onclick="toggleOutcomes(this)" style="width: 100%;">
-                            <span class="toggle-icon">▶</span> Success/Fail Outcomes
+                            <span class="toggle-icon">&#x25B6;</span> Success/Fail Outcomes
                         </button>
                         <div class="outcomes-section" style="display: none; margin-top: 0.75rem; padding: 1rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px;">
                             <div style="margin-bottom: 1rem;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #4ade80;">✏“ On Success</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #4ade80;">&#x270F;â€œ On Success</label>
                                 <textarea class="form-textarea" placeholder="What happens on success..." data-option="onSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onSuccess || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="successGold" value="${option?.successGold !== undefined && option.successGold !== 0 ? option.successGold : ""}">
@@ -3971,7 +4014,7 @@
                             </div>
                             
                             <div style="margin-bottom: 1rem;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #60a5fa;">✔… On Critical Success</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #60a5fa;">âœ”â€¦ On Critical Success</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical success..." data-option="onCritSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritSuccess || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="critSuccessGold" value="${option?.critSuccessGold !== undefined && option.critSuccessGold !== 0 ? option.critSuccessGold : ""}">
@@ -3981,7 +4024,7 @@
                             </div>
                             
                             <div style="margin-bottom: 1rem;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #fb923c;">✏— On Fail</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #fb923c;">&#x270F;â€” On Fail</label>
                                 <textarea class="form-textarea" placeholder="What happens on fail..." data-option="onFail" style="min-height: 60px; margin-top: 0.5rem;">${option?.onFail || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="failGold" value="${option?.failGold !== undefined && option.failGold !== 0 ? option.failGold : ""}">
@@ -3991,7 +4034,7 @@
                             </div>
                             
                             <div>
-                                <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">✔  On Critical Fail</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">âœ”Â  On Critical Fail</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical fail..." data-option="onCritFail" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritFail || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="critFailGold" value="${option?.critFailGold !== undefined && option.critFailGold !== 0 ? option.critFailGold : ""}">
@@ -4013,7 +4056,7 @@
                         <label class="form-label" style="font-size: 0.9rem;">
                             Follow-up Events (sequential sub-events after this option)
                             <small style="display: block; font-weight: normal; color: rgba(245, 230, 211, 0.6); margin-top: 0.25rem;">
-                                Add events that happen in sequence (e.g., e_sen4_a1 → e_sen4_a2)
+                                Add events that happen in sequence (e.g., e_sen4_a1 &#x2191; e_sen4_a2)
                             </small>
                         </label>
                         <div class="followup-events-container" data-followup-container>
@@ -4043,7 +4086,7 @@
 
         function createFollowupEventHtml(index, event = null) {
             return `
-                ${index > 0 ? '<div class="followup-arrow">↔</div>' : ''}
+                ${index > 0 ? '<div class="followup-arrow">&#x2193;</div>' : ''}
                 <div class="followup-event-item">
                     <div class="followup-event-header">
                         <span class="followup-event-label">Follow-up ${index + 1}</span>
@@ -4067,10 +4110,10 @@
             
             if (outcomesSection.style.display === 'none') {
                 outcomesSection.style.display = 'block';
-                toggleIcon.textContent = '▼';
+                toggleIcon.textContent = '&#x25BC;';
             } else {
                 outcomesSection.style.display = 'none';
-                toggleIcon.textContent = '▶';
+                toggleIcon.textContent = '&#x25B6;';
             }
         }
 
@@ -4750,7 +4793,7 @@
                 item.className = 'search-result-item';
                 item.innerHTML = `
                     <div class="result-name">${node.name}</div>
-                    <div class="result-meta">${map.name} • ${node.type}</div>
+                    <div class="result-meta">${map.name} &#x2022; ${node.type}</div>
                 `;
                 item.addEventListener('click', () => {
                     // Switch to the node's map and wait for it to load
@@ -4948,8 +4991,8 @@
                             const compressedSize = compressedDataUrl.length;
                             const savings = ((1 - compressedSize / originalSize) * 100).toFixed(1);
                             
-                            console.log(`✓ Compression complete!`);
-                            console.log(`  Size: ${(originalSize / 1024 / 1024).toFixed(2)}MB → ${(compressedSize / 1024 / 1024).toFixed(2)}MB`);
+                            console.log(`&#x2714; Compression complete!`);
+                            console.log(`  Size: ${(originalSize / 1024 / 1024).toFixed(2)}MB &#x2191; ${(compressedSize / 1024 / 1024).toFixed(2)}MB`);
                             console.log(`  Savings: ${savings}% smaller`);
                             console.log(`  Format: ${mimeType}`);
                             
@@ -5071,7 +5114,7 @@
                 
                 // Check for network errors
                 if (error.message && error.message.includes('Failed to fetch')) {
-                    console.warn('⚠️ Network error - Cannot connect to Supabase. Using empty data.');
+                    console.warn('&#x2699; ï¸ Network error - Cannot connect to Supabase. Using empty data.');
                     console.warn('Check: 1) Internet connection, 2) Supabase URL/key, 3) Supabase service status');
                     maps = [];
                     return; // Continue with empty maps instead of throwing
@@ -5695,7 +5738,7 @@
                 }
                 
                 // Follow-up event indicator
-                if (line.includes('→ On Success, leads to:')) {
+                if (line.includes('&#x2191; On Success, leads to:')) {
                     i++;
                     // Parse follow-up event
                     const followup = parseFollowupEvent(lines, i);
@@ -5790,7 +5833,7 @@
             if (results.matched.length > 0) {
                 matchList.innerHTML = `
                     <div style="font-weight: 600; color: var(--success); margin-bottom: 0.75rem;">
-                        ✓ ${results.matched.length} node${results.matched.length !== 1 ? 's' : ''} on "${mapName}" will be updated:
+                        &#x2714; ${results.matched.length} node${results.matched.length !== 1 ? 's' : ''} on "${mapName}" will be updated:
                     </div>
                     ${results.matched.map(match => `
                         <div style="padding: 0.5rem; background: rgba(56, 161, 105, 0.1); border-radius: 4px; margin-bottom: 0.5rem; border-left: 3px solid var(--success);">
@@ -5816,7 +5859,7 @@
                 unmatchedList.style.display = 'block';
                 unmatchedList.innerHTML = `
                     <div style="font-weight: 600; color: var(--danger); margin-bottom: 0.5rem;">
-                        ⚠ ${results.unmatched.length} node${results.unmatched.length !== 1 ? 's' : ''} not found on "${mapName}":
+                        &#x2699;  ${results.unmatched.length} node${results.unmatched.length !== 1 ? 's' : ''} not found on "${mapName}":
                     </div>
                     <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.8);">
                         ${results.unmatched.map(n => n.name).join(', ')}
@@ -5843,7 +5886,7 @@
             }
 
             // Final confirmation with map name
-            const confirmMsg = `⚠️ IMPORT CONFIRMATION\n\n` +
+            const confirmMsg = `&#x2699; ï¸ IMPORT CONFIRMATION\n\n` +
                 `This will update ${importMatchResults.matched.length} node${importMatchResults.matched.length !== 1 ? 's' : ''} on the map:\n\n` +
                 `   "${map.name}"\n\n` +
                 `Nodes on other maps will NOT be affected.\n\n` +
@@ -5894,7 +5937,7 @@
             // Refresh display
             renderMapCanvas();
 
-            alert(`✅ Successfully imported data for ${updatedCount} node${updatedCount !== 1 ? 's' : ''} on map "${map.name}"!`);
+            alert(`âœ&#x2026; Successfully imported data for ${updatedCount} node${updatedCount !== 1 ? 's' : ''} on map "${map.name}"!`);
             closeImportModal();
         }
 
@@ -5911,7 +5954,7 @@
                     <td class="rarity-rare">${tier.rare}</td>
                     <td class="rarity-epic">${tier.epic}</td>
                     <td class="rarity-mythic">${tier.mythic}</td>
-                    <td class="dust-amount">${tier.dust} 💎</td>
+                    <td class="dust-amount">${tier.dust} &#x1F48E;</td>
                 </tr>
             `).join('');
         }
@@ -5926,7 +5969,7 @@
                 
                 // Check if Supabase SDK loaded
                 if (typeof supabase === 'undefined') {
-                    console.error('⚠️ Supabase SDK failed to load from CDN');
+                    console.error('&#x2699; ï¸ Supabase SDK failed to load from CDN');
                     alert('Network Error: Could not load required libraries.\n\nPlease check your internet connection and refresh the page.');
                     return;
                 }
@@ -5949,10 +5992,10 @@
                 
                 // Check if it's a Supabase configuration error
                 if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE') {
-                    alert('⚠️ Supabase not configured!\n\nPlease update the SUPABASE_URL and SUPABASE_ANON_KEY in the HTML file.');
+                    alert('&#x2699; ï¸ Supabase not configured!\n\nPlease update the SUPABASE_URL and SUPABASE_ANON_KEY in the HTML file.');
                 } else if (error.message && error.message.includes('Failed to fetch')) {
                     // Network/connectivity error - don't block the app completely
-                    console.warn('⚠️ Could not connect to Supabase - continuing with empty data');
+                    console.warn('&#x2699; ï¸ Could not connect to Supabase - continuing with empty data');
                     // App will continue with empty maps array
                 } else {
                     alert('Error loading application:\n\n' + error.message + '\n\nCheck browser console (F12) for details.');
