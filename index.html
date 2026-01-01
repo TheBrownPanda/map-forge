@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -1770,7 +1770,7 @@
                         </div>
                     </div>
                     <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.6); margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(212, 175, 55, 0.3);">
-                        &#x2699; ï¸ Only nodes on this map will be updated. Nodes with the same name on other maps will not be affected.
+                        &#x2699; &#xFE0F; Only nodes on this map will be updated. Nodes with the same name on other maps will not be affected.
                     </div>
                 </div>
 
@@ -1818,7 +1818,7 @@
     <!-- Context Menu -->
     <div class="context-menu" id="contextMenu">
         <div class="context-menu-item" id="contextEdit">&#x1F441;&#xFE0F; View Node</div>
-        <div class="context-menu-item" id="contextMove">&#x2193;ï¸ Move Node</div>
+        <div class="context-menu-item" id="contextMove">&#x2193;&#xFE0F; Move Node</div>
         <div class="context-menu-item danger" id="contextDelete">&#x1F5D1;&#xFE0F; Delete Node</div>
     </div>
 
@@ -2234,7 +2234,7 @@
                     progressBar.textContent = percent + '%';
                 }
                 
-                status.textContent = `âœ&#x2026; Successfully uploaded ${total} image(s)!`;
+                status.textContent = `&#x2714;&#x2026; Successfully uploaded ${total} image(s)!`;
                 
                 // Clear input and reload library
                 input.value = '';
@@ -2783,7 +2783,7 @@
             
             const actionsHtml = isAdmin ? `
                 <div class="map-item-actions">
-                    <button class="map-action-btn" onclick="event.stopPropagation(); editMap('${map.id}')" title="Edit Map">&#x270F;ï¸</button>
+                    <button class="map-action-btn" onclick="event.stopPropagation(); editMap('${map.id}')" title="Edit Map">&#x270F;&#xFE0F;</button>
                     <button class="map-action-btn" onclick="event.stopPropagation(); deleteMapFromSidebar('${map.id}')" title="Delete Map">&#x1F5D1;&#xFE0F;</button>
                 </div>
             ` : '';
@@ -3114,7 +3114,7 @@
 
                 function getNodeIcon(type) {
             const icons = {
-                combat: '&#x2694;&#xFE0F;ï¸',
+                combat: '&#x2694;&#xFE0F;&#xFE0F;',
                 event: '&#x1F4DC;',
                 card: '&#x1F3B4;',
                 crafter: '&#x1F528;',
@@ -3127,7 +3127,7 @@
                 boss: '&#x1F479;',
                 information: '&#x2139;&#xFE0F;'
             };
-            const icon = icons[type] || 'â­';
+            const icon = icons[type] || '&#x2B50;';
             console.log('Getting icon for type:', type, '&#x2191;', icon);
             return icon;
         }
@@ -3253,7 +3253,7 @@
                 console.error('Error opening node modal:', error);
                 loadingOverlay.innerHTML = `
                     <div style="color: var(--danger); text-align: center;">
-                        <div style="font-size: 2rem; margin-bottom: 1rem;">&#x2699; ï¸</div>
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">&#x2699; &#xFE0F;</div>
                         <div style="font-weight: 600; margin-bottom: 0.5rem;">Error Loading Node</div>
                         <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem;">${error.message}</div>
                         <button class="btn btn-primary" onclick="closeNodeModal()">Close</button>
@@ -3553,7 +3553,7 @@
                             if (option.onSuccess || option.successGold || option.successShards || option.successExp) {
                                 variantHtml.push(`
                                     <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(74, 222, 128, 0.1); border-left: 3px solid #4ade80; border-radius: 4px;">
-                                        <div style="color: #4ade80; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x270F;â€œ Success</div>
+                                        <div style="color: #4ade80; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x2714;&#x201C; Success</div>
                                 `);
                                 if (option.onSuccess) {
                                     variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onSuccess}</div>`);
@@ -3571,7 +3571,7 @@
                             if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp) {
                                 variantHtml.push(`
                                     <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(96, 165, 250, 0.1); border-left: 3px solid #60a5fa; border-radius: 4px;">
-                                        <div style="color: #60a5fa; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">âœ”â€¦ Critical Success</div>
+                                        <div style="color: #60a5fa; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x2714;&#x2026; Critical Success</div>
                                 `);
                                 if (option.onCritSuccess) {
                                     variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onCritSuccess}</div>`);
@@ -3589,7 +3589,7 @@
                             if (option.onFail || option.failGold || option.failShards || option.failExp) {
                                 variantHtml.push(`
                                     <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(251, 146, 60, 0.1); border-left: 3px solid #fb923c; border-radius: 4px;">
-                                        <div style="color: #fb923c; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x270F;â€” Fail</div>
+                                        <div style="color: #fb923c; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x2714;&#x2014; Fail</div>
                                 `);
                                 if (option.onFail) {
                                     variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onFail}</div>`);
@@ -3607,7 +3607,7 @@
                             if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp) {
                                 variantHtml.push(`
                                     <div style="padding: 0.5rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; border-radius: 4px;">
-                                        <div style="color: #ef4444; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">âœ”Â  Critical Fail</div>
+                                        <div style="color: #ef4444; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">\u2714  Critical Fail</div>
                                 `);
                                 if (option.onCritFail) {
                                     variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${option.onCritFail}</div>`);
@@ -3693,8 +3693,8 @@
             if (isAdmin) {
                 html += `
                     <div class="node-viewer-actions">
-                        <button class="btn btn-primary btn-small" onclick="editNodeFromViewer()">&#x270F;ï¸ Edit</button>
-                        <button class="btn btn-secondary btn-small" onclick="moveNodeFromViewer()">&#x2193;ï¸ Move</button>
+                        <button class="btn btn-primary btn-small" onclick="editNodeFromViewer()">&#x270F;&#xFE0F; Edit</button>
+                        <button class="btn btn-secondary btn-small" onclick="moveNodeFromViewer()">&#x2193;&#xFE0F; Move</button>
                         <button class="btn btn-danger btn-small" onclick="deleteNodeFromViewer()">&#x1F5D1;&#xFE0F; Delete</button>
                     </div>
                 `;
@@ -4004,7 +4004,7 @@
                         </button>
                         <div class="outcomes-section" style="display: none; margin-top: 0.75rem; padding: 1rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px;">
                             <div style="margin-bottom: 1rem;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #4ade80;">&#x270F;â€œ On Success</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #4ade80;">&#x2714;&#x201C; On Success</label>
                                 <textarea class="form-textarea" placeholder="What happens on success..." data-option="onSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onSuccess || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="successGold" value="${option?.successGold !== undefined && option.successGold !== 0 ? option.successGold : ""}">
@@ -4014,7 +4014,7 @@
                             </div>
                             
                             <div style="margin-bottom: 1rem;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #60a5fa;">âœ”â€¦ On Critical Success</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #60a5fa;">&#x2714;&#x2026; On Critical Success</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical success..." data-option="onCritSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritSuccess || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="critSuccessGold" value="${option?.critSuccessGold !== undefined && option.critSuccessGold !== 0 ? option.critSuccessGold : ""}">
@@ -4024,7 +4024,7 @@
                             </div>
                             
                             <div style="margin-bottom: 1rem;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #fb923c;">&#x270F;â€” On Fail</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #fb923c;">&#x2714;&#x2014; On Fail</label>
                                 <textarea class="form-textarea" placeholder="What happens on fail..." data-option="onFail" style="min-height: 60px; margin-top: 0.5rem;">${option?.onFail || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="failGold" value="${option?.failGold !== undefined && option.failGold !== 0 ? option.failGold : ""}">
@@ -4034,7 +4034,7 @@
                             </div>
                             
                             <div>
-                                <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">âœ”Â  On Critical Fail</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">\u2714  On Critical Fail</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical fail..." data-option="onCritFail" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritFail || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="critFailGold" value="${option?.critFailGold !== undefined && option.critFailGold !== 0 ? option.critFailGold : ""}">
@@ -5114,7 +5114,7 @@
                 
                 // Check for network errors
                 if (error.message && error.message.includes('Failed to fetch')) {
-                    console.warn('&#x2699; ï¸ Network error - Cannot connect to Supabase. Using empty data.');
+                    console.warn('&#x2699; &#xFE0F; Network error - Cannot connect to Supabase. Using empty data.');
                     console.warn('Check: 1) Internet connection, 2) Supabase URL/key, 3) Supabase service status');
                     maps = [];
                     return; // Continue with empty maps instead of throwing
@@ -5886,7 +5886,7 @@
             }
 
             // Final confirmation with map name
-            const confirmMsg = `&#x2699; ï¸ IMPORT CONFIRMATION\n\n` +
+            const confirmMsg = `&#x2699; &#xFE0F; IMPORT CONFIRMATION\n\n` +
                 `This will update ${importMatchResults.matched.length} node${importMatchResults.matched.length !== 1 ? 's' : ''} on the map:\n\n` +
                 `   "${map.name}"\n\n` +
                 `Nodes on other maps will NOT be affected.\n\n` +
@@ -5937,7 +5937,7 @@
             // Refresh display
             renderMapCanvas();
 
-            alert(`âœ&#x2026; Successfully imported data for ${updatedCount} node${updatedCount !== 1 ? 's' : ''} on map "${map.name}"!`);
+            alert(`&#x2714;&#x2026; Successfully imported data for ${updatedCount} node${updatedCount !== 1 ? 's' : ''} on map "${map.name}"!`);
             closeImportModal();
         }
 
@@ -5969,7 +5969,7 @@
                 
                 // Check if Supabase SDK loaded
                 if (typeof supabase === 'undefined') {
-                    console.error('&#x2699; ï¸ Supabase SDK failed to load from CDN');
+                    console.error('&#x2699; &#xFE0F; Supabase SDK failed to load from CDN');
                     alert('Network Error: Could not load required libraries.\n\nPlease check your internet connection and refresh the page.');
                     return;
                 }
@@ -5992,10 +5992,10 @@
                 
                 // Check if it's a Supabase configuration error
                 if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE') {
-                    alert('&#x2699; ï¸ Supabase not configured!\n\nPlease update the SUPABASE_URL and SUPABASE_ANON_KEY in the HTML file.');
+                    alert('&#x2699; &#xFE0F; Supabase not configured!\n\nPlease update the SUPABASE_URL and SUPABASE_ANON_KEY in the HTML file.');
                 } else if (error.message && error.message.includes('Failed to fetch')) {
                     // Network/connectivity error - don't block the app completely
-                    console.warn('&#x2699; ï¸ Could not connect to Supabase - continuing with empty data');
+                    console.warn('&#x2699; &#xFE0F; Could not connect to Supabase - continuing with empty data');
                     // App will continue with empty maps array
                 } else {
                     alert('Error loading application:\n\n' + error.message + '\n\nCheck browser console (F12) for details.');
