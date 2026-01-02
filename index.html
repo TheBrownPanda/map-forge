@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0 - OPTIMIZED</title>
+    <title>Map Forge v2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -1523,6 +1523,7 @@
                 <div class="node-viewer" id="nodeViewer">
                     <div class="node-viewer-header">
                         <h3 class="node-viewer-title" id="viewerNodeName"></h3>
+                        <div id="viewerGameId" style="font-size: 0.8rem; color: rgba(245, 230, 211, 0.5); margin-top: -0.25rem; margin-bottom: 0.5rem;"></div>
                         <button class="node-viewer-close" id="closeViewerBtn">&#xD7;</button>
                     </div>
                     <div id="viewerContent"></div>
@@ -1542,6 +1543,11 @@
                 <div class="form-group">
                     <label class="form-label">Name</label>
                     <input type="text" class="form-input" id="nodeName" placeholder="Enter node name" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Game ID <small style="font-weight: normal; color: rgba(245, 230, 211, 0.5);">(for import matching, e.g., faen_1)</small></label>
+                    <input type="text" class="form-input" id="nodeGameId" placeholder="e.g., faen_1, sen_4, sahti_12">
                 </div>
 
                 <div class="form-group">
@@ -3236,6 +3242,7 @@
                     deleteBtn.style.display = 'none';
                     nodeForm.reset();
                     document.getElementById('nodeName').value = '';
+                    document.getElementById('nodeGameId').value = '';
                     initializeVariants();
                     mapLinkGroup.style.display = 'none';
                 }
@@ -3277,6 +3284,7 @@
 
         function populateNodeForm(node) {
             document.getElementById('nodeName').value = node.name;
+            document.getElementById('nodeGameId').value = node.gameId || '';
             document.getElementById('nodeType').value = node.type;
             document.getElementById('nodeDescription').value = node.description || '';
             
@@ -3327,6 +3335,7 @@
             const nodeData = {
                 id: editingNodeId || generateId(),
                 name: document.getElementById('nodeName').value,
+                gameId: document.getElementById('nodeGameId').value || '',
                 variants: JSON.parse(JSON.stringify(currentNodeVariants)), // Save all variants
                 x: 0,
                 y: 0,
@@ -3384,6 +3393,7 @@
             viewingNodeId = nodeId;
             
             document.getElementById('viewerNodeName').textContent = node.name;
+            document.getElementById('viewerGameId').textContent = node.gameId ? `ID: ${node.gameId}` : '';
             
             const content = document.getElementById('viewerContent');
             let html = '';
@@ -3556,23 +3566,14 @@
                             let combatEffects = null;
                             let combatLoot = null;
                             
-                            // Extract Combat Effects
-                            const effectsMatch = text.match(/Combat Effects:\s*([^|]+)/);
+                            // Extract Combat Effects ONLY (loot is in dedicated field now)
+                            const effectsMatch = text.match(/Combat Effects:\s*([^\n]+)/);
                             if (effectsMatch) {
                                 combatEffects = effectsMatch[1].trim();
-                                // Remove from text
-                                cleanText = cleanText.replace(/\s*\|?\s*Combat Effects:[^|]+\|?\s*/, ' | ').trim();
+                                cleanText = cleanText.replace(/Combat Effects:[^\n]+\n?/, '').trim();
                             }
                             
-                            // Extract Combat Loot
-                            const lootMatch = text.match(/Combat Loot:\s*(.+?)(?=\s*$|\s*\|\s*Gold:)/);
-                            if (lootMatch) {
-                                combatLoot = lootMatch[1].trim();
-                                // Remove from text
-                                cleanText = cleanText.replace(/\s*\|?\s*Combat Loot:[^|]+(?=\s*\|\s*Gold:|$)/, '').trim();
-                            }
-                            
-                            // Clean up extra pipes and spaces
+                            // Clean up
                             cleanText = cleanText.replace(/\|\s*\|/g, '|').replace(/^\s*\|\s*/, '').replace(/\s*\|\s*$/, '').trim();
                             
                             return { cleanText, combatEffects, combatLoot };
@@ -3606,19 +3607,6 @@
                                     `);
                                 }
                                 
-                                // Main Combat Loot (if present and no extracted loot)
-                                if (option.combatLoot) {
-                                    variantHtml.push(`
-                                        <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border-left: 3px solid var(--accent); margin-bottom: 0.75rem;">
-                                            <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 0.5rem;">
-                                                &#x1F4B0; Combat Loot
-                                            </div>
-                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; line-height: 1.6;">
-                                                ${option.combatLoot}
-                                            </div>
-                                        </div>
-                                    `);
-                                }
                                 
                                 variantHtml.push(`
                                     <div style="padding: 0.75rem; background: rgba(74, 222, 128, 0.15); border-left: 3px solid #4ade80; border-radius: 4px; margin-bottom: 0.75rem;">
@@ -3646,11 +3634,11 @@
                                 }
                                 
                                 // Display Combat Loot if extracted
-                                if (successInfo.combatLoot) {
+                                if (option.combatLoot) {
                                     variantHtml.push(`
                                         <div style="padding: 0.5rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
                                             <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F4B0; Combat Loot</div>
-                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${successInfo.combatLoot}</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.combatLoot}</div>
                                         </div>
                                     `);
                                 }
@@ -3673,7 +3661,7 @@
                                 }
                                 const critSuccessRewards = [];
                                 if (option.critSuccessGold && option.critSuccessGold !== 0) critSuccessRewards.push(`&#x1F4B0; ${option.critSuccessGold}`);
-                                if (option.critSuccessShards && option.critSuccessShards !== 0) critSuccessRewards.push(`&#x1F48E; ${option.critSuccessShards}`);
+                                if ((option.critSuccessShards || option.critSuccessDust) && (option.critSuccessShards || option.critSuccessDust) !== 0) critSuccessRewards.push(`&#x1F48E; ${option.critSuccessShards || option.critSuccessDust}`);
                                 if (option.critSuccessExp && option.critSuccessExp !== 0) critSuccessRewards.push(`&#x2B50; ${option.critSuccessExp}`);
                                 if (critSuccessRewards.length > 0) {
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${critSuccessRewards.join(' ')}</div>`);
@@ -3689,11 +3677,11 @@
                                     `);
                                 }
                                 
-                                if (critSuccessInfo.combatLoot) {
+                                if (option.critCombatLoot) {
                                     variantHtml.push(`
                                         <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
                                             <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F4B0; Combat Loot</div>
-                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${critSuccessInfo.combatLoot}</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critCombatLoot}</div>
                                         </div>
                                     `);
                                 }
@@ -3732,11 +3720,11 @@
                                     `);
                                 }
                                 
-                                if (failInfo.combatLoot) {
+                                if (option.failCombatLoot) {
                                     variantHtml.push(`
                                         <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
                                             <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F4B0; Combat Loot</div>
-                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${failInfo.combatLoot}</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.failCombatLoot}</div>
                                         </div>
                                     `);
                                 }
@@ -3775,11 +3763,11 @@
                                     `);
                                 }
                                 
-                                if (critFailInfo.combatLoot) {
+                                if (option.critFailCombatLoot) {
                                     variantHtml.push(`
                                         <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
                                             <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F4B0; Combat Loot</div>
-                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${critFailInfo.combatLoot}</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critFailCombatLoot}</div>
                                         </div>
                                     `);
                                 }
@@ -5965,16 +5953,29 @@
                 mapName: map.name
             };
 
-            // Only search within the provided map's nodes
+            // Match by gameId first (e.g., faen_1), then fall back to name
             parsedNodes.forEach(parsedNode => {
-                const existingNode = map.nodes.find(n => 
-                    n.name.toLowerCase() === parsedNode.name.toLowerCase()
+                // First try to match by gameId
+                let existingNode = map.nodes.find(n => 
+                    n.gameId && parsedNode.id && 
+                    n.gameId.toLowerCase() === parsedNode.id.toLowerCase()
                 );
+                
+                let matchedBy = 'gameId';
+                
+                // Fall back to name matching if no gameId match
+                if (!existingNode) {
+                    existingNode = map.nodes.find(n => 
+                        n.name.toLowerCase() === parsedNode.name.toLowerCase()
+                    );
+                    matchedBy = 'name';
+                }
 
                 if (existingNode) {
                     results.matched.push({
                         mapNode: existingNode,
-                        importData: parsedNode
+                        importData: parsedNode,
+                        matchedBy: matchedBy
                     });
                 } else {
                     results.unmatched.push(parsedNode);
@@ -6003,6 +6004,8 @@
                     ${results.matched.map(match => `
                         <div style="padding: 0.5rem; background: rgba(56, 161, 105, 0.1); border-radius: 4px; margin-bottom: 0.5rem; border-left: 3px solid var(--success);">
                             <strong>${match.importData.name}</strong>
+                            <span style="font-size: 0.8rem; color: rgba(245, 230, 211, 0.5); margin-left: 0.5rem;">${match.importData.id || ''}</span>
+                            <span style="font-size: 0.75rem; color: ${match.matchedBy === 'gameId' ? 'var(--success)' : 'var(--warning)'}; margin-left: 0.5rem;">(matched by ${match.matchedBy})</span>
                             <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-top: 0.25rem;">
                                 ${match.importData.variants.length} variant${match.importData.variants.length !== 1 ? 's' : ''}, 
                                 ${match.importData.variants.reduce((sum, v) => sum + v.options.length, 0)} total options
