@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -3608,20 +3608,24 @@
                                 }
                                 
                                 
-                                variantHtml.push(`
-                                    <div style="padding: 0.75rem; background: rgba(74, 222, 128, 0.15); border-left: 3px solid #4ade80; border-radius: 4px; margin-bottom: 0.75rem;">
-                                `);
-                                if (successInfo.cleanText) {
-                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${successInfo.cleanText}</div>`);
-                                }
                                 const successRewards = [];
                                 if (option.successGold && option.successGold !== 0) successRewards.push(`&#x1F4B0; ${option.successGold}`);
                                 if (option.successShards && option.successShards !== 0) successRewards.push(`&#x1F48E; ${option.successShards}`);
                                 if (option.successExp && option.successExp !== 0) successRewards.push(`&#x2B50; ${option.successExp}`);
-                                if (successRewards.length > 0) {
-                                    variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${successRewards.join(' ')}</div>`);
+                                
+                                // Only show green box if there's text or rewards
+                                if (successInfo.cleanText || successRewards.length > 0) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.75rem; background: rgba(74, 222, 128, 0.15); border-left: 3px solid #4ade80; border-radius: 4px; margin-bottom: 0.75rem;">
+                                    `);
+                                    if (successInfo.cleanText) {
+                                        variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${successInfo.cleanText}</div>`);
+                                    }
+                                    if (successRewards.length > 0) {
+                                        variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${successRewards.join(' ')}</div>`);
+                                    }
+                                    variantHtml.push(`</div>`);
                                 }
-                                variantHtml.push(`</div>`);
                                 
                                 // Display Combat Effects if extracted
                                 if (successInfo.combatEffects) {
@@ -3653,20 +3657,24 @@
                                     <div style="margin-bottom: 0.75rem; padding: 1rem; background: rgba(96, 165, 250, 0.05); border: 2px solid #60a5fa; border-radius: 8px;">
                                         <div style="color: #60a5fa; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">&#x2714;&#x2026; CRITICAL SUCCESS</div>
                                 `);
-                                variantHtml.push(`
-                                    <div style="padding: 0.75rem; background: rgba(96, 165, 250, 0.15); border-left: 3px solid #60a5fa; border-radius: 4px; margin-bottom: 0.75rem;">
-                                `);
-                                if (critSuccessInfo.cleanText) {
-                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${critSuccessInfo.cleanText}</div>`);
-                                }
                                 const critSuccessRewards = [];
                                 if (option.critSuccessGold && option.critSuccessGold !== 0) critSuccessRewards.push(`&#x1F4B0; ${option.critSuccessGold}`);
                                 if ((option.critSuccessShards || option.critSuccessDust) && (option.critSuccessShards || option.critSuccessDust) !== 0) critSuccessRewards.push(`&#x1F48E; ${option.critSuccessShards || option.critSuccessDust}`);
                                 if (option.critSuccessExp && option.critSuccessExp !== 0) critSuccessRewards.push(`&#x2B50; ${option.critSuccessExp}`);
-                                if (critSuccessRewards.length > 0) {
-                                    variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${critSuccessRewards.join(' ')}</div>`);
+                                
+                                // Only show blue box if there's text or rewards
+                                if (critSuccessInfo.cleanText || critSuccessRewards.length > 0) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.75rem; background: rgba(96, 165, 250, 0.15); border-left: 3px solid #60a5fa; border-radius: 4px; margin-bottom: 0.75rem;">
+                                    `);
+                                    if (critSuccessInfo.cleanText) {
+                                        variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${critSuccessInfo.cleanText}</div>`);
+                                    }
+                                    if (critSuccessRewards.length > 0) {
+                                        variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${critSuccessRewards.join(' ')}</div>`);
+                                    }
+                                    variantHtml.push(`</div>`);
                                 }
-                                variantHtml.push(`</div>`);
                                 
                                 if (critSuccessInfo.combatEffects) {
                                     variantHtml.push(`
@@ -3696,20 +3704,24 @@
                                     <div style="margin-bottom: 0.75rem; padding: 1rem; background: rgba(251, 146, 60, 0.05); border: 2px solid #fb923c; border-radius: 8px;">
                                         <div style="color: #fb923c; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">&#x2714;&#x2014; FAIL</div>
                                 `);
-                                variantHtml.push(`
-                                    <div style="padding: 0.75rem; background: rgba(251, 146, 60, 0.15); border-left: 3px solid #fb923c; border-radius: 4px; margin-bottom: 0.75rem;">
-                                `);
-                                if (failInfo.cleanText) {
-                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${failInfo.cleanText}</div>`);
-                                }
                                 const failRewards = [];
                                 if (option.failGold && option.failGold !== 0) failRewards.push(`&#x1F4B0; ${option.failGold}`);
                                 if (option.failShards && option.failShards !== 0) failRewards.push(`&#x1F48E; ${option.failShards}`);
                                 if (option.failExp && option.failExp !== 0) failRewards.push(`&#x2B50; ${option.failExp}`);
-                                if (failRewards.length > 0) {
-                                    variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${failRewards.join(' ')}</div>`);
+                                
+                                // Only show orange box if there's text or rewards
+                                if (failInfo.cleanText || failRewards.length > 0) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.75rem; background: rgba(251, 146, 60, 0.15); border-left: 3px solid #fb923c; border-radius: 4px; margin-bottom: 0.75rem;">
+                                    `);
+                                    if (failInfo.cleanText) {
+                                        variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.25rem;">${failInfo.cleanText}</div>`);
+                                    }
+                                    if (failRewards.length > 0) {
+                                        variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${failRewards.join(' ')}</div>`);
+                                    }
+                                    variantHtml.push(`</div>`);
                                 }
-                                variantHtml.push(`</div>`);
                                 
                                 if (failInfo.combatEffects) {
                                     variantHtml.push(`
