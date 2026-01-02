@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0 - OPTIMIZED</title>
+    <title>Map Forge v2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -3640,9 +3640,18 @@
                                 // Display Combat Loot if extracted
                                 if (option.combatLoot) {
                                     variantHtml.push(`
-                                        <div style="padding: 0.5rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
+                                        <div style="padding: 0.5rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px; margin-bottom: 0.5rem;">
                                             <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F4B0; Combat Loot</div>
                                             <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.combatLoot}</div>
+                                        </div>
+                                    `);
+                                }
+                                // Display Shop Loot if present
+                                if (option.shopLoot) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(147, 51, 234, 0.1); border-left: 3px solid #9333ea; border-radius: 4px;">
+                                            <div style="color: #9333ea; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F6D2; Shop Items</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.shopLoot}</div>
                                         </div>
                                     `);
                                 }
@@ -3687,9 +3696,17 @@
                                 
                                 if (option.critCombatLoot) {
                                     variantHtml.push(`
-                                        <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
+                                        <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px; margin-bottom: 0.5rem;">
                                             <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F4B0; Combat Loot</div>
                                             <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critCombatLoot}</div>
+                                        </div>
+                                    `);
+                                }
+                                if (option.critShopLoot) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.75rem; background: rgba(147, 51, 234, 0.1); border-left: 3px solid #9333ea; border-radius: 4px;">
+                                            <div style="color: #9333ea; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F6D2; Shop Items</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critShopLoot}</div>
                                         </div>
                                     `);
                                 }
@@ -3734,9 +3751,17 @@
                                 
                                 if (option.failCombatLoot) {
                                     variantHtml.push(`
-                                        <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
+                                        <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px; margin-bottom: 0.5rem;">
                                             <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F4B0; Combat Loot</div>
                                             <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.failCombatLoot}</div>
+                                        </div>
+                                    `);
+                                }
+                                if (option.failShopLoot) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.75rem; background: rgba(147, 51, 234, 0.1); border-left: 3px solid #9333ea; border-radius: 4px;">
+                                            <div style="color: #9333ea; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F6D2; Shop Items</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.failShopLoot}</div>
                                         </div>
                                     `);
                                 }
