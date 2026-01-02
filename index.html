@@ -1763,14 +1763,14 @@
                 <!-- Target Map Indicator -->
                 <div id="importTargetMapInfo" style="display: none; background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(201, 169, 97, 0.2)); border: 2px solid var(--primary); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="font-size: 1.5rem;">&#x1F5FA;¸</div>
+                        <div style="font-size: 1.5rem;">&#x1F5FA;Â¸Â</div>
                         <div style="flex: 1;">
                             <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.25rem;">Importing to Map:</div>
                             <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary);" id="importTargetMap"></div>
                         </div>
                     </div>
                     <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.6); margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(212, 175, 55, 0.3);">
-                        &#x2699; &#xFE0F; Only nodes on this map will be updated. Nodes with the same name on other maps will not be affected.
+                        &#x2699;Â &#xFE0F; Only nodes on this map will be updated. Nodes with the same name on other maps will not be affected.
                     </div>
                 </div>
 
@@ -2622,7 +2622,7 @@
                         const originalSize = (file.size / 1024 / 1024).toFixed(2);
                         stats.innerHTML = `
                             Original: ${originalSize} MB<br>
-                            <span style="color: var(--primary);">&#x2699;¡ Will be compressed on upload</span>
+                            <span style="color: var(--primary);">&#x2699;Â¡ Will be compressed on upload</span>
                         `;
                     };
                     reader.readAsDataURL(file);
@@ -3122,7 +3122,7 @@
                 character: '&#x1F464;',
                 transition: '&#x1F6AA;',
                 shop: '&#x1FA99;',
-                quest: '&#x274C;“',
+                quest: '&#x274C;â€œ',
                 rift: '&#x1F300;',
                 boss: '&#x1F479;',
                 information: '&#x2139;&#xFE0F;'
@@ -3253,7 +3253,7 @@
                 console.error('Error opening node modal:', error);
                 loadingOverlay.innerHTML = `
                     <div style="color: var(--danger); text-align: center;">
-                        <div style="font-size: 2rem; margin-bottom: 1rem;">&#x2699; &#xFE0F;</div>
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">&#x2699;Â &#xFE0F;</div>
                         <div style="font-weight: 600; margin-bottom: 0.5rem;">Error Loading Node</div>
                         <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem;">${error.message}</div>
                         <button class="btn btn-primary" onclick="closeNodeModal()">Close</button>
@@ -3501,14 +3501,14 @@
                         
                         
                         // Display Card Roll BEFORE success/fail (it determines the outcome)
-                        if (option.cardRoll) {
+                        if (option.cardRoll || option.rollInfo) {
                             variantHtml.push(`
                                 <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border-left: 3px solid var(--primary);">
                                     <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">
                                         &#x1F4CA; Card Roll
                                     </div>
                                     <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem;">
-                                        Roll: ${option.cardRoll}
+                                        Roll: ${option.cardRoll || option.rollInfo}
                                     </div>
                                 </div>
                             `);
@@ -4199,7 +4199,7 @@
                             </div>
                             
                             <div>
-                                <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">&#x2714;  On Critical Fail</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">&#x2714;Â  On Critical Fail</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical fail..." data-option="onCritFail" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritFail || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="critFailGold" value="${option?.critFailGold !== undefined && option.critFailGold !== 0 ? option.critFailGold : ""}">
@@ -5279,7 +5279,7 @@
                 
                 // Check for network errors
                 if (error.message && error.message.includes('Failed to fetch')) {
-                    console.warn('&#x2699; &#xFE0F; Network error - Cannot connect to Supabase. Using empty data.');
+                    console.warn('&#x2699;Â &#xFE0F; Network error - Cannot connect to Supabase. Using empty data.');
                     console.warn('Check: 1) Internet connection, 2) Supabase URL/key, 3) Supabase service status');
                     maps = [];
                     return; // Continue with empty maps instead of throwing
@@ -6024,7 +6024,7 @@
                 unmatchedList.style.display = 'block';
                 unmatchedList.innerHTML = `
                     <div style="font-weight: 600; color: var(--danger); margin-bottom: 0.5rem;">
-                        &#x2699;  ${results.unmatched.length} node${results.unmatched.length !== 1 ? 's' : ''} not found on "${mapName}":
+                        &#x2699;Â  ${results.unmatched.length} node${results.unmatched.length !== 1 ? 's' : ''} not found on "${mapName}":
                     </div>
                     <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.8);">
                         ${results.unmatched.map(n => n.name).join(', ')}
@@ -6051,7 +6051,7 @@
             }
 
             // Final confirmation with map name
-            const confirmMsg = `&#x2699; &#xFE0F; IMPORT CONFIRMATION\n\n` +
+            const confirmMsg = `&#x2699;Â &#xFE0F; IMPORT CONFIRMATION\n\n` +
                 `This will update ${importMatchResults.matched.length} node${importMatchResults.matched.length !== 1 ? 's' : ''} on the map:\n\n` +
                 `   "${map.name}"\n\n` +
                 `Nodes on other maps will NOT be affected.\n\n` +
@@ -6134,7 +6134,7 @@
                 
                 // Check if Supabase SDK loaded
                 if (typeof supabase === 'undefined') {
-                    console.error('&#x2699; &#xFE0F; Supabase SDK failed to load from CDN');
+                    console.error('&#x2699;Â &#xFE0F; Supabase SDK failed to load from CDN');
                     alert('Network Error: Could not load required libraries.\n\nPlease check your internet connection and refresh the page.');
                     return;
                 }
@@ -6157,10 +6157,10 @@
                 
                 // Check if it's a Supabase configuration error
                 if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE') {
-                    alert('&#x2699; &#xFE0F; Supabase not configured!\n\nPlease update the SUPABASE_URL and SUPABASE_ANON_KEY in the HTML file.');
+                    alert('&#x2699;Â &#xFE0F; Supabase not configured!\n\nPlease update the SUPABASE_URL and SUPABASE_ANON_KEY in the HTML file.');
                 } else if (error.message && error.message.includes('Failed to fetch')) {
                     // Network/connectivity error - don't block the app completely
-                    console.warn('&#x2699; &#xFE0F; Could not connect to Supabase - continuing with empty data');
+                    console.warn('&#x2699;Â &#xFE0F; Could not connect to Supabase - continuing with empty data');
                     // App will continue with empty maps array
                 } else {
                     alert('Error loading application:\n\n' + error.message + '\n\nCheck browser console (F12) for details.');
