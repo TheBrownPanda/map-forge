@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -6242,40 +6242,43 @@
             importMatchResults.matched.forEach((match, idx) => {
                 console.log(`Processing match ${idx + 1}:`, match);
                 
-                const node = match.mapNode;
                 const importData = match.importData;
                 const matchedBy = match.matchedBy;
+                const originalNodeId = match.mapNode.id;
 
-                console.log('  Map node ID:', node.id);
-                console.log('  Import data ID:', importData.id);
+                console.log('  Looking for node with internal ID:', originalNodeId);
+                console.log('  Import data ID (gameId):', importData.id);
                 console.log('  Matched by:', matchedBy);
 
-                // Double-check this node belongs to the current map
-                const nodeOnMap = map.nodes.find(n => n.id === node.id);
-                if (!nodeOnMap) {
-                    console.error('Security check failed: Node does not belong to current map');
-                    console.log('  Looking for node.id:', node.id);
-                    console.log('  Map nodes:', map.nodes.map(n => n.id));
+                // Find the node INDEX in the map's nodes array - this is crucial!
+                const nodeIndex = map.nodes.findIndex(n => n.id === originalNodeId);
+                if (nodeIndex === -1) {
+                    console.error('Security check failed: Node not found in current map');
+                    console.log('  Available node IDs:', map.nodes.map(n => n.id));
                     return;
                 }
 
-                console.log('  Node found on map, updating...');
+                console.log('  Node found at index:', nodeIndex);
+                console.log('  Current node name:', map.nodes[nodeIndex].name);
+
+                // DIRECTLY update the node in the map.nodes array
+                const targetNode = map.nodes[nodeIndex];
 
                 // If matched by gameId, also fill in the name from import data
                 if (matchedBy === 'gameId' && importData.name) {
-                    console.log('  Updating name from:', node.name, 'to:', importData.name);
-                    node.name = importData.name;
+                    console.log('  Updating name from:', targetNode.name, 'to:', importData.name);
+                    targetNode.name = importData.name;
                 }
                 
                 // If matched by name, also fill in the gameId from import data
                 if (matchedBy === 'name' && importData.id) {
-                    console.log('  Updating gameId from:', node.gameId, 'to:', importData.id);
-                    node.gameId = importData.id;
+                    console.log('  Updating gameId from:', targetNode.gameId, 'to:', importData.id);
+                    targetNode.gameId = importData.id;
                 }
 
                 // Update node with imported data
                 console.log('  Setting variants:', importData.variants.length, 'variants');
-                node.variants = importData.variants.map(v => ({
+                targetNode.variants = importData.variants.map(v => ({
                     name: v.name,
                     chance: v.chance,
                     type: v.type || importData.type || 'event',
@@ -6286,28 +6289,33 @@
                 }));
 
                 // Update legacy fields for backward compatibility
-                if (node.variants.length > 0) {
-                    node.type = node.variants[0].type;
-                    node.description = node.variants[0].description;
-                    node.tags = node.variants[0].tags;
-                    node.options = node.variants[0].options;
+                if (targetNode.variants.length > 0) {
+                    targetNode.type = targetNode.variants[0].type;
+                    targetNode.description = targetNode.variants[0].description;
+                    targetNode.tags = targetNode.variants[0].tags;
+                    targetNode.options = targetNode.variants[0].options;
                 }
 
-                console.log('  Node updated successfully');
+                console.log('  Node updated successfully. New name:', targetNode.name);
+                console.log('  Variants count:', targetNode.variants.length);
                 updatedCount++;
             });
 
             console.log('Total nodes updated:', updatedCount);
 
-            // Save to database
-            console.log('Saving to database...');
+            // Verify the maps array was actually modified
+            const verifyMap = maps.find(m => m.id === currentMapId);
+            console.log('Verification - first few nodes after update:', verifyMap.nodes.slice(0, 3).map(n => ({name: n.name, gameId: n.gameId, variantsCount: n.variants?.length})));
+
+            // Save to database with IMMEDIATE flag to bypass debounce
+            console.log('Saving to database (immediate)...');
             try {
-                await saveData();
+                await saveData(false, true);  // silent=false, immediate=true
                 console.log('Save complete');
             } catch (error) {
                 console.error('Save error:', error);
                 alert('Error saving: ' + error);
-                isSaving = false; // Reset flag on error
+                isSaving = false;
                 return;
             }
             
