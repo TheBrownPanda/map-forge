@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0 - OPTIMIZED</title>
+    <title>Map Forge v2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -3837,73 +3837,126 @@
                                     <div style="font-size: 0.95rem; color: #3b82f6; font-weight: 700; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
                                         &#x27A1;&#xFE0F; ON SUCCESS, LEADS TO: ${followUp.name || followUp.eventId}
                                     </div>
+                                    <div style="font-size: 0.85rem; color: #60a5fa; margin-bottom: 0.75rem;">OPTIONS</div>
                             `);
                             
-                            // Render follow-up event options
+                            // Render follow-up event options as collapsible items (same as regular options)
                             if (followUp.options && followUp.options.length > 0) {
                                 followUp.options.forEach((fuOption, fuIdx) => {
+                                    const fuOptionId = `fu-option-${fuIdx}-${Math.random().toString(36).substr(2, 9)}`;
                                     variantHtml.push(`
-                                        <div style="background: rgba(42, 35, 26, 0.4); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.75rem; border-left: 3px solid #3b82f6;">
-                                            <div style="font-weight: 600; color: #60a5fa; font-size: 0.9rem; margin-bottom: 0.5rem;">
-                                                ${fuIdx + 1}. ${fuOption.label || 'Option'}
+                                        <div class="node-viewer-option" style="cursor: pointer; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; background: rgba(42, 35, 26, 0.4);" onclick="toggleOptionContent('${fuOptionId}')">
+                                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                <div class="node-viewer-option-label" style="margin: 0; color: #60a5fa;">${fuIdx + 1}. ${fuOption.label || 'Option'}</div>
+                                                <span id="${fuOptionId}-toggle" style="font-size: 0.9rem; opacity: 0.6;">&#x25B6;</span>
                                             </div>
+                                            <div id="${fuOptionId}-content" style="display: none; margin-top: 0.75rem;">
                                     `);
                                     
                                     if (fuOption.description) {
-                                        variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.8); font-size: 0.85rem; margin-bottom: 0.5rem;">${fuOption.description}</div>`);
+                                        variantHtml.push(`<div class="node-viewer-option-desc" style="word-wrap: break-word; overflow-wrap: break-word;">${fuOption.description}</div>`);
                                     }
                                     
                                     if (fuOption.requirements) {
-                                        variantHtml.push(`<div style="color: #fbbf24; font-size: 0.8rem; margin-bottom: 0.5rem;">&#x1F512; ${fuOption.requirements}</div>`);
+                                        variantHtml.push(`<div style="color: #fbbf24; font-size: 0.85rem; margin: 0.5rem 0;">&#x1F512; ${fuOption.requirements}</div>`);
                                     }
                                     
                                     if (fuOption.rollInfo) {
-                                        variantHtml.push(`<div style="color: #a78bfa; font-size: 0.8rem; margin-bottom: 0.5rem;">&#x1F3B2; Roll: ${fuOption.rollInfo}</div>`);
+                                        variantHtml.push(`
+                                            <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border-left: 3px solid var(--primary);">
+                                                <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">&#x1F4CA; Card Roll</div>
+                                                <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem;">Roll: ${fuOption.rollInfo}</div>
+                                            </div>
+                                        `);
                                     }
                                     
-                                    // Success rewards
-                                    const fuRewards = [];
-                                    if (fuOption.successGold && fuOption.successGold !== 0) fuRewards.push(`&#x1F4B0; ${fuOption.successGold}`);
-                                    if (fuOption.successShards && fuOption.successShards !== 0) fuRewards.push(`&#x1F48E; ${fuOption.successShards}`);
-                                    if (fuOption.successExp && fuOption.successExp !== 0) fuRewards.push(`&#x2B50; ${fuOption.successExp}`);
-                                    if (fuRewards.length > 0) {
-                                        variantHtml.push(`<div style="font-size: 0.8rem; color: #22c55e; margin-bottom: 0.25rem;">&#x2714; Success: ${fuRewards.join(' ')}</div>`);
+                                    // Success section
+                                    if (fuOption.onSuccess || fuOption.successGold || fuOption.successShards || fuOption.successExp || fuOption.combatLoot) {
+                                        variantHtml.push(`
+                                            <div style="margin-top: 0.75rem; padding: 1rem; background: rgba(34, 197, 94, 0.05); border: 2px solid #22c55e; border-radius: 8px;">
+                                                <div style="color: #22c55e; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">&#x2714; SUCCESS</div>
+                                        `);
+                                        const fuSuccessRewards = [];
+                                        if (fuOption.successGold && fuOption.successGold !== 0) fuSuccessRewards.push(`&#x1F4B0; ${fuOption.successGold}`);
+                                        if (fuOption.successShards && fuOption.successShards !== 0) fuSuccessRewards.push(`&#x1F48E; ${fuOption.successShards}`);
+                                        if (fuOption.successExp && fuOption.successExp !== 0) fuSuccessRewards.push(`&#x2B50; ${fuOption.successExp}`);
+                                        if (fuSuccessRewards.length > 0) {
+                                            variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">${fuSuccessRewards.join(' ')}</div>`);
+                                        }
+                                        if (fuOption.onSuccess) {
+                                            variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.85); margin-bottom: 0.5rem;">${fuOption.onSuccess}</div>`);
+                                        }
+                                        if (fuOption.combatLoot) {
+                                            variantHtml.push(`
+                                                <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
+                                                    <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F4B0; Combat Loot</div>
+                                                    <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${fuOption.combatLoot}</div>
+                                                </div>
+                                            `);
+                                        }
+                                        variantHtml.push(`</div>`);
                                     }
                                     
-                                    if (fuOption.onSuccess) {
-                                        variantHtml.push(`<div style="font-size: 0.8rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.25rem;">${fuOption.onSuccess}</div>`);
+                                    // Critical Success section
+                                    if (fuOption.onCritSuccess || fuOption.critSuccessExp || fuOption.critSuccessGold || fuOption.critCombatLoot) {
+                                        variantHtml.push(`
+                                            <div style="margin-top: 0.75rem; padding: 1rem; background: rgba(74, 222, 128, 0.05); border: 2px solid #4ade80; border-radius: 8px;">
+                                                <div style="color: #4ade80; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">&#x2714;&#x2714; CRITICAL SUCCESS</div>
+                                        `);
+                                        const fuCritRewards = [];
+                                        if (fuOption.critSuccessGold && fuOption.critSuccessGold !== 0) fuCritRewards.push(`&#x1F4B0; ${fuOption.critSuccessGold}`);
+                                        if (fuOption.critSuccessExp && fuOption.critSuccessExp !== 0) fuCritRewards.push(`&#x2B50; ${fuOption.critSuccessExp}`);
+                                        if (fuCritRewards.length > 0) {
+                                            variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">${fuCritRewards.join(' ')}</div>`);
+                                        }
+                                        if (fuOption.onCritSuccess) {
+                                            variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.85); margin-bottom: 0.5rem;">${fuOption.onCritSuccess}</div>`);
+                                        }
+                                        if (fuOption.critCombatLoot) {
+                                            variantHtml.push(`
+                                                <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
+                                                    <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">&#x1F4B0; Combat Loot</div>
+                                                    <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${fuOption.critCombatLoot}</div>
+                                                </div>
+                                            `);
+                                        }
+                                        variantHtml.push(`</div>`);
                                     }
                                     
-                                    if (fuOption.combatLoot) {
-                                        variantHtml.push(`<div style="font-size: 0.8rem; color: var(--accent); margin-bottom: 0.25rem;">&#x1F4B0; Loot: ${fuOption.combatLoot}</div>`);
+                                    // Fail section
+                                    if (fuOption.onFail || fuOption.failExp || fuOption.failGold) {
+                                        variantHtml.push(`
+                                            <div style="margin-top: 0.75rem; padding: 1rem; background: rgba(251, 146, 60, 0.05); border: 2px solid #fb923c; border-radius: 8px;">
+                                                <div style="color: #fb923c; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">&#x2718; FAIL</div>
+                                        `);
+                                        const fuFailRewards = [];
+                                        if (fuOption.failGold && fuOption.failGold !== 0) fuFailRewards.push(`&#x1F4B0; ${fuOption.failGold}`);
+                                        if (fuOption.failExp && fuOption.failExp !== 0) fuFailRewards.push(`&#x2B50; ${fuOption.failExp}`);
+                                        if (fuFailRewards.length > 0) {
+                                            variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">${fuFailRewards.join(' ')}</div>`);
+                                        }
+                                        if (fuOption.onFail) {
+                                            variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.85);">${fuOption.onFail}</div>`);
+                                        }
+                                        variantHtml.push(`</div>`);
                                     }
                                     
-                                    // Fail info
-                                    if (fuOption.onFail || fuOption.failExp) {
-                                        const failParts = [];
-                                        if (fuOption.failExp) failParts.push(`&#x2B50; ${fuOption.failExp}`);
-                                        if (fuOption.onFail) failParts.push(fuOption.onFail);
-                                        variantHtml.push(`<div style="font-size: 0.8rem; color: #f87171; margin-bottom: 0.25rem;">&#x2718; Fail: ${failParts.join(' | ')}</div>`);
-                                    }
-                                    
-                                    // Crit success
-                                    if (fuOption.onCritSuccess || fuOption.critSuccessExp) {
-                                        const critParts = [];
-                                        if (fuOption.critSuccessExp) critParts.push(`&#x2B50; ${fuOption.critSuccessExp}`);
-                                        if (fuOption.onCritSuccess) critParts.push(fuOption.onCritSuccess);
-                                        if (fuOption.critCombatLoot) critParts.push(`Loot: ${fuOption.critCombatLoot}`);
-                                        variantHtml.push(`<div style="font-size: 0.8rem; color: #4ade80; margin-bottom: 0.25rem;">&#x2714;&#x2714; Crit Success: ${critParts.join(' | ')}</div>`);
-                                    }
-                                    
-                                    // Crit fail
+                                    // Critical Fail section
                                     if (fuOption.onCritFail || fuOption.critFailExp) {
-                                        const critFailParts = [];
-                                        if (fuOption.critFailExp) critFailParts.push(`&#x2B50; ${fuOption.critFailExp}`);
-                                        if (fuOption.onCritFail) critFailParts.push(fuOption.onCritFail);
-                                        variantHtml.push(`<div style="font-size: 0.8rem; color: #ef4444; margin-bottom: 0.25rem;">&#x2718;&#x2718; Crit Fail: ${critFailParts.join(' | ')}</div>`);
+                                        variantHtml.push(`
+                                            <div style="margin-top: 0.75rem; padding: 1rem; background: rgba(239, 68, 68, 0.05); border: 2px solid #ef4444; border-radius: 8px;">
+                                                <div style="color: #ef4444; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">&#x2718;&#x2718; CRITICAL FAIL</div>
+                                        `);
+                                        if (fuOption.critFailExp && fuOption.critFailExp !== 0) {
+                                            variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">&#x2B50; ${fuOption.critFailExp}</div>`);
+                                        }
+                                        if (fuOption.onCritFail) {
+                                            variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.85);">${fuOption.onCritFail}</div>`);
+                                        }
+                                        variantHtml.push(`</div>`);
                                     }
                                     
-                                    variantHtml.push(`</div>`);
+                                    variantHtml.push(`</div></div>`); // Close content and option divs
                                 });
                             }
                             
