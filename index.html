@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -3833,7 +3833,7 @@
                         if (option.followUpEvent) {
                             const followUp = option.followUpEvent;
                             variantHtml.push(`
-                                <div style="margin-top: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border: 2px solid #3b82f6; border-radius: 8px;">
+                                <div style="margin-top: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border: 2px solid #3b82f6; border-radius: 8px;" onclick="event.stopPropagation();">
                                     <div style="font-size: 0.95rem; color: #3b82f6; font-weight: 700; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
                                         &#x27A1;&#xFE0F; ON SUCCESS, LEADS TO: ${followUp.name || followUp.eventId}
                                     </div>
@@ -3845,7 +3845,7 @@
                                 followUp.options.forEach((fuOption, fuIdx) => {
                                     const fuOptionId = `fu-option-${fuIdx}-${Math.random().toString(36).substr(2, 9)}`;
                                     variantHtml.push(`
-                                        <div class="node-viewer-option" style="cursor: pointer; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; background: rgba(42, 35, 26, 0.4);" onclick="toggleOptionContent('${fuOptionId}')">
+                                        <div class="node-viewer-option" style="cursor: pointer; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; background: rgba(42, 35, 26, 0.4);" onclick="event.stopPropagation(); toggleOptionContent('${fuOptionId}')">
                                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                                 <div class="node-viewer-option-label" style="margin: 0; color: #60a5fa;">${fuIdx + 1}. ${fuOption.label || 'Option'}</div>
                                                 <span id="${fuOptionId}-toggle" style="font-size: 0.9rem; opacity: 0.6;">&#x25B6;</span>
