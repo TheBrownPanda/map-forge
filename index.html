@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -5588,6 +5588,7 @@
         
         function parseJavaScriptNodes(jsText) {
             console.log('=== PARSING JAVASCRIPT ===');
+            console.log('JS text length:', jsText.length);
             
             // Extract the FAEBORG_NODES array
             // Execute the JavaScript in a safe way
@@ -5598,6 +5599,7 @@
             }
             
             console.log(`Loaded ${nodes.length} nodes from JavaScript`);
+            console.log('First few nodes:', nodes.slice(0, 3).map(n => ({ id: n.id, name: n.name, variantsCount: n.variants?.length })));
             
             // Return in same format as markdown parser
             return nodes;
@@ -6075,6 +6077,11 @@
          * Nodes with the same name on other maps are NOT affected.
          */
         function matchNodesToMap(parsedNodes, map) {
+            console.log('=== MATCH NODES TO MAP ===');
+            console.log('Parsed nodes count:', parsedNodes.length);
+            console.log('Map nodes count:', map.nodes.length);
+            console.log('Map nodes:', map.nodes.map(n => ({ id: n.id, name: n.name, gameId: n.gameId })));
+            
             const results = {
                 matched: [],
                 unmatched: [],
@@ -6086,6 +6093,8 @@
 
             // Match by gameId first (e.g., faen_1), then fall back to name
             parsedNodes.forEach(parsedNode => {
+                console.log(`Trying to match: ${parsedNode.name} (id: ${parsedNode.id})`);
+                
                 // First try to match by gameId
                 let existingNode = map.nodes.find(n => 
                     n.gameId && parsedNode.id && 
@@ -6097,18 +6106,21 @@
                 // Fall back to name matching if no gameId match
                 if (!existingNode) {
                     existingNode = map.nodes.find(n => 
+                        n.name && parsedNode.name &&
                         n.name.toLowerCase() === parsedNode.name.toLowerCase()
                     );
                     matchedBy = 'name';
                 }
 
                 if (existingNode) {
+                    console.log(`  MATCHED by ${matchedBy}: ${existingNode.name} (map node id: ${existingNode.id})`);
                     results.matched.push({
                         mapNode: existingNode,
                         importData: parsedNode,
                         matchedBy: matchedBy
                     });
                 } else {
+                    console.log(`  NOT MATCHED`);
                     results.unmatched.push(parsedNode);
                 }
             });
@@ -6173,57 +6185,78 @@
         }
 
         async function executeImport() {
+            console.log('=== EXECUTE IMPORT CALLED ===');
+            console.log('importMatchResults:', importMatchResults);
+            
             if (!importMatchResults || importMatchResults.matched.length === 0) {
                 alert('No nodes to import');
                 return;
             }
 
             const map = maps.find(m => m.id === currentMapId);
+            console.log('Current map:', map ? map.name : 'NOT FOUND');
+            console.log('Current map ID:', currentMapId);
+            
             if (!map) {
                 alert('Error: Map not found');
                 return;
             }
 
             // Final confirmation with map name
-            const confirmMsg = `&#x2699;Â &#xFE0F; IMPORT CONFIRMATION\n\n` +
+            const confirmMsg = `IMPORT CONFIRMATION\n\n` +
                 `This will update ${importMatchResults.matched.length} node${importMatchResults.matched.length !== 1 ? 's' : ''} on the map:\n\n` +
                 `   "${map.name}"\n\n` +
                 `Nodes on other maps will NOT be affected.\n\n` +
                 `Continue with import?`;
             
             if (!confirm(confirmMsg)) {
+                console.log('Import cancelled by user');
                 return;
             }
 
             let updatedCount = 0;
 
             // IMPORTANT: Only update nodes that belong to THIS specific map
-            importMatchResults.matched.forEach(match => {
+            importMatchResults.matched.forEach((match, idx) => {
+                console.log(`Processing match ${idx + 1}:`, match);
+                
                 const node = match.mapNode;
                 const importData = match.importData;
                 const matchedBy = match.matchedBy;
 
+                console.log('  Map node ID:', node.id);
+                console.log('  Import data ID:', importData.id);
+                console.log('  Matched by:', matchedBy);
+
                 // Double-check this node belongs to the current map
-                if (!map.nodes.find(n => n.id === node.id)) {
+                const nodeOnMap = map.nodes.find(n => n.id === node.id);
+                if (!nodeOnMap) {
                     console.error('Security check failed: Node does not belong to current map');
+                    console.log('  Looking for node.id:', node.id);
+                    console.log('  Map nodes:', map.nodes.map(n => n.id));
                     return;
                 }
 
+                console.log('  Node found on map, updating...');
+
                 // If matched by gameId, also fill in the name from import data
                 if (matchedBy === 'gameId' && importData.name) {
+                    console.log('  Updating name from:', node.name, 'to:', importData.name);
                     node.name = importData.name;
                 }
                 
                 // If matched by name, also fill in the gameId from import data
                 if (matchedBy === 'name' && importData.id) {
+                    console.log('  Updating gameId from:', node.gameId, 'to:', importData.id);
                     node.gameId = importData.id;
                 }
 
                 // Update node with imported data
+                console.log('  Setting variants:', importData.variants.length, 'variants');
                 node.variants = importData.variants.map(v => ({
                     name: v.name,
                     chance: v.chance,
-                    type: importData.type,
+                    type: v.type || importData.type || 'event',
                     description: v.description || '',
                     mapLink: null,
                     tags: v.tags || [],
@@ -6238,16 +6271,28 @@
                     node.options = node.variants[0].options;
                 }
 
+                console.log('  Node updated successfully');
                 updatedCount++;
             });
 
+            console.log('Total nodes updated:', updatedCount);
+
             // Save to database
-            await saveData();
+            console.log('Saving to database...');
+            try {
+                await saveData();
+                console.log('Save complete');
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('Error saving: ' + error);
+                return;
+            }
             
             // Refresh display
+            console.log('Refreshing display...');
             renderMapCanvas();
 
-            alert(`&#x2714;&#x2026; Successfully imported data for ${updatedCount} node${updatedCount !== 1 ? 's' : ''} on map "${map.name}"!`);
+            alert(`Successfully imported data for ${updatedCount} node${updatedCount !== 1 ? 's' : ''} on map "${map.name}"!`);
             closeImportModal();
         }
 
