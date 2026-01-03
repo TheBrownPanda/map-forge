@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -1423,6 +1423,401 @@
             font-size: 0.85rem;
             margin-top: 0.5rem;
         }
+    
+        /* ============================================
+           MOBILE RESPONSIVE STYLES
+           ============================================ */
+        
+        /* Mobile hamburger menu button */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            z-index: 1001;
+        }
+        
+        /* Mobile sidebar overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1998;
+        }
+        
+        .sidebar-overlay.active {
+            display: block;
+        }
+        
+        /* Mobile close button for sidebar */
+        .sidebar-close-btn {
+            display: none;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 2000;
+        }
+        
+        /* Mobile bottom toolbar */
+        .mobile-toolbar {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, var(--darker), var(--dark));
+            border-top: 2px solid var(--primary);
+            padding: 0.5rem;
+            z-index: 1000;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -4px 20px var(--shadow);
+        }
+        
+        .mobile-toolbar-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 0.7rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            min-width: 60px;
+            transition: all 0.2s;
+        }
+        
+        .mobile-toolbar-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .mobile-toolbar-btn.active {
+            color: var(--primary);
+        }
+        
+        .mobile-toolbar-btn .icon {
+            font-size: 1.3rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        /* Touch hint indicator */
+        .touch-hint {
+            display: none;
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: var(--light);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            z-index: 999;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .touch-hint.show {
+            opacity: 1;
+        }
+        
+        /* ============================================
+           MOBILE MEDIA QUERIES
+           ============================================ */
+        @media (max-width: 768px) {
+            /* Header adjustments */
+            .header {
+                padding: 0.75rem 1rem;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+            }
+            
+            .title {
+                font-size: 1.2rem;
+                letter-spacing: 1px;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+                order: -1;
+            }
+            
+            .search-container {
+                order: 3;
+                flex: 1 1 100%;
+                max-width: none;
+                margin-top: 0.5rem;
+            }
+            
+            .header-buttons {
+                gap: 0.5rem;
+            }
+            
+            .btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+            
+            .btn-text {
+                display: none;
+            }
+            
+            .btn-icon {
+                display: inline;
+            }
+            
+            .user-info {
+                font-size: 0.8rem;
+                gap: 0.5rem;
+            }
+            
+            .user-info span:first-child {
+                display: none;
+            }
+            
+            .logout-btn {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.8rem;
+            }
+            
+            /* Sidebar - hidden by default, shown as overlay */
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -320px;
+                width: 300px;
+                height: 100vh;
+                z-index: 1999;
+                transition: left 0.3s ease;
+                padding-top: 3.5rem;
+            }
+            
+            .sidebar.open {
+                left: 0;
+            }
+            
+            .sidebar-close-btn {
+                display: block;
+            }
+            
+            /* Main content takes full width */
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .map-container {
+                height: calc(100vh - 130px);
+            }
+            
+            /* Show mobile toolbar */
+            .mobile-toolbar {
+                display: flex;
+            }
+            
+            /* Adjust map container for bottom toolbar */
+            .map-container {
+                height: calc(100vh - 130px - 70px);
+            }
+            
+            /* Zoom controls repositioned */
+            .zoom-controls {
+                bottom: 80px;
+                right: 10px;
+            }
+            
+            .zoom-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+            
+            /* Touch hint visible */
+            .touch-hint {
+                display: block;
+            }
+            
+            /* Node panel adjustments */
+            .node-panel {
+                width: 100%;
+                max-width: 100%;
+                right: 0;
+                top: auto;
+                bottom: 70px;
+                max-height: 60vh;
+                border-radius: 16px 16px 0 0;
+                border-right: none;
+                border-left: none;
+            }
+            
+            .node-panel-content {
+                padding: 1rem;
+            }
+            
+            .node-panel h3 {
+                font-size: 1.1rem;
+            }
+            
+            /* Modals - full screen on mobile */
+            .modal-content {
+                width: 95%;
+                max-width: none;
+                max-height: 90vh;
+                margin: 5vh auto;
+                border-radius: 12px;
+            }
+            
+            .modal-header {
+                padding: 1rem;
+            }
+            
+            .modal-body {
+                padding: 1rem;
+                max-height: calc(90vh - 140px);
+            }
+            
+            .modal-footer {
+                padding: 1rem;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            .modal-footer .btn {
+                flex: 1;
+                min-width: 100px;
+            }
+            
+            /* Form inputs larger for touch */
+            .form-input, .form-textarea, .form-select {
+                font-size: 16px; /* Prevents iOS zoom */
+                padding: 0.75rem;
+                min-height: 44px; /* Apple's recommended touch target */
+            }
+            
+            /* Variant tabs scrollable */
+            .variant-tabs {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                flex-wrap: nowrap;
+                gap: 0.5rem;
+                padding-bottom: 0.5rem;
+            }
+            
+            .variant-tab {
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            
+            /* Options list touch-friendly */
+            .options-list {
+                gap: 1rem;
+            }
+            
+            .option-item {
+                padding: 1rem;
+            }
+            
+            /* Map item touch-friendly */
+            .map-item {
+                padding: 1rem;
+                min-height: 48px;
+            }
+            
+            .map-item-actions {
+                display: flex;
+                gap: 0.75rem;
+            }
+            
+            .map-action-btn {
+                padding: 0.5rem;
+                font-size: 1.1rem;
+            }
+            
+            /* Search results */
+            .search-results {
+                max-height: 50vh;
+            }
+            
+            /* Hide desktop-only elements */
+            .desktop-only {
+                display: none !important;
+            }
+            
+            /* Map drag handle always visible on mobile */
+            .map-drag-handle {
+                opacity: 1;
+            }
+        }
+        
+        /* Small mobile adjustments */
+        @media (max-width: 480px) {
+            .header {
+                padding: 0.5rem;
+            }
+            
+            .title {
+                font-size: 1rem;
+            }
+            
+            .modal-content {
+                width: 100%;
+                height: 100%;
+                max-height: 100%;
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .modal-body {
+                max-height: calc(100vh - 140px);
+            }
+            
+            .sidebar {
+                width: 280px;
+                left: -290px;
+            }
+            
+            .node-panel {
+                max-height: 70vh;
+            }
+            
+            .mobile-toolbar-btn {
+                min-width: 50px;
+                font-size: 0.65rem;
+            }
+            
+            .mobile-toolbar-btn .icon {
+                font-size: 1.1rem;
+            }
+        }
+        
+        /* Landscape mobile */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .map-container {
+                height: calc(100vh - 60px - 60px);
+            }
+            
+            .node-panel {
+                max-height: 50vh;
+            }
+            
+            .modal-content {
+                max-height: 95vh;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -1501,8 +1896,14 @@
 
         <!-- Main Content -->
         <div class="main-content">
+            
+            <!-- Mobile sidebar overlay -->
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
+            
             <!-- Sidebar -->
-            <div class="sidebar">
+            <div class="sidebar" id="sidebar">
+                <button class="sidebar-close-btn" id="sidebarCloseBtn">&times;</button>
+
                 <h3>Maps</h3>
                 <ul class="map-list" id="mapList"></ul>
             </div>
@@ -1518,6 +1919,33 @@
                     <button class="zoom-btn" id="zoomResetBtn">&#x2299;</button>
                     <button class="zoom-btn" id="zoomOutBtn">&#x2212;</button>
                 </div>
+                
+                <!-- Mobile Bottom Toolbar -->
+                <div class="mobile-toolbar" id="mobileToolbar">
+                    <button class="mobile-toolbar-btn" id="mobileAddNodeBtn" title="Add Node">
+                        <span class="icon">&#x271A;</span>
+                        <span>Add</span>
+                    </button>
+                    <button class="mobile-toolbar-btn" id="mobileMoveNodeBtn" title="Move Node">
+                        <span class="icon">&#x2725;</span>
+                        <span>Move</span>
+                    </button>
+                    <button class="mobile-toolbar-btn" id="mobileZoomInBtn" title="Zoom In">
+                        <span class="icon">&#x2795;</span>
+                        <span>Zoom+</span>
+                    </button>
+                    <button class="mobile-toolbar-btn" id="mobileZoomOutBtn" title="Zoom Out">
+                        <span class="icon">&#x2796;</span>
+                        <span>Zoom-</span>
+                    </button>
+                    <button class="mobile-toolbar-btn" id="mobileResetBtn" title="Reset View">
+                        <span class="icon">&#x2299;</span>
+                        <span>Reset</span>
+                    </button>
+                </div>
+                
+                <!-- Touch hint -->
+                <div class="touch-hint" id="touchHint">Pinch to zoom, drag to pan</div>
 
                 <!-- Node Viewer Panel -->
                 <div class="node-viewer" id="nodeViewer">
@@ -6403,6 +6831,334 @@
                 }
             }
         })();
+
+        // ============================================
+        // MOBILE TOUCH SUPPORT
+        // ============================================
+        
+        // Touch state variables
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTranslateX = 0;
+        let touchStartTranslateY = 0;
+        let lastTouchDistance = 0;
+        let isTouching = false;
+        let isPinching = false;
+        let touchStartTime = 0;
+        let lastTapTime = 0;
+        let touchMoved = false;
+        
+        // Mobile sidebar toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+        const sidebar = document.getElementById('sidebar');
+        const touchHint = document.getElementById('touchHint');
+        
+        function openSidebar() {
+            sidebar.classList.add('open');
+            sidebarOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', openSidebar);
+        }
+        
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', closeSidebar);
+        }
+        
+        if (sidebarCloseBtn) {
+            sidebarCloseBtn.addEventListener('click', closeSidebar);
+        }
+        
+        // Close sidebar when selecting a map on mobile
+        const originalSelectMap = selectMap;
+        selectMap = function(mapId) {
+            originalSelectMap(mapId);
+            if (window.innerWidth <= 768) {
+                closeSidebar();
+            }
+        };
+        
+        // Show touch hint on first load
+        function showTouchHint() {
+            if (window.innerWidth <= 768 && touchHint) {
+                touchHint.classList.add('show');
+                setTimeout(() => {
+                    touchHint.classList.remove('show');
+                }, 3000);
+            }
+        }
+        
+        // Touch event handlers for map canvas
+        function getTouchDistance(touches) {
+            if (touches.length < 2) return 0;
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+        
+        function getTouchCenter(touches) {
+            if (touches.length < 2) {
+                return { x: touches[0].clientX, y: touches[0].clientY };
+            }
+            return {
+                x: (touches[0].clientX + touches[1].clientX) / 2,
+                y: (touches[0].clientY + touches[1].clientY) / 2
+            };
+        }
+        
+        function handleTouchStart(e) {
+            if (e.touches.length === 1) {
+                // Single finger - pan
+                isTouching = true;
+                isPinching = false;
+                touchMoved = false;
+                touchStartTime = Date.now();
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                touchStartTranslateX = translateX;
+                touchStartTranslateY = translateY;
+                mapCanvas.classList.add('grabbing');
+            } else if (e.touches.length === 2) {
+                // Two fingers - pinch to zoom
+                isPinching = true;
+                isTouching = false;
+                lastTouchDistance = getTouchDistance(e.touches);
+                touchStartTranslateX = translateX;
+                touchStartTranslateY = translateY;
+            }
+        }
+        
+        function handleTouchMove(e) {
+            e.preventDefault();
+            
+            if (isPinching && e.touches.length === 2) {
+                // Pinch to zoom
+                const currentDistance = getTouchDistance(e.touches);
+                const center = getTouchCenter(e.touches);
+                const rect = mapCanvas.getBoundingClientRect();
+                
+                if (lastTouchDistance > 0) {
+                    const scaleFactor = currentDistance / lastTouchDistance;
+                    const newScale = Math.max(0.1, Math.min(5, scale * scaleFactor));
+                    
+                    // Zoom toward pinch center
+                    const mouseX = center.x - rect.left;
+                    const mouseY = center.y - rect.top;
+                    
+                    const scaleChange = newScale / scale;
+                    translateX = mouseX - (mouseX - translateX) * scaleChange;
+                    translateY = mouseY - (mouseY - translateY) * scaleChange;
+                    scale = newScale;
+                    
+                    updateMapTransform();
+                }
+                
+                lastTouchDistance = currentDistance;
+            } else if (isTouching && e.touches.length === 1) {
+                // Pan
+                const dx = e.touches[0].clientX - touchStartX;
+                const dy = e.touches[0].clientY - touchStartY;
+                
+                // Check if moved enough to consider it a drag
+                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                    touchMoved = true;
+                }
+                
+                if (!isAddingNode && !isMovingMode) {
+                    translateX = touchStartTranslateX + dx;
+                    translateY = touchStartTranslateY + dy;
+                    updateMapTransform();
+                }
+            }
+        }
+        
+        function handleTouchEnd(e) {
+            const touchDuration = Date.now() - touchStartTime;
+            
+            if (isTouching && !touchMoved && touchDuration < 300) {
+                // This was a tap, not a drag
+                const touch = e.changedTouches[0];
+                const rect = mapCanvas.getBoundingClientRect();
+                const canvasX = touch.clientX - rect.left;
+                const canvasY = touch.clientY - rect.top;
+                const mapX = (canvasX - translateX) / scale;
+                const mapY = (canvasY - translateY) / scale;
+                
+                // Check for double tap
+                const currentTime = Date.now();
+                if (currentTime - lastTapTime < 300) {
+                    // Double tap - zoom in
+                    const newScale = Math.min(5, scale * 1.5);
+                    const scaleChange = newScale / scale;
+                    translateX = canvasX - (canvasX - translateX) * scaleChange;
+                    translateY = canvasY - (canvasY - translateY) * scaleChange;
+                    scale = newScale;
+                    updateMapTransform();
+                    lastTapTime = 0;
+                } else {
+                    lastTapTime = currentTime;
+                    
+                    // Handle tap actions
+                    if (isAddingNode && currentMapId && isAdmin) {
+                        addNodeAtPosition(mapX, mapY);
+                        setAddingMode(false);
+                    } else if (isMovingMode && draggedNodeId) {
+                        // Place the node being moved
+                        const map = maps.find(m => m.id === currentMapId);
+                        const node = map?.nodes.find(n => n.id === draggedNodeId);
+                        if (node) {
+                            node.x = mapX;
+                            node.y = mapY;
+                            saveData(true);
+                            renderMapCanvas();
+                        }
+                        draggedNodeId = null;
+                        setMovingMode(false);
+                    }
+                }
+            }
+            
+            isTouching = false;
+            isPinching = false;
+            lastTouchDistance = 0;
+            mapCanvas.classList.remove('grabbing');
+        }
+        
+        // Add touch event listeners to map canvas
+        mapCanvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        mapCanvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        mapCanvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+        mapCanvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+        
+        // Mobile toolbar button handlers
+        const mobileAddNodeBtn = document.getElementById('mobileAddNodeBtn');
+        const mobileMoveNodeBtn = document.getElementById('mobileMoveNodeBtn');
+        const mobileZoomInBtn = document.getElementById('mobileZoomInBtn');
+        const mobileZoomOutBtn = document.getElementById('mobileZoomOutBtn');
+        const mobileResetBtn = document.getElementById('mobileResetBtn');
+        
+        if (mobileAddNodeBtn) {
+            mobileAddNodeBtn.addEventListener('click', () => {
+                if (!isAdmin) {
+                    alert('Only admins can add nodes');
+                    return;
+                }
+                if (!currentMapId) {
+                    alert('Please select a map first');
+                    return;
+                }
+                setAddingMode(!isAddingNode);
+                mobileAddNodeBtn.classList.toggle('active', isAddingNode);
+                mobileMoveNodeBtn.classList.remove('active');
+            });
+        }
+        
+        if (mobileMoveNodeBtn) {
+            mobileMoveNodeBtn.addEventListener('click', () => {
+                if (!isAdmin) {
+                    alert('Only admins can move nodes');
+                    return;
+                }
+                if (!currentMapId) {
+                    alert('Please select a map first');
+                    return;
+                }
+                setMovingMode(!isMovingMode);
+                mobileMoveNodeBtn.classList.toggle('active', isMovingMode);
+                mobileAddNodeBtn.classList.remove('active');
+            });
+        }
+        
+        if (mobileZoomInBtn) {
+            mobileZoomInBtn.addEventListener('click', () => {
+                const rect = mapCanvas.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const newScale = Math.min(5, scale * 1.3);
+                const scaleChange = newScale / scale;
+                translateX = centerX - (centerX - translateX) * scaleChange;
+                translateY = centerY - (centerY - translateY) * scaleChange;
+                scale = newScale;
+                updateMapTransform();
+            });
+        }
+        
+        if (mobileZoomOutBtn) {
+            mobileZoomOutBtn.addEventListener('click', () => {
+                const rect = mapCanvas.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const newScale = Math.max(0.1, scale / 1.3);
+                const scaleChange = newScale / scale;
+                translateX = centerX - (centerX - translateX) * scaleChange;
+                translateY = centerY - (centerY - translateY) * scaleChange;
+                scale = newScale;
+                updateMapTransform();
+            });
+        }
+        
+        if (mobileResetBtn) {
+            mobileResetBtn.addEventListener('click', () => {
+                scale = 1;
+                translateX = 0;
+                translateY = 0;
+                updateMapTransform();
+            });
+        }
+        
+        // Update mobile toolbar state when modes change
+        function updateMobileToolbarState() {
+            if (mobileAddNodeBtn) {
+                mobileAddNodeBtn.classList.toggle('active', isAddingNode);
+            }
+            if (mobileMoveNodeBtn) {
+                mobileMoveNodeBtn.classList.toggle('active', isMovingMode);
+            }
+        }
+        
+        // Patch setAddingMode and setMovingMode to update mobile toolbar
+        const originalSetAddingMode = setAddingMode;
+        setAddingMode = function(mode) {
+            originalSetAddingMode(mode);
+            updateMobileToolbarState();
+        };
+        
+        const originalSetMovingMode = setMovingMode;
+        setMovingMode = function(mode) {
+            originalSetMovingMode(mode);
+            updateMobileToolbarState();
+        };
+        
+        // Handle orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                updateMapTransform();
+            }, 100);
+        });
+        
+        // Prevent pull-to-refresh on mobile when interacting with map
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.map-canvas')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Show hint on first load
+        setTimeout(showTouchHint, 1000);
+        
+        console.log('Mobile touch support initialized');
+
+
     </script>
 </body>
 </html>
