@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0 - OPTIMIZED</title>
+    <title>Map Forge v2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -6201,11 +6201,22 @@
             importMatchResults.matched.forEach(match => {
                 const node = match.mapNode;
                 const importData = match.importData;
+                const matchedBy = match.matchedBy;
 
                 // Double-check this node belongs to the current map
                 if (!map.nodes.find(n => n.id === node.id)) {
                     console.error('Security check failed: Node does not belong to current map');
                     return;
+                }
+
+                // If matched by gameId, also fill in the name from import data
+                if (matchedBy === 'gameId' && importData.name) {
+                    node.name = importData.name;
+                }
+                
+                // If matched by name, also fill in the gameId from import data
+                if (matchedBy === 'name' && importData.id) {
+                    node.gameId = importData.id;
                 }
 
                 // Update node with imported data
