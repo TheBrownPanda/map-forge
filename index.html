@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -3829,42 +3829,83 @@
                             `);
                         }
                         
-                        // Display follow-up events
-                        if (option.followupEvents && option.followupEvents.length > 0) {
+                        // Display follow-up event (singular - attached to this specific option)
+                        if (option.followUpEvent) {
+                            const followUp = option.followUpEvent;
                             variantHtml.push(`
-                                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(139, 115, 85, 0.3);">
-                                    <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">
-                                        &#x2193; Follow-up Events (${option.followupEvents.length})
+                                <div style="margin-top: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border: 2px solid #3b82f6; border-radius: 8px;">
+                                    <div style="font-size: 0.95rem; color: #3b82f6; font-weight: 700; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        &#x27A1;&#xFE0F; ON SUCCESS, LEADS TO: ${followUp.name || followUp.eventId}
                                     </div>
                             `);
                             
-                            option.followupEvents.forEach((event, eventIdx) => {
-                                variantHtml.push(`
-                                    <div style="background: rgba(42, 35, 26, 0.3); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; border-left: 3px solid var(--primary);">
-                                        <div style="font-weight: 600; color: var(--primary); font-size: 0.9rem; margin-bottom: 0.25rem;">
-                                            ${eventIdx + 1}. ${event.name}
-                                        </div>
-                                `);
-                                
-                                if (event.description) {
+                            // Render follow-up event options
+                            if (followUp.options && followUp.options.length > 0) {
+                                followUp.options.forEach((fuOption, fuIdx) => {
                                     variantHtml.push(`
-                                        <div style="color: rgba(245, 230, 211, 0.8); font-size: 0.85rem; margin-bottom: 0.5rem;">
-                                            ${event.description}
-                                        </div>
+                                        <div style="background: rgba(42, 35, 26, 0.4); padding: 0.75rem; border-radius: 6px; margin-bottom: 0.75rem; border-left: 3px solid #3b82f6;">
+                                            <div style="font-weight: 600; color: #60a5fa; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                                ${fuIdx + 1}. ${fuOption.label || 'Option'}
+                                            </div>
                                     `);
-                                }
-                                
-                                const eventRewards = [];
-                                if (event.gold && event.gold !== 0) eventRewards.push(`<span class="node-viewer-reward">&#x1F4B0; ${event.gold}</span>`);
-                                if (event.shards && event.shards !== 0) eventRewards.push(`<span class="node-viewer-reward">&#x1F48E; ${event.shards}</span>`);
-                                if (event.exp && event.exp !== 0) eventRewards.push(`<span class="node-viewer-reward">&#x2B50; ${event.exp}</span>`);
-                                
-                                if (eventRewards.length > 0) {
-                                    variantHtml.push(`<div class="node-viewer-rewards">${eventRewards.join('')}</div>`);
-                                }
-                                
-                                variantHtml.push(`</div>`);
-                            });
+                                    
+                                    if (fuOption.description) {
+                                        variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.8); font-size: 0.85rem; margin-bottom: 0.5rem;">${fuOption.description}</div>`);
+                                    }
+                                    
+                                    if (fuOption.requirements) {
+                                        variantHtml.push(`<div style="color: #fbbf24; font-size: 0.8rem; margin-bottom: 0.5rem;">&#x1F512; ${fuOption.requirements}</div>`);
+                                    }
+                                    
+                                    if (fuOption.rollInfo) {
+                                        variantHtml.push(`<div style="color: #a78bfa; font-size: 0.8rem; margin-bottom: 0.5rem;">&#x1F3B2; Roll: ${fuOption.rollInfo}</div>`);
+                                    }
+                                    
+                                    // Success rewards
+                                    const fuRewards = [];
+                                    if (fuOption.successGold && fuOption.successGold !== 0) fuRewards.push(`&#x1F4B0; ${fuOption.successGold}`);
+                                    if (fuOption.successShards && fuOption.successShards !== 0) fuRewards.push(`&#x1F48E; ${fuOption.successShards}`);
+                                    if (fuOption.successExp && fuOption.successExp !== 0) fuRewards.push(`&#x2B50; ${fuOption.successExp}`);
+                                    if (fuRewards.length > 0) {
+                                        variantHtml.push(`<div style="font-size: 0.8rem; color: #22c55e; margin-bottom: 0.25rem;">&#x2714; Success: ${fuRewards.join(' ')}</div>`);
+                                    }
+                                    
+                                    if (fuOption.onSuccess) {
+                                        variantHtml.push(`<div style="font-size: 0.8rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.25rem;">${fuOption.onSuccess}</div>`);
+                                    }
+                                    
+                                    if (fuOption.combatLoot) {
+                                        variantHtml.push(`<div style="font-size: 0.8rem; color: var(--accent); margin-bottom: 0.25rem;">&#x1F4B0; Loot: ${fuOption.combatLoot}</div>`);
+                                    }
+                                    
+                                    // Fail info
+                                    if (fuOption.onFail || fuOption.failExp) {
+                                        const failParts = [];
+                                        if (fuOption.failExp) failParts.push(`&#x2B50; ${fuOption.failExp}`);
+                                        if (fuOption.onFail) failParts.push(fuOption.onFail);
+                                        variantHtml.push(`<div style="font-size: 0.8rem; color: #f87171; margin-bottom: 0.25rem;">&#x2718; Fail: ${failParts.join(' | ')}</div>`);
+                                    }
+                                    
+                                    // Crit success
+                                    if (fuOption.onCritSuccess || fuOption.critSuccessExp) {
+                                        const critParts = [];
+                                        if (fuOption.critSuccessExp) critParts.push(`&#x2B50; ${fuOption.critSuccessExp}`);
+                                        if (fuOption.onCritSuccess) critParts.push(fuOption.onCritSuccess);
+                                        if (fuOption.critCombatLoot) critParts.push(`Loot: ${fuOption.critCombatLoot}`);
+                                        variantHtml.push(`<div style="font-size: 0.8rem; color: #4ade80; margin-bottom: 0.25rem;">&#x2714;&#x2714; Crit Success: ${critParts.join(' | ')}</div>`);
+                                    }
+                                    
+                                    // Crit fail
+                                    if (fuOption.onCritFail || fuOption.critFailExp) {
+                                        const critFailParts = [];
+                                        if (fuOption.critFailExp) critFailParts.push(`&#x2B50; ${fuOption.critFailExp}`);
+                                        if (fuOption.onCritFail) critFailParts.push(fuOption.onCritFail);
+                                        variantHtml.push(`<div style="font-size: 0.8rem; color: #ef4444; margin-bottom: 0.25rem;">&#x2718;&#x2718; Crit Fail: ${critFailParts.join(' | ')}</div>`);
+                                    }
+                                    
+                                    variantHtml.push(`</div>`);
+                                });
+                            }
                             
                             variantHtml.push(`</div>`);
                         }
