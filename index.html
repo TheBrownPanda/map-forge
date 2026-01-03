@@ -3532,7 +3532,16 @@
                         }
                         
                         // Check if this option has structured success/fail outcomes
-                        const hasStructuredOutcomes = option.onSuccess || option.onCritSuccess || option.onFail || option.onCritFail;
+                        // Include reward fields (gold, shards, exp) in the check, not just text
+                        const hasStructuredOutcomes = option.onSuccess || option.onCritSuccess || option.onFail || option.onCritFail ||
+                            option.successGold || option.successShards || option.successExp ||
+                            option.critSuccessGold || option.critSuccessDust || option.critSuccessExp ||
+                            option.failGold || option.failShards || option.failExp ||
+                            option.critFailExp ||
+                            option.combatLoot || option.shopLoot ||
+                            option.failCombatLoot || option.failShopLoot ||
+                            option.critCombatLoot || option.critShopLoot ||
+                            option.critFailCombatLoot;
                         
                         // Display Combat Effects/Loot as STANDALONE sections if NO success/fail outcomes
                         // (For combat events that don't have success/fail, just lead to combat)
@@ -3592,7 +3601,7 @@
                                 <div style="margin-top: 0.75rem;">
                             `);
                             
-                            if (option.onSuccess || option.successGold || option.successShards || option.successExp) {
+                            if (option.onSuccess || option.successGold || option.successShards || option.successExp || option.combatLoot || option.shopLoot) {
                                 const successInfo = extractCombatInfo(option.onSuccess);
                                 // Overarching Success container
                                 variantHtml.push(`
@@ -3666,7 +3675,7 @@
                                 variantHtml.push(`</div>`);
                             }
                             
-                            if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp) {
+                            if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp || option.critCombatLoot || option.critShopLoot) {
                                 const critSuccessInfo = extractCombatInfo(option.onCritSuccess);
                                 // Overarching Critical Success container
                                 variantHtml.push(`
@@ -3721,7 +3730,7 @@
                                 variantHtml.push(`</div>`);
                             }
                             
-                            if (option.onFail || option.failGold || option.failShards || option.failExp) {
+                            if (option.onFail || option.failGold || option.failShards || option.failExp || option.failCombatLoot || option.failShopLoot) {
                                 const failInfo = extractCombatInfo(option.onFail);
                                 // Overarching Fail container
                                 variantHtml.push(`
@@ -3776,7 +3785,7 @@
                                 variantHtml.push(`</div>`);
                             }
                             
-                            if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp) {
+                            if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp || option.critFailCombatLoot) {
                                 const critFailInfo = extractCombatInfo(option.onCritFail);
                                 // Overarching Critical Fail container
                                 variantHtml.push(`
