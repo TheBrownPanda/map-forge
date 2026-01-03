@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0 - OPTIMIZED</title>
+    <title>Map Forge v2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -2040,6 +2040,8 @@
         }
 
         function setupRealtimeSync() {
+            let realtimeDebounceTimer = null;
+            
             supabaseClient
                 .channel('maps-changes')
                 .on('postgres_changes', 
@@ -2053,11 +2055,16 @@
                             return;
                         }
                         
-                        await loadData();
-                        renderMaps();
-                        if (currentMapId) {
-                            renderMapCanvas();
-                        }
+                        // Debounce real-time updates to prevent rapid-fire reloads
+                        clearTimeout(realtimeDebounceTimer);
+                        realtimeDebounceTimer = setTimeout(async () => {
+                            console.log('Executing debounced real-time reload');
+                            await loadData();
+                            renderMaps();
+                            if (currentMapId) {
+                                renderMapCanvas();
+                            }
+                        }, 2000); // Wait 2 seconds before reloading
                     }
                 )
                 .subscribe();
@@ -5350,10 +5357,10 @@
                 if (!silent) hideLoading();
                 
                 // Wait longer before clearing flag to ensure real-time event is skipped
-                // Increased from 500ms to 1500ms to prevent rubberband effect
+                // Increased to 5000ms to prevent rubberband effect during imports
                 setTimeout(() => {
                     isSaving = false;
-                }, 1500);
+                }, 5000);
             } catch (error) {
                 if (!silent) hideLoading();
                 isSaving = false; // Clear flag on error
@@ -5536,6 +5543,10 @@
         }
 
         async function handleImportFile(e) {
+            console.log('=== handleImportFile TRIGGERED ===');
+            console.log('Event:', e);
+            console.log('Files:', e.target.files);
+            
             const file = e.target.files[0];
             if (!file) {
                 console.log('No file selected');
@@ -5550,6 +5561,7 @@
                 console.log('Reading file...');
                 const text = await file.text();
                 console.log('File read successfully, length:', text.length);
+                console.log('First 200 chars:', text.substring(0, 200));
                 
                 // Detect file type
                 const isJavaScript = file.name.endsWith('.js');
@@ -5563,6 +5575,9 @@
                 }
                 
                 console.log('Parsing complete, nodes found:', parsedImportData.length);
+                if (parsedImportData.length > 0) {
+                    console.log('First parsed node:', parsedImportData[0]);
+                }
                 
                 // Match with existing nodes on map
                 const map = maps.find(m => m.id === currentMapId);
@@ -5573,6 +5588,7 @@
                 }
 
                 console.log('Matching nodes to map:', map.name);
+                console.log('Map has', map.nodes.length, 'nodes');
                 importMatchResults = matchNodesToMap(parsedImportData, map);
                 console.log('Match results:', importMatchResults);
                 
@@ -6188,8 +6204,12 @@
             console.log('=== EXECUTE IMPORT CALLED ===');
             console.log('importMatchResults:', importMatchResults);
             
+            // Block real-time updates during entire import process
+            isSaving = true;
+            
             if (!importMatchResults || importMatchResults.matched.length === 0) {
                 alert('No nodes to import');
+                isSaving = false;
                 return;
             }
 
@@ -6199,6 +6219,7 @@
             
             if (!map) {
                 alert('Error: Map not found');
+                isSaving = false;
                 return;
             }
 
@@ -6211,6 +6232,7 @@
             
             if (!confirm(confirmMsg)) {
                 console.log('Import cancelled by user');
+                isSaving = false;
                 return;
             }
 
@@ -6285,6 +6307,7 @@
             } catch (error) {
                 console.error('Save error:', error);
                 alert('Error saving: ' + error);
+                isSaving = false; // Reset flag on error
                 return;
             }
             
@@ -6294,6 +6317,12 @@
 
             alert(`Successfully imported data for ${updatedCount} node${updatedCount !== 1 ? 's' : ''} on map "${map.name}"!`);
             closeImportModal();
+            
+            // Keep blocking real-time updates for 5 more seconds after import completes
+            setTimeout(() => {
+                isSaving = false;
+                console.log('Import protection period ended');
+            }, 5000);
         }
 
         // Populate Divination Rewards Table
