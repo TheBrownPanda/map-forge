@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -221,6 +221,24 @@
 
         .search-input::placeholder {
             color: rgba(245, 230, 211, 0.5);
+        }
+        
+        .search-filter-btn {
+            background: rgba(42, 35, 26, 0.5);
+            border: 1px solid rgba(139, 115, 85, 0.3);
+            color: rgba(245, 230, 211, 0.7);
+            transition: all 0.2s;
+        }
+        
+        .search-filter-btn:hover {
+            background: rgba(139, 115, 85, 0.3);
+            color: var(--light);
+        }
+        
+        .search-filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--dark);
         }
 
         .search-results {
@@ -1764,10 +1782,16 @@
             </div>
             <div class="search-container">
                 <input type="text" class="search-input" id="searchInput" placeholder="Search nodes, tags, or content...">
+                <div class="search-filters" style="display: flex; gap: 0.25rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-small search-filter-btn active" data-filter="all" onclick="setSearchFilter('all')" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">All</button>
+                    <button type="button" class="btn btn-small search-filter-btn" data-filter="items" onclick="setSearchFilter('items')" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">🎁 Items</button>
+                    <button type="button" class="btn btn-small search-filter-btn" data-filter="events" onclick="setSearchFilter('events')" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">📜 Events</button>
+                </div>
                 <div class="search-results" id="searchResults"></div>
             </div>
             <div class="header-actions">
                 <button class="btn btn-secondary" id="importNodesBtn">📥 Import Data</button>
+                <button class="btn btn-secondary" id="massImportBtn2" onclick="openMassImportModal()" style="margin-top: 0.5rem;">📦 Mass Import All Maps</button>
                 <button class="btn btn-secondary" id="manageImagesBtn">🖼️ Image Library</button>
                 <button class="btn btn-secondary" id="addMapBtn">+ New Map</button>
                 <button class="btn btn-primary" id="addNodeBtn">+ Add Node</button>
@@ -1928,19 +1952,7 @@
                 <div class="form-group">
                     <label class="form-label">Options (Actions at this node)</label>
                     <div class="options-container" id="optionsContainer">
-                        <div class="option-item">
-                            <div class="option-header">
-                                <span class="option-number">Option 1</span>
-                                <button type="button" class="option-remove" onclick="removeOption(this)">Remove</button>
-                            </div>
-                            <input type="text" class="form-input" placeholder="Option label (e.g., 'Talk', 'Buy', 'Fight')" data-option="label">
-                            <input type="text" class="form-input" placeholder="Option description (optional)" data-option="description" style="margin-top: 0.5rem;">
-                            <div class="rewards-row">
-                                <input type="number" class="form-input" placeholder="Gold" data-option="gold">
-                                <input type="number" class="form-input" placeholder="Shards" data-option="shards">
-                                <input type="number" class="form-input" placeholder="EXP" data-option="exp">
-                            </div>
-                        </div>
+                        <!-- Options will be populated by JavaScript using createOptionHtml() -->
                     </div>
                     <button type="button" class="btn btn-secondary" style="margin-top: 1rem; width: 100%;" onclick="addOption()">+ Add Option</button>
                 </div>
@@ -2080,7 +2092,7 @@
                 <!-- Target Map Indicator -->
                 <div id="importTargetMapInfo" style="display: none; background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(201, 169, 97, 0.2)); border: 2px solid var(--primary); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="font-size: 1.5rem;">🗺️</div>
+                        <div style="font-size: 1.5rem;">📍</div>
                         <div style="flex: 1;">
                             <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.25rem;">Importing to Map:</div>
                             <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary);" id="importTargetMap"></div>
@@ -2140,6 +2152,61 @@
     </div>
 
     <!-- Hidden file input for import -->
+
+    <!-- Mass Import Modal -->
+    <div class="modal" id="massImportModal">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh;">
+            <div class="modal-header">
+                <h2 class="modal-title">📦 Mass Import - Update All Maps</h2>
+                <button class="close-btn" onclick="closeMassImportModal()">×</button>
+            </div>
+            <div style="padding: 1.5rem; overflow-y: auto; max-height: calc(90vh - 120px);">
+                <p style="margin-bottom: 1rem; color: rgba(245, 230, 211, 0.8);">
+                    Assign JS data files to each map. Only maps with assigned files will be updated.
+                </p>
+                
+                <!-- Global file selector -->
+                <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(42, 35, 26, 0.5); border-radius: 8px; border: 2px dashed rgba(139, 115, 85, 0.5);">
+                    <label class="form-label" style="margin-bottom: 0.5rem;">
+                        📁 Select All Data Files (JS)
+                    </label>
+                    <input type="file" id="massImportFiles" multiple accept=".js" 
+                           style="padding: 0.5rem; width: 100%;"
+                           onchange="handleMassImportFiles(event)">
+                    <small style="color: rgba(245, 230, 211, 0.6); display: block; margin-top: 0.5rem;">
+                        Select multiple JS files. They will be auto-matched to maps by filename.
+                    </small>
+                </div>
+                
+                <!-- Map assignments grid -->
+                <div id="massImportMapGrid" style="display: grid; gap: 0.75rem;">
+                    <!-- Map rows will be populated by JS -->
+                </div>
+                
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-secondary" onclick="clearMassImportAssignments()">
+                        Clear All
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeMassImportModal()">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="executeMassImport()" id="massImportBtn">
+                        📥 Import All Assigned
+                    </button>
+                </div>
+                
+                <!-- Progress section (hidden by default) -->
+                <div id="massImportProgress" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(42, 35, 26, 0.5); border-radius: 8px;">
+                    <div class="form-label" style="margin-bottom: 0.5rem;">Import Progress</div>
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; height: 24px;">
+                        <div id="massImportProgressBar" style="height: 100%; background: var(--primary); width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                    <div id="massImportStatus" style="margin-top: 0.5rem; font-size: 0.9rem; color: rgba(245, 230, 211, 0.8);"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         // ==========================================
@@ -2270,6 +2337,19 @@
         const mapForm = document.getElementById('mapForm');
         const searchInput = document.getElementById('searchInput');
         const searchResults = document.getElementById('searchResults');
+        let currentSearchFilter = 'all'; // 'all', 'items', 'events'
+        
+        function setSearchFilter(filter) {
+            currentSearchFilter = filter;
+            // Update button states
+            document.querySelectorAll('.search-filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filter);
+            });
+            // Re-run search with new filter
+            if (searchInput.value.trim()) {
+                executeSearch(searchInput.value.toLowerCase().trim());
+            }
+        }
         const modeIndicator = document.getElementById('modeIndicator');
 
         // Initialize
@@ -3446,7 +3526,7 @@
                 character: '👤',
                 transition: '🚪',
                 shop: '🪙',
-                quest: '❌â€œ',
+                quest: '🏁',
                 rift: '🌀',
                 boss: '👹',
                 information: 'ℹ️'
@@ -3728,24 +3808,22 @@
                 options: node.options || []
             }];
 
-            // Show variant tabs if there are multiple variants
-            if (variants.length > 1) {
-                html += `
-                    <div class="node-viewer-section">
-                        <div class="node-viewer-label">Variants (${variants.length} possible encounters)</div>
-                        <div class="viewer-variant-tabs" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
-                            ${variants.map((v, idx) => `
-                                <button class="btn btn-secondary btn-small viewer-variant-tab ${idx === 0 ? 'active' : ''}" 
-                                        onclick="switchViewerVariant(${idx})" 
-                                        data-variant-idx="${idx}"
-                                        style="font-size: 0.85rem;">
-                                    ${v.name} (${v.chance}%)
-                                </button>
-                            `).join('')}
-                        </div>
+            // Always show variant info (even for single variants)
+            html += `
+                <div class="node-viewer-section">
+                    <div class="node-viewer-label">Encounters (${variants.length} possible)</div>
+                    <div class="viewer-variant-tabs" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+                        ${variants.map((v, idx) => `
+                            <button class="btn btn-secondary btn-small viewer-variant-tab ${idx === 0 ? 'active' : ''}" 
+                                    onclick="switchViewerVariant(${idx})" 
+                                    data-variant-idx="${idx}"
+                                    style="font-size: 0.85rem; ${v.type === 'combat' ? 'border-left: 3px solid #c53030;' : ''}">
+                                ${v.type === 'combat' ? '⚔️ ' : ''}${v.name} (${v.chance}%)
+                            </button>
+                        `).join('')}
                     </div>
-                `;
-            }
+                </div>
+            `;
 
             // Display each variant's content (only show first by default)
             variants.forEach((variant, variantIdx) => {
@@ -3753,6 +3831,22 @@
                 const isVisible = variantIdx === 0;
                 
                 variantHtml.push(`<div class="viewer-variant-content" data-variant-idx="${variantIdx}" style="display: ${isVisible ? 'block' : 'none'};">`);
+
+                // Show variant name and info
+                if (variant.eventId || variant.rarity) {
+                    variantHtml.push(`
+                        <div class="node-viewer-section" style="padding: 0.75rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px; margin-bottom: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                <div style="font-weight: 600; color: var(--primary);">${variant.name}</div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    ${variant.eventId ? `<span style="font-size: 0.8rem; opacity: 0.7;">${variant.eventId}</span>` : ''}
+                                    ${variant.rarity ? `<span style="font-size: 0.8rem; padding: 0.2rem 0.5rem; background: rgba(139, 115, 85, 0.3); border-radius: 4px;">${variant.rarity}</span>` : ''}
+                                    ${variant.type === 'combat' ? `<span style="font-size: 0.8rem; padding: 0.2rem 0.5rem; background: rgba(197, 48, 48, 0.3); border-radius: 4px; color: #f56565;">⚔️ Combat</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                }
 
                 // Node Type - only show for transitions (other types implied by options)
                 if (variant.type === 'transition') {
@@ -4594,6 +4688,14 @@
                 ? option.followupEvents.map((event, idx) => createFollowupEventHtml(idx, event)).join('')
                 : '';
             
+            // Check if this option has any outcome data to auto-expand
+            const hasOutcomeData = option && (
+                option.onSuccess || option.onCritSuccess || option.onFail || option.onCritFail ||
+                option.combatLoot || option.shopLoot || option.combatEffects ||
+                option.failCombatLoot || option.failShopLoot ||
+                option.critCombatLoot || option.critShopLoot || option.critFailCombatLoot
+            );
+            
             return `
                 <div class="option-item">
                     <div class="option-header">
@@ -4601,47 +4703,52 @@
                         <button type="button" class="option-remove" onclick="removeOption(this)">Remove</button>
                     </div>
                     <input type="text" class="form-input" placeholder="Option label (e.g., 'Talk', 'Buy', 'Fight')" data-option="label" value="${option?.label || ''}">
-                    <input type="text" class="form-input" placeholder="Option description (optional)" data-option="description" style="margin-top: 0.5rem;" value="${option?.description || ''}">
-                    <div class="rewards-row">
-                        <input type="number" class="form-input" placeholder="Gold" data-option="gold" value="${option?.gold !== undefined && option.gold !== 0 ? option.gold : ''}">
-                        <input type="number" class="form-input" placeholder="Shards" data-option="shards" value="${option?.shards !== undefined && option.shards !== 0 ? option.shards : ''}">
-                        <input type="number" class="form-input" placeholder="EXP" data-option="exp" value="${option?.exp !== undefined && option.exp !== 0 ? option.exp : ''}">
-                    </div>
+                    <input type="text" class="form-input" placeholder="Requirements (e.g., 'Ranger only' or 'Any Priest')" data-option="requirements" style="margin-top: 0.5rem;" value="${option?.requirements || ''}">
+                    <textarea class="form-textarea" placeholder="Option description (optional)" data-option="description" style="margin-top: 0.5rem; min-height: 50px;">${option?.description || ''}</textarea>
+                    <input type="text" class="form-input" placeholder="Reveal Card (e.g., 'Forest Card')" data-option="revealCard" style="margin-top: 0.5rem;" value="${option?.revealCard || ''}">
+                    <input type="text" class="form-input" placeholder="Combat Effects (e.g., 'Stun 2 rounds')" data-option="combatEffects" style="margin-top: 0.5rem;" value="${option?.combatEffects || ''}">
+                    <input type="text" class="form-input" placeholder="Roll Info (e.g., 'LowerOrEqual 5 (Group)')" data-option="rollInfo" style="margin-top: 0.5rem; background: rgba(212, 175, 55, 0.1); border-color: var(--primary);" value="${option?.rollInfo || ''}">
                     
                     <!-- Expandable Success/Fail Outcomes -->
                     <div style="margin-top: 1rem;">
                         <button type="button" class="btn btn-secondary btn-small" onclick="toggleOutcomes(this)" style="width: 100%;">
-                            <span class="toggle-icon">▶</span> Success/Fail Outcomes
+                            <span class="toggle-icon">${hasOutcomeData ? '▼' : '▶'}</span> Success/Fail Outcomes & Loot
                         </button>
-                        <div class="outcomes-section" style="display: none; margin-top: 0.75rem; padding: 1rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px;">
-                            <div style="margin-bottom: 1rem;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #4ade80;">✔️" On Success</label>
+                        <div class="outcomes-section" style="display: ${hasOutcomeData ? 'block' : 'none'}; margin-top: 0.75rem; padding: 1rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px;">
+                            <div style="margin-bottom: 1rem; background: rgba(72, 187, 120, 0.08); padding: 0.75rem; border-radius: 6px; border-left: 3px solid #48bb78;">
+                                <label class="form-label" style="font-size: 0.9rem; color: #48bb78;">✓ On Success</label>
                                 <textarea class="form-textarea" placeholder="What happens on success..." data-option="onSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onSuccess || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="successGold" value="${option?.successGold !== undefined && option.successGold !== 0 ? option.successGold : ""}">
                                     <input type="number" class="form-input" placeholder="Shards" data-option="successShards" value="${option?.successShards !== undefined && option.successShards !== 0 ? option.successShards : ""}">
                                     <input type="number" class="form-input" placeholder="EXP" data-option="successExp" value="${option?.successExp !== undefined && option.successExp !== 0 ? option.successExp : ""}">
                                 </div>
+                                <input type="text" class="form-input" placeholder="Combat Loot (e.g., 'Sword (Epic) - 25%')" data-option="combatLoot" style="margin-top: 0.5rem;" value="${option?.combatLoot || ''}">
+                                <input type="text" class="form-input" placeholder="Shop Loot (e.g., 'Potion - 100%')" data-option="shopLoot" style="margin-top: 0.5rem;" value="${option?.shopLoot || ''}">
                             </div>
                             
-                            <div style="margin-bottom: 1rem;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #60a5fa;">✔️… On Critical Success</label>
+                            <div style="margin-bottom: 1rem; background: rgba(246, 224, 94, 0.08); padding: 0.75rem; border-radius: 6px; border-left: 3px solid #f6e05e;">
+                                <label class="form-label" style="font-size: 0.9rem; color: #f6e05e;">★ On Critical Success</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical success..." data-option="onCritSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritSuccess || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="critSuccessGold" value="${option?.critSuccessGold !== undefined && option.critSuccessGold !== 0 ? option.critSuccessGold : ""}">
                                     <input type="number" class="form-input" placeholder="Shards" data-option="critSuccessShards" value="${option?.critSuccessShards !== undefined && option.critSuccessShards !== 0 ? option.critSuccessShards : ""}">
                                     <input type="number" class="form-input" placeholder="EXP" data-option="critSuccessExp" value="${option?.critSuccessExp !== undefined && option.critSuccessExp !== 0 ? option.critSuccessExp : ""}">
                                 </div>
+                                <input type="text" class="form-input" placeholder="Combat Loot" data-option="critCombatLoot" style="margin-top: 0.5rem;" value="${option?.critCombatLoot || ''}">
+                                <input type="text" class="form-input" placeholder="Shop Loot" data-option="critShopLoot" style="margin-top: 0.5rem;" value="${option?.critShopLoot || ''}">
                             </div>
                             
-                            <div style="margin-bottom: 1rem;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #fb923c;">✔️— On Fail</label>
+                            <div style="margin-bottom: 1rem; background: rgba(251, 146, 60, 0.08); padding: 0.75rem; border-radius: 6px; border-left: 3px solid #fb923c;">
+                                <label class="form-label" style="font-size: 0.9rem; color: #fb923c;">✗ On Fail</label>
                                 <textarea class="form-textarea" placeholder="What happens on fail..." data-option="onFail" style="min-height: 60px; margin-top: 0.5rem;">${option?.onFail || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="failGold" value="${option?.failGold !== undefined && option.failGold !== 0 ? option.failGold : ""}">
                                     <input type="number" class="form-input" placeholder="Shards" data-option="failShards" value="${option?.failShards !== undefined && option.failShards !== 0 ? option.failShards : ""}">
                                     <input type="number" class="form-input" placeholder="EXP" data-option="failExp" value="${option?.failExp !== undefined && option.failExp !== 0 ? option.failExp : ""}">
                                 </div>
+                                <input type="text" class="form-input" placeholder="Combat Loot" data-option="failCombatLoot" style="margin-top: 0.5rem;" value="${option?.failCombatLoot || ''}">
+                                <input type="text" class="form-input" placeholder="Shop Loot" data-option="failShopLoot" style="margin-top: 0.5rem;" value="${option?.failShopLoot || ''}">
                             </div>
                             
                             <div>
@@ -4652,6 +4759,7 @@
                                     <input type="number" class="form-input" placeholder="Shards" data-option="critFailShards" value="${option?.critFailShards !== undefined && option.critFailShards !== 0 ? option.critFailShards : ""}">
                                     <input type="number" class="form-input" placeholder="EXP" data-option="critFailExp" value="${option?.critFailExp !== undefined && option.critFailExp !== 0 ? option.critFailExp : ""}">
                                 </div>
+                                <input type="text" class="form-input" placeholder="Combat Loot" data-option="critFailCombatLoot" style="margin-top: 0.5rem;" value="${option?.critFailCombatLoot || ''}">
                             </div>
                         </div>
                     </div>
@@ -4983,27 +5091,42 @@
                 
                 const option = {
                     label: item.querySelector('[data-option="label"]').value,
-                    description: item.querySelector('[data-option="description"]').value,
-                    gold: parseInt(item.querySelector('[data-option="gold"]').value) || 0,
-                    shards: parseInt(item.querySelector('[data-option="shards"]').value) || 0,
-                    exp: parseInt(item.querySelector('[data-option="exp"]').value) || 0,
-                    // Success/Fail outcomes
+                    description: item.querySelector('[data-option="description"]')?.value || '',
+                    requirements: item.querySelector('[data-option="requirements"]')?.value || '',
+                    revealCard: item.querySelector('[data-option="revealCard"]')?.value || '',
+                    combatEffects: item.querySelector('[data-option="combatEffects"]')?.value || '',
+                    rollInfo: item.querySelector('[data-option="rollInfo"]')?.value || '',
+                    gold: parseInt(item.querySelector('[data-option="gold"]')?.value) || 0,
+                    shards: parseInt(item.querySelector('[data-option="shards"]')?.value) || 0,
+                    exp: parseInt(item.querySelector('[data-option="exp"]')?.value) || 0,
+                    // Success outcomes
                     onSuccess: item.querySelector('[data-option="onSuccess"]')?.value || '',
                     successGold: parseInt(item.querySelector('[data-option="successGold"]')?.value) || 0,
                     successShards: parseInt(item.querySelector('[data-option="successShards"]')?.value) || 0,
                     successExp: parseInt(item.querySelector('[data-option="successExp"]')?.value) || 0,
+                    combatLoot: item.querySelector('[data-option="combatLoot"]')?.value || '',
+                    shopLoot: item.querySelector('[data-option="shopLoot"]')?.value || '',
+                    // Critical Success outcomes
                     onCritSuccess: item.querySelector('[data-option="onCritSuccess"]')?.value || '',
                     critSuccessGold: parseInt(item.querySelector('[data-option="critSuccessGold"]')?.value) || 0,
                     critSuccessShards: parseInt(item.querySelector('[data-option="critSuccessShards"]')?.value) || 0,
                     critSuccessExp: parseInt(item.querySelector('[data-option="critSuccessExp"]')?.value) || 0,
+                    critCombatLoot: item.querySelector('[data-option="critCombatLoot"]')?.value || '',
+                    critShopLoot: item.querySelector('[data-option="critShopLoot"]')?.value || '',
+                    // Fail outcomes
                     onFail: item.querySelector('[data-option="onFail"]')?.value || '',
                     failGold: parseInt(item.querySelector('[data-option="failGold"]')?.value) || 0,
                     failShards: parseInt(item.querySelector('[data-option="failShards"]')?.value) || 0,
                     failExp: parseInt(item.querySelector('[data-option="failExp"]')?.value) || 0,
+                    failCombatLoot: item.querySelector('[data-option="failCombatLoot"]')?.value || '',
+                    failShopLoot: item.querySelector('[data-option="failShopLoot"]')?.value || '',
+                    // Critical Fail outcomes
                     onCritFail: item.querySelector('[data-option="onCritFail"]')?.value || '',
                     critFailGold: parseInt(item.querySelector('[data-option="critFailGold"]')?.value) || 0,
                     critFailShards: parseInt(item.querySelector('[data-option="critFailShards"]')?.value) || 0,
                     critFailExp: parseInt(item.querySelector('[data-option="critFailExp"]')?.value) || 0,
+                    critFailCombatLoot: item.querySelector('[data-option="critFailCombatLoot"]')?.value || '',
+                    // Other
                     outcomes: item.querySelector('[data-option="outcomes"]')?.value || '',
                     followupEvents: followupEvents
                 };
@@ -5314,15 +5437,23 @@
                 const isCurrentMap = map.id === currentMapId;
                 
                 map.nodes.forEach(node => {
-                    // Quick check: search in basic fields first
-                    const basicText = `${node.name} ${node.description || ''}`.toLowerCase();
-                    if (!basicText.includes(query)) {
-                        // If not in basic fields, check tags
-                        const tagText = node.tags ? node.tags.join(' ').toLowerCase() : '';
-                        if (!tagText.includes(query)) {
-                            // Only do deep search if not found in basic fields or tags
-                            if (!deepSearchNode(node, query)) {
-                                return; // Skip this node
+                    // For loot/shop filters, skip basic name/description search
+                    if (currentSearchFilter === 'items') {
+                        // Only search in loot fields
+                        if (!deepSearchNode(node, query)) {
+                            return; // Skip this node
+                        }
+                    } else {
+                        // Quick check: search in basic fields first
+                        const basicText = `${node.name} ${node.description || ''}`.toLowerCase();
+                        if (!basicText.includes(query)) {
+                            // If not in basic fields, check tags
+                            const tagText = node.tags ? node.tags.join(' ').toLowerCase() : '';
+                            if (!tagText.includes(query)) {
+                                // Only do deep search if not found in basic fields or tags
+                                if (!deepSearchNode(node, query)) {
+                                    return; // Skip this node
+                                }
                             }
                         }
                     }
@@ -5346,42 +5477,80 @@
         function deepSearchNode(node, query) {
             let searchText = '';
             
-            // Search in variants
+            // Build search text based on current filter
             if (node.variants && node.variants.length > 0) {
                 node.variants.forEach(variant => {
-                    searchText += ` ${variant.name} ${variant.description || ''}`;
-                    searchText += ` ${variant.tags ? variant.tags.join(' ') : ''}`;
+                    // Only include variant/event names if filter is 'all' or 'events'
+                    if (currentSearchFilter === 'all' || currentSearchFilter === 'events') {
+                        searchText += ` ${variant.name} ${variant.description || ''}`;
+                        searchText += ` ${variant.tags ? variant.tags.join(' ') : ''}`;
+                    }
                     
-                    // Search in variant options
                     if (variant.options && variant.options.length > 0) {
                         variant.options.forEach(option => {
-                            searchText += ` ${option.label || ''} ${option.description || ''}`;
-                            searchText += ` ${option.outcomes || ''}`;
-                            searchText += ` ${option.onSuccess || ''} ${option.onCritSuccess || ''}`;
-                            searchText += ` ${option.onFail || ''} ${option.onCritFail || ''}`;
+                            // Always search option labels for context
+                            if (currentSearchFilter === 'all' || currentSearchFilter === 'events') {
+                                searchText += ` ${option.label || ''} ${option.description || ''}`;
+                                searchText += ` ${option.outcomes || ''}`;
+                                searchText += ` ${option.onSuccess || ''} ${option.onCritSuccess || ''}`;
+                                searchText += ` ${option.onFail || ''} ${option.onCritFail || ''}`;
+                                searchText += ` ${option.rollInfo || ''} ${option.cardRoll || ''}`;
+                                searchText += ` ${option.combatEffects || ''}`;
+                                searchText += ` ${option.requirements || ''}`;
+                            }
                             
-                            // Search in follow-up events
-                            if (option.followupEvents && option.followupEvents.length > 0) {
-                                option.followupEvents.forEach(event => {
-                                    searchText += ` ${event.name || ''} ${event.description || ''}`;
-                                });
+                            // Items (combat loot + shop loot) - for 'all' or 'items' filter
+                            if (currentSearchFilter === 'all' || currentSearchFilter === 'items') {
+                                searchText += ` ${option.combatLoot || ''}`;
+                                searchText += ` ${option.failCombatLoot || ''}`;
+                                searchText += ` ${option.critCombatLoot || ''}`;
+                                searchText += ` ${option.critFailCombatLoot || ''}`;
+                                searchText += ` ${option.shopLoot || ''}`;
+                                searchText += ` ${option.failShopLoot || ''}`;
+                                searchText += ` ${option.critShopLoot || ''}`;
+                            }
+                            
+                            // Follow-up events
+                            if (currentSearchFilter === 'all' || currentSearchFilter === 'events') {
+                                if (option.followupEvents && option.followupEvents.length > 0) {
+                                    option.followupEvents.forEach(event => {
+                                        searchText += ` ${event.name || ''} ${event.description || ''}`;
+                                    });
+                                }
                             }
                         });
                     }
                 });
             } else {
-                // Old format nodes without variants - search in options directly
+                // Old format nodes without variants
                 if (node.options && node.options.length > 0) {
                     node.options.forEach(option => {
-                        searchText += ` ${option.label || ''} ${option.description || ''}`;
-                        searchText += ` ${option.outcomes || ''}`;
-                        searchText += ` ${option.onSuccess || ''} ${option.onCritSuccess || ''}`;
-                        searchText += ` ${option.onFail || ''} ${option.onCritFail || ''}`;
+                        if (currentSearchFilter === 'all' || currentSearchFilter === 'events') {
+                            searchText += ` ${option.label || ''} ${option.description || ''}`;
+                            searchText += ` ${option.outcomes || ''}`;
+                            searchText += ` ${option.onSuccess || ''} ${option.onCritSuccess || ''}`;
+                            searchText += ` ${option.onFail || ''} ${option.onCritFail || ''}`;
+                            searchText += ` ${option.rollInfo || ''} ${option.cardRoll || ''}`;
+                            searchText += ` ${option.combatEffects || ''}`;
+                            searchText += ` ${option.requirements || ''}`;
+                        }
                         
-                        if (option.followupEvents && option.followupEvents.length > 0) {
-                            option.followupEvents.forEach(event => {
-                                searchText += ` ${event.name || ''} ${event.description || ''}`;
-                            });
+                        if (currentSearchFilter === 'all' || currentSearchFilter === 'items') {
+                            searchText += ` ${option.combatLoot || ''}`;
+                            searchText += ` ${option.failCombatLoot || ''}`;
+                            searchText += ` ${option.critCombatLoot || ''}`;
+                            searchText += ` ${option.critFailCombatLoot || ''}`;
+                            searchText += ` ${option.shopLoot || ''}`;
+                            searchText += ` ${option.failShopLoot || ''}`;
+                            searchText += ` ${option.critShopLoot || ''}`;
+                        }
+                        
+                        if (currentSearchFilter === 'all' || currentSearchFilter === 'events') {
+                            if (option.followupEvents && option.followupEvents.length > 0) {
+                                option.followupEvents.forEach(event => {
+                                    searchText += ` ${event.name || ''} ${event.description || ''}`;
+                                });
+                            }
                         }
                     });
                 }
@@ -6464,7 +6633,275 @@
             return results;
         }
 
-        function displayImportPreview(results) {
+
+
+        // ==========================================
+        // MASS IMPORT FUNCTIONS  
+        // ==========================================
+        let massImportAssignments = {}; // mapId -> file content
+        let massImportFileList = []; // loaded files
+        
+        function openMassImportModal() {
+            massImportAssignments = {};
+            massImportFileList = [];
+            
+            // Build the map grid
+            const grid = document.getElementById('massImportMapGrid');
+            grid.innerHTML = '';
+            
+            maps.forEach(map => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px;';
+                row.innerHTML = `
+                    <div style="flex: 1; min-width: 120px;">
+                        <div style="font-weight: 600; color: var(--light);">${map.name}</div>
+                        <div style="font-size: 0.8rem; color: rgba(245, 230, 211, 0.5);">${map.nodes.length} nodes</div>
+                    </div>
+                    <select class="form-select mass-import-select" data-map-id="${map.id}" 
+                            style="flex: 2; min-width: 200px;"
+                            onchange="updateMassImportAssignment('${map.id}', this.value)">
+                        <option value="">-- No file assigned --</option>
+                    </select>
+                    <div class="mass-import-status" data-map-id="${map.id}" style="width: 24px; text-align: center;">
+                        
+                    </div>
+                `;
+                grid.appendChild(row);
+            });
+            
+            document.getElementById('massImportModal').classList.add('active');
+        }
+        
+        function closeMassImportModal() {
+            document.getElementById('massImportModal').classList.remove('active');
+        }
+        
+        async function handleMassImportFiles(event) {
+            const files = Array.from(event.target.files);
+            massImportFileList = [];
+            
+            // Read all files
+            for (const file of files) {
+                try {
+                    const text = await file.text();
+                    massImportFileList.push({
+                        name: file.name,
+                        content: text
+                    });
+                } catch (e) {
+                    console.error('Error reading file:', file.name, e);
+                }
+            }
+            
+            // Update all select dropdowns with file options
+            document.querySelectorAll('.mass-import-select').forEach(select => {
+                const mapId = select.dataset.mapId;
+                const currentValue = select.value;
+                
+                // Clear and rebuild options
+                select.innerHTML = '<option value="">-- No file assigned --</option>';
+                
+                massImportFileList.forEach((file, idx) => {
+                    const option = document.createElement('option');
+                    option.value = idx.toString();
+                    option.textContent = file.name;
+                    select.appendChild(option);
+                });
+                
+                // Restore selection if still valid
+                if (currentValue && select.querySelector(`option[value="${currentValue}"]`)) {
+                    select.value = currentValue;
+                }
+            });
+            
+            // Auto-match files to maps by name
+            autoMatchFilesToMaps();
+        }
+        
+        function autoMatchFilesToMaps() {
+            maps.forEach(map => {
+                const mapNameLower = map.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const select = document.querySelector(`.mass-import-select[data-map-id="${map.id}"]`);
+                
+                if (!select) return;
+                
+                // Try to find a matching file
+                let bestMatch = -1;
+                let bestScore = 0;
+                
+                massImportFileList.forEach((file, idx) => {
+                    const fileNameLower = file.name.toLowerCase().replace(/[^a-z0-9]/g, '').replace('nodesjs', '').replace('_nodes', '');
+                    
+                    // Check if map name is contained in filename
+                    if (fileNameLower.includes(mapNameLower) || mapNameLower.includes(fileNameLower)) {
+                        const score = Math.min(mapNameLower.length, fileNameLower.length);
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestMatch = idx;
+                        }
+                    }
+                });
+                
+                if (bestMatch >= 0) {
+                    select.value = bestMatch.toString();
+                    updateMassImportAssignment(map.id, bestMatch.toString());
+                }
+            });
+        }
+        
+        function updateMassImportAssignment(mapId, fileIdx) {
+            const statusEl = document.querySelector(`.mass-import-status[data-map-id="${mapId}"]`);
+            
+            if (fileIdx && massImportFileList[parseInt(fileIdx)]) {
+                massImportAssignments[mapId] = massImportFileList[parseInt(fileIdx)];
+                if (statusEl) statusEl.textContent = '✓';
+                if (statusEl) statusEl.style.color = '#48bb78';
+            } else {
+                delete massImportAssignments[mapId];
+                if (statusEl) statusEl.textContent = '';
+            }
+            
+            // Update button text with count
+            const count = Object.keys(massImportAssignments).length;
+            document.getElementById('massImportBtn').textContent = `📥 Import ${count} Map${count !== 1 ? 's' : ''}`;
+        }
+        
+        function clearMassImportAssignments() {
+            massImportAssignments = {};
+            document.querySelectorAll('.mass-import-select').forEach(select => {
+                select.value = '';
+            });
+            document.querySelectorAll('.mass-import-status').forEach(el => {
+                el.textContent = '';
+            });
+            document.getElementById('massImportBtn').textContent = '📥 Import All Assigned';
+        }
+        
+        async function executeMassImport() {
+            const assignments = Object.entries(massImportAssignments);
+            
+            if (assignments.length === 0) {
+                alert('No files assigned to maps. Please select files for the maps you want to update.');
+                return;
+            }
+            
+            // Show progress
+            const progressDiv = document.getElementById('massImportProgress');
+            const progressBar = document.getElementById('massImportProgressBar');
+            const statusEl = document.getElementById('massImportStatus');
+            progressDiv.style.display = 'block';
+            progressBar.style.width = '0%';
+            
+            let completed = 0;
+            let errors = [];
+            
+            for (const [mapId, fileData] of assignments) {
+                const map = maps.find(m => m.id === mapId);
+                statusEl.textContent = `Importing: ${map ? map.name : mapId}...`;
+                
+                try {
+                    // Parse the JS file
+                    const importedNodes = parseMassImportJS(fileData.content);
+                    
+                    if (importedNodes && importedNodes.length > 0) {
+                        // Merge with existing nodes
+                        const result = await mergeMassImportNodes(mapId, importedNodes);
+                        console.log(`Imported ${importedNodes.length} nodes to ${map.name}:`, result);
+                    } else {
+                        errors.push(`${map.name}: No valid nodes found in file`);
+                    }
+                } catch (e) {
+                    console.error(`Error importing to ${map.name}:`, e);
+                    errors.push(`${map.name}: ${e.message}`);
+                }
+                
+                completed++;
+                progressBar.style.width = `${(completed / assignments.length) * 100}%`;
+                
+                // Small delay for visual feedback
+                await new Promise(r => setTimeout(r, 100));
+            }
+            
+            // Done
+            if (errors.length === 0) {
+                statusEl.innerHTML = `<span style="color: #48bb78;">✓ Successfully imported ${completed} map${completed !== 1 ? 's' : ''}!</span>`;
+            } else {
+                statusEl.innerHTML = `<span style="color: #f6e05e;">⚠ Completed with ${errors.length} error(s):</span><br>${errors.join('<br>')}`;
+            }
+            
+            // Refresh display
+            renderNodes();
+            saveToLocalStorage();
+            
+            // Close modal after delay
+            setTimeout(() => {
+                if (errors.length === 0) {
+                    closeMassImportModal();
+                }
+            }, 1500);
+        }
+        
+        function parseMassImportJS(content) {
+            try {
+                // Try to extract the array from the JS file
+                // Look for pattern: const XXXX_NODES = [...]
+                const constMatch = content.match(/const\s+\w+_NODES\s*=\s*(\[[\s\S]*?\]);/);
+                if (constMatch) {
+                    return JSON.parse(constMatch[1]);
+                }
+                
+                // Try finding just the array
+                const arrayStart = content.indexOf('[');
+                const arrayEnd = content.lastIndexOf(']');
+                if (arrayStart !== -1 && arrayEnd > arrayStart) {
+                    const jsonStr = content.substring(arrayStart, arrayEnd + 1);
+                    return JSON.parse(jsonStr);
+                }
+                
+                return null;
+            } catch (e) {
+                console.error('Error parsing JS content:', e);
+                return null;
+            }
+        }
+        
+        async function mergeMassImportNodes(mapId, importedNodes) {
+            const map = maps.find(m => m.id === mapId);
+            if (!map) return { error: 'Map not found' };
+            
+            let updated = 0;
+            let skipped = 0;
+            
+            importedNodes.forEach(importNode => {
+                // Try to find existing node by gameId or id
+                let existingNode = map.nodes.find(n => 
+                    (importNode.id && n.gameId === importNode.id) ||
+                    (importNode.id && n.id === importNode.id) ||
+                    (importNode.id && n.gameId && n.gameId.toLowerCase() === importNode.id.toLowerCase())
+                );
+                
+                if (existingNode) {
+                    // Update existing node with import data
+                    if (importNode.variants && importNode.variants.length > 0) {
+                        existingNode.variants = importNode.variants;
+                    }
+                    if (importNode.name) existingNode.name = importNode.name;
+                    if (importNode.type) existingNode.type = importNode.type;
+                    if (importNode.eventChance !== undefined) existingNode.eventChance = importNode.eventChance;
+                    if (importNode.combatChance !== undefined) existingNode.combatChance = importNode.combatChance;
+                    if (importNode.spawnChance !== undefined) existingNode.spawnChance = importNode.spawnChance;
+                    updated++;
+                } else {
+                    // Node not found - skip it
+                    skipped++;
+                }
+            });
+            
+            return { updated, skipped, total: importedNodes.length };
+        }
+
+
+                function displayImportPreview(results) {
             const currentMap = maps.find(m => m.id === currentMapId);
             const mapName = currentMap ? currentMap.name : 'Unknown Map';
             
