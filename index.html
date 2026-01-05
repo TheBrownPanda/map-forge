@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -3989,12 +3989,21 @@
                         
                         // Display structured success/fail outcomes if present
                         // Helper function to extract Combat Effects and Combat Loot from text
-                        function extractCombatInfo(text) {
+                        // NOTE: This should NOT be used when dedicated combatEffects/combatLoot fields exist
+                        function extractCombatInfo(text, hasDedicatedFields = false) {
                             if (!text) return { cleanText: text, combatEffects: null, combatLoot: null };
                             
                             let cleanText = text;
                             let combatEffects = null;
                             let combatLoot = null;
+                            
+                            // If we have dedicated fields, just clean the text without extracting
+                            if (hasDedicatedFields) {
+                                cleanText = cleanText.replace(/Combat Effects:[^|]+\|?/g, '').trim();
+                                cleanText = cleanText.replace(/Combat Loot:[^|]+(?:\|[^|]+)*$/g, '').trim();
+                                cleanText = cleanText.replace(/\s*\|\s*$/, '').trim();
+                                return { cleanText, combatEffects: null, combatLoot: null };
+                            }
                             
                             // Extract Combat Effects ONLY (loot is in dedicated field now)
                             const effectsMatch = text.match(/Combat Effects:\s*([^\n]+)/);
@@ -4016,7 +4025,7 @@
                             `);
                             
                             if (option.onSuccess || option.successGold || option.successShards || option.successExp || option.combatLoot || option.shopLoot) {
-                                const successInfo = extractCombatInfo(option.onSuccess);
+                                const successInfo = extractCombatInfo(option.onSuccess, !!(option.combatEffects || option.combatLoot));
                                 // Overarching Success container
                                 variantHtml.push(`
                                     <div style="margin-bottom: 0.75rem; padding: 1rem; background: rgba(74, 222, 128, 0.05); border: 2px solid #4ade80; border-radius: 8px;">
@@ -4058,7 +4067,8 @@
                                 }
                                 
                                 // Display Combat Effects if extracted
-                                if (successInfo.combatEffects) {
+                                // Only show extracted effects if no dedicated field exists
+                                if (successInfo.combatEffects && !option.combatEffects) {
                                     variantHtml.push(`
                                         <div style="padding: 0.75rem; background: rgba(197, 48, 48, 0.1); border-left: 3px solid #c53030; border-radius: 4px; margin-bottom: 0.75rem;">
                                             <div style="color: #c53030; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">⚔️ Combat Effects</div>
@@ -4090,7 +4100,7 @@
                             }
                             
                             if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp || option.critCombatLoot || option.critShopLoot) {
-                                const critSuccessInfo = extractCombatInfo(option.onCritSuccess);
+                                const critSuccessInfo = extractCombatInfo(option.onCritSuccess, !!(option.critCombatEffects || option.critCombatLoot));
                                 // Overarching Critical Success container
                                 variantHtml.push(`
                                     <div style="margin-bottom: 0.75rem; padding: 1rem; background: rgba(96, 165, 250, 0.05); border: 2px solid #60a5fa; border-radius: 8px;">
@@ -4115,7 +4125,22 @@
                                     variantHtml.push(`</div>`);
                                 }
                                 
-                                if (critSuccessInfo.combatEffects) {
+                                // Show dedicated critCombatEffects first
+                                if (option.critCombatEffects) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.75rem; background: rgba(197, 48, 48, 0.1); border-radius: 6px; border-left: 3px solid #c53030; margin-bottom: 0.75rem;">
+                                            <div style="font-size: 0.85rem; color: #c53030; font-weight: 600; margin-bottom: 0.5rem;">
+                                                ⚔️ Combat Effects
+                                            </div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem;">
+                                                ${option.critCombatEffects}
+                                            </div>
+                                        </div>
+                                    `);
+                                }
+                                
+                                // Only show extracted effects if no dedicated field exists
+                                if (critSuccessInfo.combatEffects && !option.critCombatEffects) {
                                     variantHtml.push(`
                                         <div style="padding: 0.75rem; background: rgba(197, 48, 48, 0.1); border-left: 3px solid #c53030; border-radius: 4px; margin-bottom: 0.75rem;">
                                             <div style="color: #c53030; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">⚔️ Combat Effects</div>
@@ -4145,7 +4170,7 @@
                             }
                             
                             if (option.onFail || option.failGold || option.failShards || option.failExp || option.failCombatLoot || option.failShopLoot || option.failCombatEffects) {
-                                const failInfo = extractCombatInfo(option.onFail);
+                                const failInfo = extractCombatInfo(option.onFail, !!(option.failCombatEffects || option.failCombatLoot));
                                 // Overarching Fail container
                                 variantHtml.push(`
                                     <div style="margin-bottom: 0.75rem; padding: 1rem; background: rgba(251, 146, 60, 0.05); border: 2px solid #fb923c; border-radius: 8px;">
@@ -4184,7 +4209,8 @@
                                     variantHtml.push(`</div>`);
                                 }
                                 
-                                if (failInfo.combatEffects) {
+                                // Only show extracted effects if no dedicated field exists
+                                if (failInfo.combatEffects && !option.failCombatEffects) {
                                     variantHtml.push(`
                                         <div style="padding: 0.75rem; background: rgba(197, 48, 48, 0.1); border-left: 3px solid #c53030; border-radius: 4px; margin-bottom: 0.75rem;">
                                             <div style="color: #c53030; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">⚔️ Combat Effects</div>
@@ -4214,7 +4240,7 @@
                             }
                             
                             if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp || option.critFailCombatLoot) {
-                                const critFailInfo = extractCombatInfo(option.onCritFail);
+                                const critFailInfo = extractCombatInfo(option.onCritFail, !!(option.critFailCombatLoot));
                                 // Overarching Critical Fail container
                                 variantHtml.push(`
                                     <div style="padding: 1rem; background: rgba(239, 68, 68, 0.05); border: 2px solid #ef4444; border-radius: 8px;">
