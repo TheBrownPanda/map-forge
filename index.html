@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -3791,6 +3791,19 @@
             const node = map?.nodes.find(n => n.id === nodeId);
             if (!node) return;
 
+            // Debug: Log the data being displayed
+            console.log('=== VIEW NODE ===');
+            console.log('Node ID:', nodeId);
+            if (node.variants && node.variants[0]) {
+                const sampleText = JSON.stringify(node.variants[0]).substring(0, 500);
+                console.log('Sample variant data:', sampleText);
+                if (sampleText.includes("Let's")) {
+                    console.log('✓ VIEW NODE ENCODING OK');
+                } else if (sampleText.includes("Letâ€™s")) {
+                    console.log('✗ VIEW NODE ENCODING BAD - mojibake detected!');
+                }
+            }
+
             // Save current view position
             savedTranslateX = translateX;
             savedTranslateY = translateY;
@@ -6373,19 +6386,39 @@
             console.log('=== PARSING JAVASCRIPT ===');
             console.log('JS text length:', jsText.length);
             
-            // Extract the FAEBORG_NODES array
-            // Execute the JavaScript in a safe way
-            const nodes = eval(`(function() { ${jsText}; return FAEBORG_NODES; })()`);
+            // Dynamically detect the variable name (e.g., SENENTHIA_NODES, FAEBORG_NODES, etc.)
+            const varNameMatch = jsText.match(/const\s+(\w+_NODES)\s*=/);
+            if (!varNameMatch) {
+                throw new Error('JavaScript file must contain a const XXX_NODES = [...] declaration');
+            }
+            const varName = varNameMatch[1];
+            console.log('Detected variable name:', varName);
             
-            if (!Array.isArray(nodes)) {
-                throw new Error('JavaScript file must export FAEBORG_NODES array');
+            // Use bracket-counting to extract the array (same as mass import)
+            const constMatch = jsText.match(/const\s+\w+_NODES\s*=\s*\[/);
+            if (constMatch) {
+                const startIdx = jsText.indexOf(constMatch[0]) + constMatch[0].length - 1;
+                let bracketCount = 1;
+                let endIdx = startIdx + 1;
+                while (bracketCount > 0 && endIdx < jsText.length) {
+                    if (jsText[endIdx] === '[') bracketCount++;
+                    else if (jsText[endIdx] === ']') bracketCount--;
+                    endIdx++;
+                }
+                const jsonStr = jsText.substring(startIdx, endIdx);
+                const nodes = JSON.parse(jsonStr);
+                
+                if (!Array.isArray(nodes)) {
+                    throw new Error('JavaScript file must export an array of nodes');
+                }
+                
+                console.log(`Loaded ${nodes.length} nodes from JavaScript`);
+                console.log('First few nodes:', nodes.slice(0, 3).map(n => ({ id: n.id, name: n.name, variantsCount: n.variants?.length })));
+                
+                return nodes;
             }
             
-            console.log(`Loaded ${nodes.length} nodes from JavaScript`);
-            console.log('First few nodes:', nodes.slice(0, 3).map(n => ({ id: n.id, name: n.name, variantsCount: n.variants?.length })));
-            
-            // Return in same format as markdown parser
-            return nodes;
+            throw new Error('Could not find node array in JavaScript file');
         }
 
         function parseNodeMarkdown(text) {
