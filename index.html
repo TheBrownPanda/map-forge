@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -7081,6 +7081,12 @@
                 statusEl.innerHTML = `<span style="color: #48bb78;">✓ Successfully imported and saved ${completed} map${completed !== 1 ? 's' : ''}!</span>`;
             }
             
+            // Force reload data from database to ensure we see the new data
+            statusEl.innerHTML += '<br><span style="color: #90cdf4;">Reloading data...</span>';
+            await loadData();
+            renderNodes();
+            statusEl.innerHTML = `<span style="color: #48bb78;">✓ Import complete! ${completed} map${completed !== 1 ? 's' : ''} updated.</span>`;
+            
             // Close modal after delay
             setTimeout(() => {
                 if (errors.length === 0) {
@@ -7092,13 +7098,31 @@
         function parseMassImportJS(content) {
             try {
                 // Try to extract the array from the JS file
-                // Look for pattern: const XXXX_NODES = [...]
-                const constMatch = content.match(/const\s+\w+_NODES\s*=\s*(\[[\s\S]*?\]);/);
+                // Find the start of the array after const XXXX_NODES = 
+                const constMatch = content.match(/const\s+\w+_NODES\s*=\s*\[/);
                 if (constMatch) {
-                    return JSON.parse(constMatch[1]);
+                    const startIdx = content.indexOf(constMatch[0]) + constMatch[0].length - 1;
+                    // Find matching closing bracket by counting brackets
+                    let bracketCount = 1;
+                    let endIdx = startIdx + 1;
+                    while (bracketCount > 0 && endIdx < content.length) {
+                        if (content[endIdx] === '[') bracketCount++;
+                        else if (content[endIdx] === ']') bracketCount--;
+                        endIdx++;
+                    }
+                    const jsonStr = content.substring(startIdx, endIdx);
+                    console.log('Parsed JSON length:', jsonStr.length);
+                    const parsed = JSON.parse(jsonStr);
+                    console.log('Parsed nodes count:', parsed.length);
+                    // Log sample to verify encoding is correct
+                    if (parsed.length > 0 && parsed[0].variants && parsed[0].variants[0]) {
+                        const sampleDesc = parsed[0].variants[0].options?.[0]?.description || '';
+                        console.log('Sample description:', sampleDesc.substring(0, 100));
+                    }
+                    return parsed;
                 }
                 
-                // Try finding just the array
+                // Fallback: Try finding just the array
                 const arrayStart = content.indexOf('[');
                 const arrayEnd = content.lastIndexOf(']');
                 if (arrayStart !== -1 && arrayEnd > arrayStart) {
@@ -7120,6 +7144,8 @@
             let updated = 0;
             let skipped = 0;
             
+            console.log(`Merging ${importedNodes.length} nodes into map ${mapId}`);
+            
             importedNodes.forEach(importNode => {
                 // Try to find existing node by gameId or id
                 let existingNode = map.nodes.find(n => 
@@ -7129,9 +7155,10 @@
                 );
                 
                 if (existingNode) {
-                    // Update existing node with import data
+                    // Update existing node with import data - use deep copy
                     if (importNode.variants && importNode.variants.length > 0) {
-                        existingNode.variants = importNode.variants;
+                        existingNode.variants = JSON.parse(JSON.stringify(importNode.variants));
+                        console.log(`Updated ${existingNode.gameId || existingNode.id}: ${importNode.variants.length} variants`);
                     }
                     if (importNode.name) existingNode.name = importNode.name;
                     if (importNode.type) existingNode.type = importNode.type;
@@ -7141,10 +7168,12 @@
                     updated++;
                 } else {
                     // Node not found - skip it
+                    console.log(`Node not found: ${importNode.id}`);
                     skipped++;
                 }
             });
             
+            console.log(`Merge complete: ${updated} updated, ${skipped} skipped`);
             return { updated, skipped, total: importedNodes.length };
         }
 
