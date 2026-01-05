@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0 - OPTIMIZED</title>
+    <title>Map Forge v2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -3907,10 +3907,17 @@
                     
                     variant.options.forEach((option, index) => {
                         const optionId = `option-${index}-${Math.random().toString(36).substr(2, 9)}`;
+                        
+                        // Build requirements badge for header
+                        const reqBadge = option.requirements ? `<div style="font-size: 0.75rem; color: #fbbf24; margin-top: 0.25rem;">🔒 ${option.requirements}</div>` : '';
+                        
                         variantHtml.push(`
                             <div class="node-viewer-option" style="cursor: pointer; border: 1px solid rgba(139, 115, 85, 0.3); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem;" onclick="toggleOptionContent('${optionId}')">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div class="node-viewer-option-label" style="margin: 0;">${index + 1}. ${option.label || 'Unnamed Option'}</div>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                    <div>
+                                        <div class="node-viewer-option-label" style="margin: 0;">${index + 1}. ${option.label || 'Unnamed Option'}</div>
+                                        ${reqBadge}
+                                    </div>
                                     <span id="${optionId}-toggle" style="font-size: 0.9rem; opacity: 0.6;">▶</span>
                                 </div>
                                 <div id="${optionId}-content" style="display: none; margin-top: 0.75rem;">
@@ -3918,6 +3925,15 @@
                         
                         if (option.description) {
                             variantHtml.push(`<div class="node-viewer-option-desc" style="word-wrap: break-word; overflow-wrap: break-word;">${option.description}</div>`);
+                        }
+                        
+                        // Display Requirements
+                        if (option.requirements) {
+                            variantHtml.push(`
+                                <div style="margin-top: 0.5rem; padding: 0.5rem 0.75rem; background: rgba(251, 191, 36, 0.1); border-radius: 4px; border-left: 3px solid #fbbf24;">
+                                    <span style="color: #fbbf24; font-size: 0.85rem;">🔒 ${option.requirements}</span>
+                                </div>
+                            `);
                         }
                         
                         const rewards = [];
@@ -7055,9 +7071,15 @@
                 statusEl.innerHTML = `<span style="color: #f6e05e;">⚠ Completed with ${errors.length} error(s):</span><br>${errors.join('<br>')}`;
             }
             
-            // Refresh display
+            // Refresh display and SAVE to database
             renderNodes();
-            saveToLocalStorage();
+            statusEl.innerHTML += '<br><span style="color: #90cdf4;">Saving to database...</span>';
+            await saveData(false, true); // Save immediately to Supabase
+            
+            // Update status with save confirmation
+            if (errors.length === 0) {
+                statusEl.innerHTML = `<span style="color: #48bb78;">✓ Successfully imported and saved ${completed} map${completed !== 1 ? 's' : ''}!</span>`;
+            }
             
             // Close modal after delay
             setTimeout(() => {
