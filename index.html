@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -4431,6 +4431,133 @@
                             }
                             
                             variantHtml.push(`</div>`);
+                        }
+                        
+                        // Display followupEvents (plural array - from imported JS data)
+                        if (option.followupEvents && Array.isArray(option.followupEvents) && option.followupEvents.length > 0) {
+                            option.followupEvents.forEach((followUp, fuEventIdx) => {
+                                variantHtml.push(`
+                                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border: 2px solid #3b82f6; border-radius: 8px;" onclick="event.stopPropagation();">
+                                        <div style="font-size: 0.95rem; color: #3b82f6; font-weight: 700; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            ➡️ ON SUCCESS, LEADS TO: ${followUp.name || followUp.eventId || 'Follow-up Event'}
+                                        </div>
+                                `);
+                                
+                                if (followUp.description) {
+                                    variantHtml.push(`<div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem; margin-bottom: 0.75rem;">${followUp.description}</div>`);
+                                }
+                                
+                                // Render follow-up event options
+                                if (followUp.options && followUp.options.length > 0) {
+                                    variantHtml.push(`<div style="font-size: 0.85rem; color: #60a5fa; margin-bottom: 0.75rem;">OPTIONS (${followUp.options.length})</div>`);
+                                    
+                                    followUp.options.forEach((fuOption, fuIdx) => {
+                                        const fuOptionId = `fu-${fuEventIdx}-option-${fuIdx}-${Math.random().toString(36).substr(2, 9)}`;
+                                        variantHtml.push(`
+                                            <div class="node-viewer-option" style="cursor: pointer; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; background: rgba(42, 35, 26, 0.4);" onclick="event.stopPropagation(); toggleOptionContent('${fuOptionId}')">
+                                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                    <div class="node-viewer-option-label" style="margin: 0; color: #60a5fa;">${fuIdx + 1}. ${fuOption.label || 'Option'}</div>
+                                                    <span id="${fuOptionId}-toggle" style="font-size: 0.9rem; opacity: 0.6;">▶</span>
+                                                </div>
+                                                <div id="${fuOptionId}-content" style="display: none; margin-top: 0.75rem;">
+                                        `);
+                                        
+                                        if (fuOption.description) {
+                                            variantHtml.push(`<div class="node-viewer-option-desc" style="word-wrap: break-word; overflow-wrap: break-word;">${fuOption.description}</div>`);
+                                        }
+                                        
+                                        if (fuOption.requirements) {
+                                            variantHtml.push(`<div style="color: #fbbf24; font-size: 0.85rem; margin: 0.5rem 0;">🔒 ${fuOption.requirements}</div>`);
+                                        }
+                                        
+                                        if (fuOption.rollInfo) {
+                                            variantHtml.push(`
+                                                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border-left: 3px solid var(--primary);">
+                                                    <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">📊 Card Roll</div>
+                                                    <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.9rem;">Roll: ${fuOption.rollInfo}</div>
+                                                </div>
+                                            `);
+                                        }
+                                        
+                                        // Success section
+                                        if (fuOption.onSuccess || fuOption.successGold || fuOption.successExp || fuOption.combatLoot) {
+                                            variantHtml.push(`
+                                                <div style="margin-top: 0.75rem; padding: 1rem; background: rgba(34, 197, 94, 0.05); border: 2px solid #22c55e; border-radius: 8px;">
+                                                    <div style="color: #22c55e; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">✔️ SUCCESS</div>
+                                            `);
+                                            const fuRewards = [];
+                                            if (fuOption.successGold) fuRewards.push('💰 ' + fuOption.successGold);
+                                            if (fuOption.successExp) fuRewards.push('⭐ ' + fuOption.successExp);
+                                            if (fuRewards.length > 0) {
+                                                variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">${fuRewards.join(' ')}</div>`);
+                                            }
+                                            if (fuOption.onSuccess) {
+                                                variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.85);">${fuOption.onSuccess}</div>`);
+                                            }
+                                            if (fuOption.combatLoot) {
+                                                variantHtml.push(`
+                                                    <div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
+                                                        <div style="color: var(--accent); font-weight: 600; font-size: 0.8rem;">💰 Combat Loot</div>
+                                                        <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.8rem;">${fuOption.combatLoot}</div>
+                                                    </div>
+                                                `);
+                                            }
+                                            variantHtml.push(`</div>`);
+                                        }
+                                        
+                                        // Fail section
+                                        if (fuOption.onFail || fuOption.failGold || fuOption.failExp) {
+                                            variantHtml.push(`
+                                                <div style="margin-top: 0.75rem; padding: 1rem; background: rgba(239, 68, 68, 0.05); border: 2px solid #ef4444; border-radius: 8px;">
+                                                    <div style="color: #ef4444; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">✖️ FAIL</div>
+                                            `);
+                                            if (fuOption.onFail) {
+                                                variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.85);">${fuOption.onFail}</div>`);
+                                            }
+                                            variantHtml.push(`</div>`);
+                                        }
+                                        
+                                        // Crit success
+                                        if (fuOption.onCritSuccess || fuOption.critSuccessExp || fuOption.critCombatLoot) {
+                                            variantHtml.push(`
+                                                <div style="margin-top: 0.75rem; padding: 1rem; background: rgba(96, 165, 250, 0.05); border: 2px solid #60a5fa; border-radius: 8px;">
+                                                    <div style="color: #60a5fa; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">✔️✔️ CRITICAL SUCCESS</div>
+                                            `);
+                                            if (fuOption.critSuccessExp) {
+                                                variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">⭐ ${fuOption.critSuccessExp}</div>`);
+                                            }
+                                            if (fuOption.onCritSuccess) {
+                                                variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.85);">${fuOption.onCritSuccess}</div>`);
+                                            }
+                                            if (fuOption.critCombatLoot) {
+                                                variantHtml.push(`
+                                                    <div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
+                                                        <div style="color: var(--accent); font-weight: 600; font-size: 0.8rem;">💰 Combat Loot</div>
+                                                        <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.8rem;">${fuOption.critCombatLoot}</div>
+                                                    </div>
+                                                `);
+                                            }
+                                            variantHtml.push(`</div>`);
+                                        }
+                                        
+                                        // Crit fail
+                                        if (fuOption.onCritFail || fuOption.critFailExp) {
+                                            variantHtml.push(`
+                                                <div style="margin-top: 0.75rem; padding: 1rem; background: rgba(139, 69, 69, 0.1); border: 2px solid #dc2626; border-radius: 8px;">
+                                                    <div style="color: #dc2626; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">✖️✖️ CRITICAL FAIL</div>
+                                            `);
+                                            if (fuOption.onCritFail) {
+                                                variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.85);">${fuOption.onCritFail}</div>`);
+                                            }
+                                            variantHtml.push(`</div>`);
+                                        }
+                                        
+                                        variantHtml.push(`</div></div>`); // Close content and option divs
+                                    });
+                                }
+                                
+                                variantHtml.push(`</div>`); // Close follow-up event container
+                            });
                         }
                         
                         variantHtml.push(`</div></div>`); // Close content div and option div
