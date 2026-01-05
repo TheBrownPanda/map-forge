@@ -6067,6 +6067,24 @@
                 isSaving = true; // Set flag to prevent real-time reload
                 if (!silent) showLoading();
                 
+                // Debug: Log sample of data being saved
+                const sampleMap = maps.find(m => m.name && m.name.includes('Senenthia'));
+                if (sampleMap && sampleMap.nodes) {
+                    const sampleNode = sampleMap.nodes.find(n => n.gameId === 'sen_4' || n.id === 'sen_4');
+                    if (sampleNode && sampleNode.variants && sampleNode.variants[0]) {
+                        const sampleText = JSON.stringify(sampleNode.variants[0]).substring(0, 300);
+                        console.log('SAVING TO SUPABASE - Sample sen_4 data:', sampleText);
+                    }
+                    
+                    // Check encoding before save
+                    const mapJson = JSON.stringify(sampleMap.nodes);
+                    if (mapJson.includes("Let's")) {
+                        console.log('✓ SAVING ENCODING OK: Found clean "Let\'s"');
+                    } else if (mapJson.includes("Letâ€™s")) {
+                        console.log('✗ SAVING ENCODING BAD: Found mojibake "Letâ€™s"');
+                    }
+                }
+                
                 const { error } = await supabaseClient
                     .from('maps')
                     .upsert(maps.map(map => ({
@@ -6128,6 +6146,24 @@
                         nodes: row.nodes || [],
                         displayOrder: row.display_order !== undefined ? row.display_order : 0
                     }));
+                    
+                    // Debug: Log sample of data being loaded
+                    const sampleMap = maps.find(m => m.name && m.name.includes('Senenthia'));
+                    if (sampleMap && sampleMap.nodes) {
+                        const sampleNode = sampleMap.nodes.find(n => n.gameId === 'sen_4' || n.id === 'sen_4');
+                        if (sampleNode && sampleNode.variants && sampleNode.variants[0]) {
+                            const sampleText = JSON.stringify(sampleNode.variants[0]).substring(0, 300);
+                            console.log('LOADED FROM SUPABASE - Sample sen_4 data:', sampleText);
+                        }
+                        
+                        // Check encoding after load
+                        const mapJson = JSON.stringify(sampleMap.nodes);
+                        if (mapJson.includes("Let's")) {
+                            console.log('✓ LOADED ENCODING OK: Found clean "Let\'s"');
+                        } else if (mapJson.includes("Letâ€™s")) {
+                            console.log('✗ LOADED ENCODING BAD: Found mojibake "Letâ€™s"');
+                        }
+                    }
                 } else {
                     maps = [];
                 }
@@ -7119,6 +7155,15 @@
                         const sampleDesc = parsed[0].variants[0].options?.[0]?.description || '';
                         console.log('Sample description:', sampleDesc.substring(0, 100));
                     }
+                    // Check for encoding issues - search for "Let" text
+                    const jsonStr2 = JSON.stringify(parsed);
+                    if (jsonStr2.includes("Let's")) {
+                        console.log('✓ ENCODING OK: Found clean "Let\'s" in parsed data');
+                    } else if (jsonStr2.includes("Letâ€™s")) {
+                        console.log('✗ ENCODING BAD: Found mojibake "Letâ€™s" in parsed data');
+                    } else if (jsonStr2.includes("Let")) {
+                        console.log('? Found "Let" but not "Let\'s" pattern');
+                    }
                     return parsed;
                 }
                 
@@ -7174,6 +7219,22 @@
             });
             
             console.log(`Merge complete: ${updated} updated, ${skipped} skipped`);
+            
+            // Debug: Log sample of merged data to verify encoding
+            const sampleNode = map.nodes.find(n => n.gameId === 'sen_4' || n.id === 'sen_4');
+            if (sampleNode && sampleNode.variants && sampleNode.variants[0]) {
+                const sampleText = JSON.stringify(sampleNode.variants[0]).substring(0, 300);
+                console.log('AFTER MERGE - Sample sen_4 data:', sampleText);
+            }
+            
+            // Check encoding after merge
+            const mapJson = JSON.stringify(map.nodes);
+            if (mapJson.includes("Let's")) {
+                console.log('✓ AFTER MERGE ENCODING OK: Found clean "Let\'s"');
+            } else if (mapJson.includes("Letâ€™s")) {
+                console.log('✗ AFTER MERGE ENCODING BAD: Found mojibake "Letâ€™s"');
+            }
+            
             return { updated, skipped, total: importedNodes.length };
         }
 
