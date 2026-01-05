@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0 - OPTIMIZED</title>
+    <title>Map Forge v2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -4853,14 +4853,50 @@
         }
 
         function createFollowupEventHtml(index, event = null) {
+            // Build nested options display if they exist
+            let nestedOptionsHtml = '';
+            if (event?.options && Array.isArray(event.options) && event.options.length > 0) {
+                const optionsDisplay = event.options.map((opt, optIdx) => {
+                    const rewards = [];
+                    if (opt.successGold) rewards.push('💰' + opt.successGold);
+                    if (opt.successExp) rewards.push('⭐' + opt.successExp);
+                    return `
+                        <div style="padding: 0.5rem; background: rgba(212, 175, 55, 0.05); border-radius: 4px; margin-bottom: 0.5rem; border-left: 2px solid var(--accent);">
+                            <div style="font-weight: 600; color: var(--text); font-size: 0.9rem;">
+                                ${optIdx + 1}. ${opt.label || 'Option'}
+                            </div>
+                            <div style="font-size: 0.8rem; color: rgba(245, 230, 211, 0.7); margin-top: 0.25rem;">
+                                ${opt.description || ''}
+                            </div>
+                            ${opt.requirements ? '<div style="font-size: 0.75rem; color: #f6ad55; margin-top: 0.25rem;">⚠️ ' + opt.requirements + '</div>' : ''}
+                            ${opt.rollInfo ? '<div style="font-size: 0.75rem; color: #90cdf4; margin-top: 0.25rem;">🎲 ' + opt.rollInfo + '</div>' : ''}
+                            ${rewards.length > 0 ? '<div style="font-size: 0.75rem; color: #48bb78; margin-top: 0.25rem;">✓ ' + rewards.join(' ') + '</div>' : ''}
+                        </div>
+                    `;
+                }).join('');
+                
+                nestedOptionsHtml = `
+                    <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 6px; border-left: 3px solid var(--primary);">
+                        <div style="font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.5rem;">
+                            📋 ${event.options.length} Option${event.options.length !== 1 ? 's' : ''} in this follow-up:
+                        </div>
+                        ${optionsDisplay}
+                    </div>
+                `;
+            }
+            
+            // Store options as data attribute for saving
+            const optionsJson = event?.options ? JSON.stringify(event.options).replace(/'/g, "&#39;") : '[]';
+            
             return `
                 ${index > 0 ? '<div class="followup-arrow">↓</div>' : ''}
-                <div class="followup-event-item">
+                <div class="followup-event-item" data-followup-options='${optionsJson}'>
                     <div class="followup-event-header">
-                        <span class="followup-event-label">Follow-up ${index + 1}</span>
+                        <span class="followup-event-label">Follow-up ${index + 1}: ${event?.name || 'New Event'}</span>
                         <button type="button" class="followup-event-remove" onclick="removeFollowupEvent(this)">Remove</button>
                     </div>
-                    <input type="text" class="form-input" placeholder="Event ID/Name (e.g., 'e_sen4_a2')" data-followup="name" value="${event?.name || ''}" style="margin-bottom: 0.5rem;">
+                    <input type="text" class="form-input" placeholder="Event Name" data-followup="name" value="${event?.name || ''}" style="margin-bottom: 0.5rem;">
+                    <input type="text" class="form-input" placeholder="Event ID (e.g., 'e_sen4_a2')" data-followup="eventId" value="${event?.eventId || ''}" style="margin-bottom: 0.5rem;">
                     <textarea class="form-textarea" placeholder="Event description" data-followup="description" style="min-height: 60px; margin-bottom: 0.5rem;">${event?.description || ''}</textarea>
                     <div class="form-label" style="font-size: 0.85rem; margin-bottom: 0.5rem;">Rewards:</div>
                     <div class="rewards-row">
@@ -4868,6 +4904,7 @@
                         <input type="number" class="form-input" placeholder="Shards" data-followup="shards" value="${event?.shards !== undefined && event.shards !== 0 ? event.shards : ''}">
                         <input type="number" class="form-input" placeholder="EXP" data-followup="exp" value="${event?.exp !== undefined && event.exp !== 0 ? event.exp : ''}">
                     </div>
+                    ${nestedOptionsHtml}
                 </div>
             `;
         }
@@ -5128,12 +5165,25 @@
                 // Get follow-up events for this option
                 const followupEvents = [];
                 item.querySelectorAll('.followup-event-item').forEach(eventItem => {
+                    // Get nested options from data attribute (preserved from import)
+                    let nestedOptions = [];
+                    const optionsAttr = eventItem.getAttribute('data-followup-options');
+                    if (optionsAttr) {
+                        try {
+                            nestedOptions = JSON.parse(optionsAttr.replace(/&#39;/g, "'"));
+                        } catch (e) {
+                            console.warn('Could not parse followup options:', e);
+                        }
+                    }
+                    
                     const event = {
-                        name: eventItem.querySelector('[data-followup="name"]').value,
-                        description: eventItem.querySelector('[data-followup="description"]').value,
-                        gold: parseInt(eventItem.querySelector('[data-followup="gold"]').value) || 0,
-                        shards: parseInt(eventItem.querySelector('[data-followup="shards"]').value) || 0,
-                        exp: parseInt(eventItem.querySelector('[data-followup="exp"]').value) || 0
+                        name: eventItem.querySelector('[data-followup="name"]')?.value || '',
+                        eventId: eventItem.querySelector('[data-followup="eventId"]')?.value || '',
+                        description: eventItem.querySelector('[data-followup="description"]')?.value || '',
+                        gold: parseInt(eventItem.querySelector('[data-followup="gold"]')?.value) || 0,
+                        shards: parseInt(eventItem.querySelector('[data-followup="shards"]')?.value) || 0,
+                        exp: parseInt(eventItem.querySelector('[data-followup="exp"]')?.value) || 0,
+                        options: nestedOptions
                     };
                     if (event.name) followupEvents.push(event);
                 });
