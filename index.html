@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -3938,7 +3938,7 @@
                             (option.critFailAddCards && option.critFailAddCards.length > 0) ||
                             option.successPerk || option.critPerk || option.failPerk || option.critFailPerk ||
                             option.corruptionUI ||
-                            option.successShop || option.critShop || option.failShop || option.critFailShop ||
+                            (option.successShopItems && option.successShopItems.length > 0) || (option.critShopItems && option.critShopItems.length > 0) || (option.failShopItems && option.failShopItems.length > 0) || (option.critFailShopItems && option.critFailShopItems.length > 0) ||
                             option.successHealerUI || option.critHealerUI || option.failHealerUI || option.critFailHealerUI;
                         
                         // Display Combat Effects/Loot as STANDALONE sections if NO success/fail outcomes
@@ -4039,7 +4039,7 @@
                                 <div style="margin-top: 0.75rem;">
                             `);
                             
-                            if (option.onSuccess || option.successGold || option.successShards || option.successExp || option.combatLoot || option.shopLoot || (option.addCards && option.addCards.length > 0) || option.successPerk || option.corruptionUI || option.successShop || option.successHealerUI) {
+                            if (option.onSuccess || option.successGold || option.successShards || option.successExp || option.combatLoot || option.shopLoot || (option.addCards && option.addCards.length > 0) || option.successPerk || option.corruptionUI || (option.successShopItems && option.successShopItems.length > 0) || option.successHealerUI) {
                                 const successInfo = extractCombatInfo(option.onSuccess, !!(option.combatEffects || option.combatLoot));
                                 // Overarching Success container
                                 variantHtml.push(`
@@ -4136,12 +4136,12 @@
                                         </div>
                                     `);
                                 }
-                                // Display Shop if present
-                                if (option.successShop) {
+                                // Display Shop Items if present
+                                if (option.successShopItems && option.successShopItems.length > 0) {
                                     variantHtml.push(`
                                         <div style="padding: 0.5rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid #fbbf24; border-radius: 4px; margin-top: 0.5rem;">
-                                            <div style="color: #fbbf24; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🛒 Opens Shop</div>
-                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.successShop}</div>
+                                            <div style="color: #fbbf24; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🛒 Shop Items</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.successShopItems.join(', ')}</div>
                                         </div>
                                     `);
                                 }
@@ -4157,7 +4157,7 @@
                                 variantHtml.push(`</div>`);
                             }
                             
-                            if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp || option.critCombatLoot || option.critShopLoot || (option.critAddCards && option.critAddCards.length > 0) || option.critPerk || option.critShop || option.critHealerUI) {
+                            if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp || option.critCombatLoot || option.critShopLoot || (option.critAddCards && option.critAddCards.length > 0) || option.critPerk || (option.critShopItems && option.critShopItems.length > 0) || option.critHealerUI) {
                                 const critSuccessInfo = extractCombatInfo(option.onCritSuccess, !!(option.critCombatEffects || option.critCombatLoot));
                                 // Overarching Critical Success container
                                 variantHtml.push(`
@@ -4242,11 +4242,11 @@
                                     `);
                                 }
                                 // Display Critical Shop if present
-                                if (option.critShop) {
+                                if (option.critShopItems && option.critShopItems.length > 0) {
                                     variantHtml.push(`
                                         <div style="padding: 0.5rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid #fbbf24; border-radius: 4px; margin-top: 0.5rem;">
-                                            <div style="color: #fbbf24; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🛒 Opens Shop</div>
-                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critShop}</div>
+                                            <div style="color: #fbbf24; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🛒 Shop Items</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critShopItems.join(', ')}</div>
                                         </div>
                                     `);
                                 }
@@ -4262,7 +4262,7 @@
                                 variantHtml.push(`</div>`);
                             }
                             
-                            if (option.onFail || option.failGold || option.failShards || option.failExp || option.failCombatLoot || option.failShopLoot || option.failCombatEffects || (option.failAddCards && option.failAddCards.length > 0) || option.failPerk || option.failShop || option.failHealerUI) {
+                            if (option.onFail || option.failGold || option.failShards || option.failExp || option.failCombatLoot || option.failShopLoot || option.failCombatEffects || (option.failAddCards && option.failAddCards.length > 0) || option.failPerk || (option.failShopItems && option.failShopItems.length > 0) || option.failHealerUI) {
                                 const failInfo = extractCombatInfo(option.onFail, !!(option.failCombatEffects || option.failCombatLoot));
                                 // Overarching Fail container
                                 variantHtml.push(`
@@ -4347,11 +4347,11 @@
                                     `);
                                 }
                                 // Display Fail Shop if present
-                                if (option.failShop) {
+                                if (option.failShopItems && option.failShopItems.length > 0) {
                                     variantHtml.push(`
                                         <div style="padding: 0.5rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid #fbbf24; border-radius: 4px; margin-top: 0.5rem;">
-                                            <div style="color: #fbbf24; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🛒 Opens Shop</div>
-                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.failShop}</div>
+                                            <div style="color: #fbbf24; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🛒 Shop Items</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.failShopItems.join(', ')}</div>
                                         </div>
                                     `);
                                 }
@@ -4367,7 +4367,7 @@
                                 variantHtml.push(`</div>`);
                             }
                             
-                            if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp || option.critFailCombatLoot || (option.critFailAddCards && option.critFailAddCards.length > 0) || option.critFailPerk || option.critFailShop || option.critFailHealerUI) {
+                            if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp || option.critFailCombatLoot || (option.critFailAddCards && option.critFailAddCards.length > 0) || option.critFailPerk || (option.critFailShopItems && option.critFailShopItems.length > 0) || option.critFailHealerUI) {
                                 const critFailInfo = extractCombatInfo(option.onCritFail, !!(option.critFailCombatLoot));
                                 // Overarching Critical Fail container
                                 variantHtml.push(`
@@ -4425,11 +4425,11 @@
                                     `);
                                 }
                                 // Display Critical Fail Shop if present
-                                if (option.critFailShop) {
+                                if (option.critFailShopItems && option.critFailShopItems.length > 0) {
                                     variantHtml.push(`
                                         <div style="padding: 0.5rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid #fbbf24; border-radius: 4px; margin-top: 0.5rem;">
-                                            <div style="color: #fbbf24; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🛒 Opens Shop</div>
-                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critFailShop}</div>
+                                            <div style="color: #fbbf24; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🛒 Shop Items</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critFailShopItems.join(', ')}</div>
                                         </div>
                                     `);
                                 }
