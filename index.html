@@ -7345,10 +7345,13 @@
                     targetNode.name = importData.name;
                 }
                 
-                // If matched by name, also fill in the gameId from import data
-                if (matchedBy === 'name' && importData.id) {
-                    console.log('  Updating gameId from:', targetNode.gameId, 'to:', importData.id);
+                // If matched by name, only fill in the gameId if not already set
+                // This preserves manually entered IDs
+                if (matchedBy === 'name' && importData.id && !targetNode.gameId) {
+                    console.log('  Setting gameId (was empty):', importData.id);
                     targetNode.gameId = importData.id;
+                } else if (matchedBy === 'name' && importData.id && targetNode.gameId) {
+                    console.log('  Keeping existing gameId:', targetNode.gameId, '(import had:', importData.id, ')');
                 }
 
                 // Update node with imported data
@@ -7644,8 +7647,9 @@
                             targetNode.name = importData.name;
                         }
                         
-                        // Update gameId if matched by name
-                        if (match.matchedBy === 'name' && importData.id) {
+                        // Only set gameId if matched by name AND no existing gameId
+                        // This preserves manually entered IDs
+                        if (match.matchedBy === 'name' && importData.id && !targetNode.gameId) {
                             targetNode.gameId = importData.id;
                         }
                         
