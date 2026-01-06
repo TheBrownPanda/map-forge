@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -1792,7 +1792,7 @@
             <div class="header-actions">
                 <button class="btn btn-secondary admin-only" id="importNodesBtn" style="display: none;">📥 Import Data</button>
                 <!-- Mass Import removed - use single file import instead -->
-                <button class="btn btn-secondary" id="manageImagesBtn">🖼️ Image Library</button>
+                <button class="btn btn-secondary" id="manageImagesBtn">ðŸ–¼ï¸ Image Library</button>
                 <button class="btn btn-secondary" id="addMapBtn">+ New Map</button>
                 <button class="btn btn-primary" id="addNodeBtn">+ Add Node</button>
             </div>
@@ -1834,7 +1834,7 @@
                         <span>Add</span>
                     </button>
                     <button class="mobile-tool-btn" id="mobBtnMove">
-                        <span class="icon">⊕</span>
+                        <span class="icon">âŠ•</span>
                         <span>Move</span>
                     </button>
                     <button class="mobile-tool-btn" id="mobBtnZoomIn">
@@ -1995,7 +1995,7 @@
                             📚 From Library
                         </button>
                         <button type="button" class="btn btn-secondary btn-small image-source-tab" data-source="upload" style="flex: 1;">
-                            🔤 Upload File
+                            📤 Upload File
                         </button>
                         <button type="button" class="btn btn-secondary btn-small image-source-tab" data-source="url" style="flex: 1;">
                             🔗 URL
@@ -2049,13 +2049,13 @@
     <div class="modal" id="imageLibraryModal">
         <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
-                <h2 class="modal-title">🖼️ Image Library</h2>
+                <h2 class="modal-title">ðŸ–¼ï¸ Image Library</h2>
                 <button class="close-btn" id="closeImageLibraryBtn">×</button>
             </div>
             
             <!-- Upload Section -->
             <div style="background: rgba(42, 35, 26, 0.5); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.1rem;">🔤 Upload New Images</h3>
+                <h3 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.1rem;">📤 Upload New Images</h3>
                 <div style="display: flex; gap: 1rem; align-items: flex-start;">
                     <input type="file" class="form-input" id="libraryUploadInput" accept="image/*" multiple style="flex: 1; padding: 0.5rem;">
                     <button class="btn btn-primary" id="uploadToLibraryBtn">Upload</button>
@@ -2092,14 +2092,14 @@
                 <!-- Target Map Indicator -->
                 <div id="importTargetMapInfo" style="display: none; background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(201, 169, 97, 0.2)); border: 2px solid var(--primary); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="font-size: 1.5rem;">📍</div>
+                        <div style="font-size: 1.5rem;">ðŸ“Â</div>
                         <div style="flex: 1;">
                             <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.25rem;">Importing to Map:</div>
                             <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary);" id="importTargetMap"></div>
                         </div>
                     </div>
                     <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.6); margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(212, 175, 55, 0.3);">
-                        ⚙  Only nodes on this map will be updated. Nodes with the same name on other maps will not be affected.
+                        ⚙  Only nodes on this map will be updated. Nodes with the same name on other maps will not be affected.
                     </div>
                 </div>
 
@@ -2198,8 +2198,8 @@
         //    - Optimized CSS transforms
         //
         // Expected Performance Improvements:
-        // - Edit modal: 95% faster (20s ↑ <1s)
-        // - Node movement: 80% faster (5s ↑ <1s)
+        // - Edit modal: 95% faster (20s â†‘ <1s)
+        // - Node movement: 80% faster (5s â†‘ <1s)
         // - Map rendering: 75-90% faster with viewport culling
         // - Overall smoother, more responsive experience
         //
@@ -2209,7 +2209,7 @@
         // ==========================================
         // SUPABASE CONFIGURATION
         // IMPORTANT: Replace these with your actual Supabase values!
-        // Get these from: Supabase Dashboard ↑ Settings ↑ API
+        // Get these from: Supabase Dashboard â†‘ Settings â†‘ API
         // ==========================================
         const SUPABASE_URL = 'https://sczwwgszicbwomriucuz.supabase.co'; // e.g., 'https://xxxxx.supabase.co'
         const SUPABASE_ANON_KEY = 'sb_publishable_7Zh2AuEoohMwZKFLdTZjHQ_9fmeso6p'; // Publishable key
@@ -2607,7 +2607,7 @@
                 }, 2000);
                 
             } catch (error) {
-                status.innerHTML = '❌ Error: ' + error.message;
+                status.innerHTML = 'âŒ Error: ' + error.message;
                 console.error('Upload error:', error);
             }
         }
@@ -3142,7 +3142,7 @@
             
             const actionsHtml = isAdmin ? `
                 <div class="map-item-actions">
-                    <button class="map-action-btn" onclick="event.stopPropagation(); editMap('${map.id}')" title="Edit Map">✏</button>
+                    <button class="map-action-btn" onclick="event.stopPropagation(); editMap('${map.id}')" title="Edit Map">âœ</button>
                     <button class="map-action-btn" onclick="event.stopPropagation(); deleteMapFromSidebar('${map.id}')" title="Delete Map">🗑</button>
                 </div>
             ` : '';
@@ -3476,7 +3476,7 @@
                 combat: '⚔️',
                 event: '📜',
                 card: '🎴',
-                crafter: '🔨',
+                crafter: 'ðŸ”¨',
                 rest: '🛏',
                 character: '👤',
                 transition: '🚪',
@@ -3486,8 +3486,8 @@
                 boss: '👹',
                 information: 'ℹ️'
             };
-            const icon = icons[type] || '⭐';
-            console.log('Getting icon for type:', type, '↑', icon);
+            const icon = icons[type] || '⭐';
+            console.log('Getting icon for type:', type, 'â†‘', icon);
             return icon;
         }
 
@@ -3613,7 +3613,7 @@
                 console.error('Error opening node modal:', error);
                 loadingOverlay.innerHTML = `
                     <div style="color: var(--danger); text-align: center;">
-                        <div style="font-size: 2rem; margin-bottom: 1rem;">⚙ </div>
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">⚙ </div>
                         <div style="font-weight: 600; margin-bottom: 0.5rem;">Error Loading Node</div>
                         <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem;">${error.message}</div>
                         <button class="btn btn-primary" onclick="closeNodeModal()">Close</button>
@@ -3745,8 +3745,8 @@
                 const sampleText = JSON.stringify(node.variants[0]).substring(0, 500);
                 console.log('Sample variant data:', sampleText);
                 if (sampleText.includes("Let's")) {
-                    console.log('✓ VIEW NODE ENCODING OK');
-                } else if (sampleText.includes("Letâ€™s")) {
+                    console.log('âœ“ VIEW NODE ENCODING OK');
+                } else if (sampleText.includes("LetÃ¢â‚¬â„¢s")) {
                     console.log('✗ VIEW NODE ENCODING BAD - mojibake detected!');
                 }
             }
@@ -3899,7 +3899,7 @@
                         const rewards = [];
                         if (option.gold && option.gold !== 0) rewards.push(`<span class="node-viewer-reward">💰 ${option.gold}</span>`);
                         if (option.shards && option.shards !== 0) rewards.push(`<span class="node-viewer-reward">💎 ${option.shards}</span>`);
-                        if (option.exp && option.exp !== 0) rewards.push(`<span class="node-viewer-reward">⭐ ${option.exp}</span>`);
+                        if (option.exp && option.exp !== 0) rewards.push(`<span class="node-viewer-reward">⭐ ${option.exp}</span>`);
                         
                         if (rewards.length > 0) {
                             variantHtml.push(`<div class="node-viewer-rewards">${rewards.join('')}</div>`);
@@ -3931,7 +3931,11 @@
                             option.combatLoot || option.shopLoot ||
                             option.failCombatLoot || option.failShopLoot ||
                             option.critCombatLoot || option.critShopLoot ||
-                            option.critFailCombatLoot;
+                            option.critFailCombatLoot ||
+                            (option.addCards && option.addCards.length > 0) ||
+                            (option.critAddCards && option.critAddCards.length > 0) ||
+                            (option.failAddCards && option.failAddCards.length > 0) ||
+                            (option.critFailAddCards && option.critFailAddCards.length > 0);
                         
                         // Display Combat Effects/Loot as STANDALONE sections if NO success/fail outcomes
                         // (For combat events that don't have success/fail, just lead to combat)
@@ -4000,7 +4004,7 @@
                                 <div style="margin-top: 0.75rem;">
                             `);
                             
-                            if (option.onSuccess || option.successGold || option.successShards || option.successExp || option.combatLoot || option.shopLoot) {
+                            if (option.onSuccess || option.successGold || option.successShards || option.successExp || option.combatLoot || option.shopLoot || (option.addCards && option.addCards.length > 0)) {
                                 const successInfo = extractCombatInfo(option.onSuccess, !!(option.combatEffects || option.combatLoot));
                                 // Overarching Success container
                                 variantHtml.push(`
@@ -4026,7 +4030,7 @@
                                 const successRewards = [];
                                 if (option.successGold && option.successGold !== 0) successRewards.push(`💰 ${option.successGold}`);
                                 if (option.successShards && option.successShards !== 0) successRewards.push(`💎 ${option.successShards}`);
-                                if (option.successExp && option.successExp !== 0) successRewards.push(`⭐ ${option.successExp}`);
+                                if (option.successExp && option.successExp !== 0) successRewards.push(`⭐ ${option.successExp}`);
                                 
                                 // Only show green box if there's text or rewards
                                 if (successInfo.cleanText || successRewards.length > 0) {
@@ -4071,11 +4075,20 @@
                                         </div>
                                     `);
                                 }
+                                // Display Add Cards if present
+                                if (option.addCards && option.addCards.length > 0) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(34, 211, 238, 0.1); border-left: 3px solid #22d3ee; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #22d3ee; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🃏 Add Cards</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.addCards.join(', ')}</div>
+                                        </div>
+                                    `);
+                                }
                                 // Close overarching Success container
                                 variantHtml.push(`</div>`);
                             }
                             
-                            if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp || option.critCombatLoot || option.critShopLoot) {
+                            if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp || option.critCombatLoot || option.critShopLoot || (option.critAddCards && option.critAddCards.length > 0)) {
                                 const critSuccessInfo = extractCombatInfo(option.onCritSuccess, !!(option.critCombatEffects || option.critCombatLoot));
                                 // Overarching Critical Success container
                                 variantHtml.push(`
@@ -4085,7 +4098,7 @@
                                 const critSuccessRewards = [];
                                 if (option.critSuccessGold && option.critSuccessGold !== 0) critSuccessRewards.push(`💰 ${option.critSuccessGold}`);
                                 if ((option.critSuccessShards || option.critSuccessDust) && (option.critSuccessShards || option.critSuccessDust) !== 0) critSuccessRewards.push(`💎 ${option.critSuccessShards || option.critSuccessDust}`);
-                                if (option.critSuccessExp && option.critSuccessExp !== 0) critSuccessRewards.push(`⭐ ${option.critSuccessExp}`);
+                                if (option.critSuccessExp && option.critSuccessExp !== 0) critSuccessRewards.push(`⭐ ${option.critSuccessExp}`);
                                 
                                 // Only show blue box if there's text or rewards
                                 if (critSuccessInfo.cleanText || critSuccessRewards.length > 0) {
@@ -4141,11 +4154,20 @@
                                         </div>
                                     `);
                                 }
+                                // Display Critical Success Add Cards if present
+                                if (option.critAddCards && option.critAddCards.length > 0) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(34, 211, 238, 0.1); border-left: 3px solid #22d3ee; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #22d3ee; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🃏 Add Cards</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critAddCards.join(', ')}</div>
+                                        </div>
+                                    `);
+                                }
                                 // Close overarching Critical Success container
                                 variantHtml.push(`</div>`);
                             }
                             
-                            if (option.onFail || option.failGold || option.failShards || option.failExp || option.failCombatLoot || option.failShopLoot || option.failCombatEffects) {
+                            if (option.onFail || option.failGold || option.failShards || option.failExp || option.failCombatLoot || option.failShopLoot || option.failCombatEffects || (option.failAddCards && option.failAddCards.length > 0)) {
                                 const failInfo = extractCombatInfo(option.onFail, !!(option.failCombatEffects || option.failCombatLoot));
                                 // Overarching Fail container
                                 variantHtml.push(`
@@ -4169,7 +4191,7 @@
                                 const failRewards = [];
                                 if (option.failGold && option.failGold !== 0) failRewards.push(`💰 ${option.failGold}`);
                                 if (option.failShards && option.failShards !== 0) failRewards.push(`💎 ${option.failShards}`);
-                                if (option.failExp && option.failExp !== 0) failRewards.push(`⭐ ${option.failExp}`);
+                                if (option.failExp && option.failExp !== 0) failRewards.push(`⭐ ${option.failExp}`);
                                 
                                 // Only show orange box if there's text or rewards
                                 if (failInfo.cleanText || failRewards.length > 0) {
@@ -4211,11 +4233,20 @@
                                         </div>
                                     `);
                                 }
+                                // Display Fail Add Cards if present
+                                if (option.failAddCards && option.failAddCards.length > 0) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(34, 211, 238, 0.1); border-left: 3px solid #22d3ee; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #22d3ee; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🃏 Add Cards</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.failAddCards.join(', ')}</div>
+                                        </div>
+                                    `);
+                                }
                                 // Close overarching Fail container
                                 variantHtml.push(`</div>`);
                             }
                             
-                            if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp || option.critFailCombatLoot) {
+                            if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp || option.critFailCombatLoot || (option.critFailAddCards && option.critFailAddCards.length > 0)) {
                                 const critFailInfo = extractCombatInfo(option.onCritFail, !!(option.critFailCombatLoot));
                                 // Overarching Critical Fail container
                                 variantHtml.push(`
@@ -4231,7 +4262,7 @@
                                 const critFailRewards = [];
                                 if (option.critFailGold && option.critFailGold !== 0) critFailRewards.push(`💰 ${option.critFailGold}`);
                                 if (option.critFailShards && option.critFailShards !== 0) critFailRewards.push(`💎 ${option.critFailShards}`);
-                                if (option.critFailExp && option.critFailExp !== 0) critFailRewards.push(`⭐ ${option.critFailExp}`);
+                                if (option.critFailExp && option.critFailExp !== 0) critFailRewards.push(`⭐ ${option.critFailExp}`);
                                 if (critFailRewards.length > 0) {
                                     variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7);">${critFailRewards.join(' ')}</div>`);
                                 }
@@ -4251,6 +4282,15 @@
                                         <div style="padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-left: 3px solid var(--accent); border-radius: 4px;">
                                             <div style="color: var(--accent); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">💰 Combat Loot</div>
                                             <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critFailCombatLoot}</div>
+                                        </div>
+                                    `);
+                                }
+                                // Display Critical Fail Add Cards if present
+                                if (option.critFailAddCards && option.critFailAddCards.length > 0) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(34, 211, 238, 0.1); border-left: 3px solid #22d3ee; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #22d3ee; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🃏 Add Cards</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critFailAddCards.join(', ')}</div>
                                         </div>
                                     `);
                                 }
@@ -4281,7 +4321,7 @@
                             variantHtml.push(`
                                 <div style="margin-top: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border: 2px solid #3b82f6; border-radius: 8px;" onclick="event.stopPropagation();">
                                     <div style="font-size: 0.95rem; color: #3b82f6; font-weight: 700; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                                        ➡ ON SUCCESS, LEADS TO: ${followUp.name || followUp.eventId}
+                                        âž¡ ON SUCCESS, LEADS TO: ${followUp.name || followUp.eventId}
                                     </div>
                                     <div style="font-size: 0.85rem; color: #60a5fa; margin-bottom: 0.75rem;">OPTIONS</div>
                             `);
@@ -4325,7 +4365,7 @@
                                         const fuSuccessRewards = [];
                                         if (fuOption.successGold && fuOption.successGold !== 0) fuSuccessRewards.push(`💰 ${fuOption.successGold}`);
                                         if (fuOption.successShards && fuOption.successShards !== 0) fuSuccessRewards.push(`💎 ${fuOption.successShards}`);
-                                        if (fuOption.successExp && fuOption.successExp !== 0) fuSuccessRewards.push(`⭐ ${fuOption.successExp}`);
+                                        if (fuOption.successExp && fuOption.successExp !== 0) fuSuccessRewards.push(`⭐ ${fuOption.successExp}`);
                                         if (fuSuccessRewards.length > 0) {
                                             variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">${fuSuccessRewards.join(' ')}</div>`);
                                         }
@@ -4351,7 +4391,7 @@
                                         `);
                                         const fuCritRewards = [];
                                         if (fuOption.critSuccessGold && fuOption.critSuccessGold !== 0) fuCritRewards.push(`💰 ${fuOption.critSuccessGold}`);
-                                        if (fuOption.critSuccessExp && fuOption.critSuccessExp !== 0) fuCritRewards.push(`⭐ ${fuOption.critSuccessExp}`);
+                                        if (fuOption.critSuccessExp && fuOption.critSuccessExp !== 0) fuCritRewards.push(`⭐ ${fuOption.critSuccessExp}`);
                                         if (fuCritRewards.length > 0) {
                                             variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">${fuCritRewards.join(' ')}</div>`);
                                         }
@@ -4377,7 +4417,7 @@
                                         `);
                                         const fuFailRewards = [];
                                         if (fuOption.failGold && fuOption.failGold !== 0) fuFailRewards.push(`💰 ${fuOption.failGold}`);
-                                        if (fuOption.failExp && fuOption.failExp !== 0) fuFailRewards.push(`⭐ ${fuOption.failExp}`);
+                                        if (fuOption.failExp && fuOption.failExp !== 0) fuFailRewards.push(`⭐ ${fuOption.failExp}`);
                                         if (fuFailRewards.length > 0) {
                                             variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">${fuFailRewards.join(' ')}</div>`);
                                         }
@@ -4394,7 +4434,7 @@
                                                 <div style="color: #ef4444; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">✘✘ CRITICAL FAIL</div>
                                         `);
                                         if (fuOption.critFailExp && fuOption.critFailExp !== 0) {
-                                            variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">⭐ ${fuOption.critFailExp}</div>`);
+                                            variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">⭐ ${fuOption.critFailExp}</div>`);
                                         }
                                         if (fuOption.onCritFail) {
                                             variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.85);">${fuOption.onCritFail}</div>`);
@@ -4463,7 +4503,7 @@
                                             `);
                                             const fuRewards = [];
                                             if (fuOption.successGold) fuRewards.push('💰 ' + fuOption.successGold);
-                                            if (fuOption.successExp) fuRewards.push('⭐ ' + fuOption.successExp);
+                                            if (fuOption.successExp) fuRewards.push('⭐ ' + fuOption.successExp);
                                             if (fuRewards.length > 0) {
                                                 variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">${fuRewards.join(' ')}</div>`);
                                             }
@@ -4500,7 +4540,7 @@
                                                     <div style="color: #60a5fa; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">✔️✔️ CRITICAL SUCCESS</div>
                                             `);
                                             if (fuOption.critSuccessExp) {
-                                                variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">⭐ ${fuOption.critSuccessExp}</div>`);
+                                                variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.5rem;">⭐ ${fuOption.critSuccessExp}</div>`);
                                             }
                                             if (fuOption.onCritSuccess) {
                                                 variantHtml.push(`<div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.85);">${fuOption.onCritSuccess}</div>`);
@@ -4550,7 +4590,7 @@
             if (isAdmin) {
                 html += `
                     <div class="node-viewer-actions">
-                        <button class="btn btn-primary btn-small" onclick="editNodeFromViewer()">✏ Edit</button>
+                        <button class="btn btn-primary btn-small" onclick="editNodeFromViewer()">âœ Edit</button>
                         <button class="btn btn-secondary btn-small" onclick="moveNodeFromViewer()">↓ Move</button>
                         <button class="btn btn-danger btn-small" onclick="deleteNodeFromViewer()">🗑 Delete</button>
                     </div>
@@ -4868,7 +4908,7 @@
                         </button>
                         <div class="outcomes-section" style="display: ${hasOutcomeData ? 'block' : 'none'}; margin-top: 0.75rem; padding: 1rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px;">
                             <div style="margin-bottom: 1rem; background: rgba(72, 187, 120, 0.08); padding: 0.75rem; border-radius: 6px; border-left: 3px solid #48bb78;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #48bb78;">✓ On Success</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #48bb78;">âœ“ On Success</label>
                                 <textarea class="form-textarea" placeholder="What happens on success..." data-option="onSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onSuccess || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="successGold" value="${option?.successGold !== undefined && option.successGold !== 0 ? option.successGold : ""}">
@@ -4880,7 +4920,7 @@
                             </div>
                             
                             <div style="margin-bottom: 1rem; background: rgba(246, 224, 94, 0.08); padding: 0.75rem; border-radius: 6px; border-left: 3px solid #f6e05e;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #f6e05e;">★ On Critical Success</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #f6e05e;">â˜… On Critical Success</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical success..." data-option="onCritSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritSuccess || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="critSuccessGold" value="${option?.critSuccessGold !== undefined && option.critSuccessGold !== 0 ? option.critSuccessGold : ""}">
@@ -4904,7 +4944,7 @@
                             </div>
                             
                             <div>
-                                <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">✔️  On Critical Fail</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #ef4444;">✔️Â  On Critical Fail</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical fail..." data-option="onCritFail" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritFail || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="critFailGold" value="${option?.critFailGold !== undefined && option.critFailGold !== 0 ? option.critFailGold : ""}">
@@ -4927,7 +4967,7 @@
                         <label class="form-label" style="font-size: 0.9rem;">
                             Follow-up Events (sequential sub-events after this option)
                             <small style="display: block; font-weight: normal; color: rgba(245, 230, 211, 0.6); margin-top: 0.25rem;">
-                                Add events that happen in sequence (e.g., e_sen4_a1 ↑ e_sen4_a2)
+                                Add events that happen in sequence (e.g., e_sen4_a1 â†‘ e_sen4_a2)
                             </small>
                         </label>
                         <div class="followup-events-container" data-followup-container>
@@ -4962,7 +5002,7 @@
                 const optionsDisplay = event.options.map((opt, optIdx) => {
                     const rewards = [];
                     if (opt.successGold) rewards.push('💰' + opt.successGold);
-                    if (opt.successExp) rewards.push('⭐' + opt.successExp);
+                    if (opt.successExp) rewards.push('⭐' + opt.successExp);
                     return `
                         <div style="padding: 0.5rem; background: rgba(212, 175, 55, 0.05); border-radius: 4px; margin-bottom: 0.5rem; border-left: 2px solid var(--accent);">
                             <div style="font-weight: 600; color: var(--text); font-size: 0.9rem;">
@@ -4973,7 +5013,7 @@
                             </div>
                             ${opt.requirements ? '<div style="font-size: 0.75rem; color: #f6ad55; margin-top: 0.25rem;">⚠️ ' + opt.requirements + '</div>' : ''}
                             ${opt.rollInfo ? '<div style="font-size: 0.75rem; color: #90cdf4; margin-top: 0.25rem;">🎲 ' + opt.rollInfo + '</div>' : ''}
-                            ${rewards.length > 0 ? '<div style="font-size: 0.75rem; color: #48bb78; margin-top: 0.25rem;">✓ ' + rewards.join(' ') + '</div>' : ''}
+                            ${rewards.length > 0 ? '<div style="font-size: 0.75rem; color: #48bb78; margin-top: 0.25rem;">âœ“ ' + rewards.join(' ') + '</div>' : ''}
                         </div>
                     `;
                 }).join('');
@@ -5974,7 +6014,7 @@
                             const savings = ((1 - compressedSize / originalSize) * 100).toFixed(1);
                             
                             console.log(`✔️ Compression complete!`);
-                            console.log(`  Size: ${(originalSize / 1024 / 1024).toFixed(2)}MB ↑ ${(compressedSize / 1024 / 1024).toFixed(2)}MB`);
+                            console.log(`  Size: ${(originalSize / 1024 / 1024).toFixed(2)}MB â†‘ ${(compressedSize / 1024 / 1024).toFixed(2)}MB`);
                             console.log(`  Savings: ${savings}% smaller`);
                             console.log(`  Format: ${mimeType}`);
                             
@@ -6039,9 +6079,9 @@
                     // Check encoding before save
                     const mapJson = JSON.stringify(sampleMap.nodes);
                     if (mapJson.includes("Let's")) {
-                        console.log('✓ SAVING ENCODING OK: Found clean "Let\'s"');
-                    } else if (mapJson.includes("Letâ€™s")) {
-                        console.log('✗ SAVING ENCODING BAD: Found mojibake "Letâ€™s"');
+                        console.log('âœ“ SAVING ENCODING OK: Found clean "Let\'s"');
+                    } else if (mapJson.includes("LetÃ¢â‚¬â„¢s")) {
+                        console.log('✗ SAVING ENCODING BAD: Found mojibake "LetÃ¢â‚¬â„¢s"');
                     }
                 }
                 
@@ -6119,9 +6159,9 @@
                         // Check encoding after load
                         const mapJson = JSON.stringify(sampleMap.nodes);
                         if (mapJson.includes("Let's")) {
-                            console.log('✓ LOADED ENCODING OK: Found clean "Let\'s"');
-                        } else if (mapJson.includes("Letâ€™s")) {
-                            console.log('✗ LOADED ENCODING BAD: Found mojibake "Letâ€™s"');
+                            console.log('âœ“ LOADED ENCODING OK: Found clean "Let\'s"');
+                        } else if (mapJson.includes("LetÃ¢â‚¬â„¢s")) {
+                            console.log('✗ LOADED ENCODING BAD: Found mojibake "LetÃ¢â‚¬â„¢s"');
                         }
                     }
                 } else {
@@ -6132,7 +6172,7 @@
                 
                 // Check for network errors
                 if (error.message && error.message.includes('Failed to fetch')) {
-                    console.warn('⚙  Network error - Cannot connect to Supabase. Using empty data.');
+                    console.warn('⚙  Network error - Cannot connect to Supabase. Using empty data.');
                     console.warn('Check: 1) Internet connection, 2) Supabase URL/key, 3) Supabase service status');
                     maps = [];
                     return; // Continue with empty maps instead of throwing
@@ -6787,7 +6827,7 @@
                 }
                 
                 // Follow-up event indicator
-                if (line.includes('↑ On Success, leads to:')) {
+                if (line.includes('â†‘ On Success, leads to:')) {
                     i++;
                     // Parse follow-up event
                     const followup = parseFollowupEvent(lines, i);
@@ -6937,7 +6977,7 @@
                 unmatchedList.style.display = 'block';
                 unmatchedList.innerHTML = `
                     <div style="font-weight: 600; color: var(--danger); margin-bottom: 0.5rem;">
-                        ⚙  ${results.unmatched.length} node${results.unmatched.length !== 1 ? 's' : ''} not found on "${mapName}":
+                        ⚙  ${results.unmatched.length} node${results.unmatched.length !== 1 ? 's' : ''} not found on "${mapName}":
                     </div>
                     <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.8);">
                         ${results.unmatched.map(n => n.name).join(', ')}
@@ -7112,7 +7152,7 @@
                 
                 // Check if Supabase SDK loaded
                 if (typeof supabase === 'undefined') {
-                    console.error('⚙  Supabase SDK failed to load from CDN');
+                    console.error('⚙  Supabase SDK failed to load from CDN');
                     alert('Network Error: Could not load required libraries.\n\nPlease check your internet connection and refresh the page.');
                     return;
                 }
@@ -7135,10 +7175,10 @@
                 
                 // Check if it's a Supabase configuration error
                 if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY_HERE') {
-                    alert('⚙  Supabase not configured!\n\nPlease update the SUPABASE_URL and SUPABASE_ANON_KEY in the HTML file.');
+                    alert('⚙  Supabase not configured!\n\nPlease update the SUPABASE_URL and SUPABASE_ANON_KEY in the HTML file.');
                 } else if (error.message && error.message.includes('Failed to fetch')) {
                     // Network/connectivity error - don't block the app completely
-                    console.warn('⚙  Could not connect to Supabase - continuing with empty data');
+                    console.warn('⚙  Could not connect to Supabase - continuing with empty data');
                     // App will continue with empty maps array
                 } else {
                     alert('Error loading application:\n\n' + error.message + '\n\nCheck browser console (F12) for details.');
