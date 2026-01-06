@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0 - OPTIMIZED</title>
+    <title>Map Forge v2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -3935,7 +3935,11 @@
                             (option.addCards && option.addCards.length > 0) ||
                             (option.critAddCards && option.critAddCards.length > 0) ||
                             (option.failAddCards && option.failAddCards.length > 0) ||
-                            (option.critFailAddCards && option.critFailAddCards.length > 0);
+                            (option.critFailAddCards && option.critFailAddCards.length > 0) ||
+                            option.successPerk || option.critPerk || option.failPerk || option.critFailPerk ||
+                            option.corruptionUI ||
+                            option.successShop || option.critShop || option.failShop || option.critFailShop ||
+                            option.successHealerUI || option.critHealerUI || option.failHealerUI || option.critFailHealerUI;
                         
                         // Display Combat Effects/Loot as STANDALONE sections if NO success/fail outcomes
                         // (For combat events that don't have success/fail, just lead to combat)
@@ -3982,30 +3986,49 @@
                             // - Gold (shown in rewards line with 💰)
                             // - Add Cards (shown in cyan Add Cards box)
                             // - Gold from Loot (skipped equipment gold, not needed)
+                            // - Combat Loot (shown in dedicated Combat Loot box)
+                            // - Combat EXP/Gold after combat name (shown in rewards)
+                            
+                            // Remove "Combat (id): XXX EXP, XXX Gold" - keep just "Combat (id)" if present
+                            cleanText = cleanText.replace(/(\bCombat\s*\([^)]+\)):\s*[\d.]+\s*EXP,?\s*[\d.]*\s*Gold?\s*\|?\s*/gi, '$1 | ');
+                            
+                            // Remove standalone EXP: and Gold: patterns
                             cleanText = cleanText.replace(/\bEXP:\s*[\d.]+\s*\|?\s*/gi, '');
                             cleanText = cleanText.replace(/\bGold:\s*[\d.]+\s*\|?\s*/gi, '');
                             cleanText = cleanText.replace(/\bGold from Loot:\s*[\d.]+\s*\|?\s*/gi, '');
                             cleanText = cleanText.replace(/\bAdd Cards?:\s*[^|]+\s*\|?\s*/gi, '');
                             
-                            // If we have dedicated fields, also clean combat effects/loot
+                            // Remove Combat Loot section entirely (shown in dedicated box)
+                            // This matches "Combat Loot:" followed by item entries until end or next major section
+                            cleanText = cleanText.replace(/\|?\s*Combat Loot:[^]*$/gi, '');
+                            cleanText = cleanText.replace(/Combat Loot:\s*[^|]+(?:\s*\|\s*[^|]+)*/gi, '');
+                            
+                            // If we have dedicated fields, also clean combat effects
                             if (hasDedicatedFields) {
                                 cleanText = cleanText.replace(/Combat Effects:[^|]+\|?/g, '').trim();
-                                cleanText = cleanText.replace(/Combat Loot:[^|]+(?:\|[^|]+)*$/g, '').trim();
-                                cleanText = cleanText.replace(/\s*\|\s*$/, '').trim();
-                                return { cleanText, combatEffects: null, combatLoot: null };
                             }
                             
-                            // Extract Combat Effects ONLY (loot is in dedicated field now)
-                            const effectsMatch = text.match(/Combat Effects:\s*([^\n]+)/);
-                            if (effectsMatch) {
-                                combatEffects = effectsMatch[1].trim();
-                                cleanText = cleanText.replace(/Combat Effects:[^\n]+\n?/, '').trim();
+                            // Extract Combat Effects if not in dedicated fields
+                            if (!hasDedicatedFields) {
+                                const effectsMatch = text.match(/Combat Effects:\s*([^\n]+)/);
+                                if (effectsMatch) {
+                                    combatEffects = effectsMatch[1].trim();
+                                    cleanText = cleanText.replace(/Combat Effects:[^\n]+\n?/, '').trim();
+                                }
                             }
                             
-                            // Clean up multiple pipes, leading/trailing pipes
-                            cleanText = cleanText.replace(/\|\s*\|/g, '|').replace(/^\s*\|\s*/, '').replace(/\s*\|\s*$/, '').trim();
-                            // Clean up any remaining empty segments
-                            cleanText = cleanText.replace(/\|\s*\|/g, '|').replace(/^\s*\|\s*/, '').replace(/\s*\|\s*$/, '').trim();
+                            // Clean up multiple pipes, leading/trailing pipes, empty segments
+                            cleanText = cleanText.replace(/\|\s*\|/g, '|');
+                            cleanText = cleanText.replace(/^\s*\|\s*/, '');
+                            cleanText = cleanText.replace(/\s*\|\s*$/, '');
+                            cleanText = cleanText.replace(/\|\s*\|/g, '|');
+                            cleanText = cleanText.trim();
+                            
+                            // If only "Combat (id)" remains with nothing else meaningful, keep it
+                            // But if it's just pipes or whitespace, clear it
+                            if (/^\s*\|?\s*$/.test(cleanText)) {
+                                cleanText = '';
+                            }
                             
                             return { cleanText, combatEffects, combatLoot };
                         }
@@ -4016,7 +4039,7 @@
                                 <div style="margin-top: 0.75rem;">
                             `);
                             
-                            if (option.onSuccess || option.successGold || option.successShards || option.successExp || option.combatLoot || option.shopLoot || (option.addCards && option.addCards.length > 0)) {
+                            if (option.onSuccess || option.successGold || option.successShards || option.successExp || option.combatLoot || option.shopLoot || (option.addCards && option.addCards.length > 0) || option.successPerk || option.corruptionUI || option.successShop || option.successHealerUI) {
                                 const successInfo = extractCombatInfo(option.onSuccess, !!(option.combatEffects || option.combatLoot));
                                 // Overarching Success container
                                 variantHtml.push(`
@@ -4096,11 +4119,45 @@
                                         </div>
                                     `);
                                 }
+                                // Display Perk if present
+                                if (option.successPerk) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(168, 85, 247, 0.1); border-left: 3px solid #a855f7; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #a855f7; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">⬆️ Permanent Perk</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.successPerk}</div>
+                                        </div>
+                                    `);
+                                }
+                                // Display Corruption UI if present
+                                if (option.corruptionUI) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #ef4444; font-weight: 600; font-size: 0.85rem;">🔮 Opens Card Corruption UI</div>
+                                        </div>
+                                    `);
+                                }
+                                // Display Shop if present
+                                if (option.successShop) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid #fbbf24; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #fbbf24; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🛒 Opens Shop</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.successShop}</div>
+                                        </div>
+                                    `);
+                                }
+                                // Display Healer UI (Remove Card) if present
+                                if (option.successHealerUI) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(236, 72, 153, 0.1); border-left: 3px solid #ec4899; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #ec4899; font-weight: 600; font-size: 0.85rem;">🗑️ Remove Card from Deck</div>
+                                        </div>
+                                    `);
+                                }
                                 // Close overarching Success container
                                 variantHtml.push(`</div>`);
                             }
                             
-                            if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp || option.critCombatLoot || option.critShopLoot || (option.critAddCards && option.critAddCards.length > 0)) {
+                            if (option.onCritSuccess || option.critSuccessGold || option.critSuccessShards || option.critSuccessExp || option.critCombatLoot || option.critShopLoot || (option.critAddCards && option.critAddCards.length > 0) || option.critPerk || option.critShop || option.critHealerUI) {
                                 const critSuccessInfo = extractCombatInfo(option.onCritSuccess, !!(option.critCombatEffects || option.critCombatLoot));
                                 // Overarching Critical Success container
                                 variantHtml.push(`
@@ -4175,11 +4232,37 @@
                                         </div>
                                     `);
                                 }
+                                // Display Critical Perk if present
+                                if (option.critPerk) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(168, 85, 247, 0.1); border-left: 3px solid #a855f7; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #a855f7; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">⬆️ Permanent Perk</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critPerk}</div>
+                                        </div>
+                                    `);
+                                }
+                                // Display Critical Shop if present
+                                if (option.critShop) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid #fbbf24; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #fbbf24; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🛒 Opens Shop</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critShop}</div>
+                                        </div>
+                                    `);
+                                }
+                                // Display Critical Healer UI if present
+                                if (option.critHealerUI) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(236, 72, 153, 0.1); border-left: 3px solid #ec4899; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #ec4899; font-weight: 600; font-size: 0.85rem;">🗑️ Remove Card from Deck</div>
+                                        </div>
+                                    `);
+                                }
                                 // Close overarching Critical Success container
                                 variantHtml.push(`</div>`);
                             }
                             
-                            if (option.onFail || option.failGold || option.failShards || option.failExp || option.failCombatLoot || option.failShopLoot || option.failCombatEffects || (option.failAddCards && option.failAddCards.length > 0)) {
+                            if (option.onFail || option.failGold || option.failShards || option.failExp || option.failCombatLoot || option.failShopLoot || option.failCombatEffects || (option.failAddCards && option.failAddCards.length > 0) || option.failPerk || option.failShop || option.failHealerUI) {
                                 const failInfo = extractCombatInfo(option.onFail, !!(option.failCombatEffects || option.failCombatLoot));
                                 // Overarching Fail container
                                 variantHtml.push(`
@@ -4254,11 +4337,37 @@
                                         </div>
                                     `);
                                 }
+                                // Display Fail Perk if present
+                                if (option.failPerk) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(168, 85, 247, 0.1); border-left: 3px solid #a855f7; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #a855f7; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">⬆️ Permanent Perk</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.failPerk}</div>
+                                        </div>
+                                    `);
+                                }
+                                // Display Fail Shop if present
+                                if (option.failShop) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid #fbbf24; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #fbbf24; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🛒 Opens Shop</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.failShop}</div>
+                                        </div>
+                                    `);
+                                }
+                                // Display Fail Healer UI if present
+                                if (option.failHealerUI) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(236, 72, 153, 0.1); border-left: 3px solid #ec4899; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #ec4899; font-weight: 600; font-size: 0.85rem;">🗑️ Remove Card from Deck</div>
+                                        </div>
+                                    `);
+                                }
                                 // Close overarching Fail container
                                 variantHtml.push(`</div>`);
                             }
                             
-                            if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp || option.critFailCombatLoot || (option.critFailAddCards && option.critFailAddCards.length > 0)) {
+                            if (option.onCritFail || option.critFailGold || option.critFailShards || option.critFailExp || option.critFailCombatLoot || (option.critFailAddCards && option.critFailAddCards.length > 0) || option.critFailPerk || option.critFailShop || option.critFailHealerUI) {
                                 const critFailInfo = extractCombatInfo(option.onCritFail, !!(option.critFailCombatLoot));
                                 // Overarching Critical Fail container
                                 variantHtml.push(`
@@ -4303,6 +4412,32 @@
                                         <div style="padding: 0.5rem; background: rgba(34, 211, 238, 0.1); border-left: 3px solid #22d3ee; border-radius: 4px; margin-top: 0.5rem;">
                                             <div style="color: #22d3ee; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🃏 Add Cards</div>
                                             <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critFailAddCards.join(', ')}</div>
+                                        </div>
+                                    `);
+                                }
+                                // Display Critical Fail Perk if present
+                                if (option.critFailPerk) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(168, 85, 247, 0.1); border-left: 3px solid #a855f7; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #a855f7; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">⬆️ Permanent Perk</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critFailPerk}</div>
+                                        </div>
+                                    `);
+                                }
+                                // Display Critical Fail Shop if present
+                                if (option.critFailShop) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid #fbbf24; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #fbbf24; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">🛒 Opens Shop</div>
+                                            <div style="color: rgba(245, 230, 211, 0.85); font-size: 0.85rem;">${option.critFailShop}</div>
+                                        </div>
+                                    `);
+                                }
+                                // Display Critical Fail Healer UI if present
+                                if (option.critFailHealerUI) {
+                                    variantHtml.push(`
+                                        <div style="padding: 0.5rem; background: rgba(236, 72, 153, 0.1); border-left: 3px solid #ec4899; border-radius: 4px; margin-top: 0.5rem;">
+                                            <div style="color: #ec4899; font-weight: 600; font-size: 0.85rem;">🗑️ Remove Card from Deck</div>
                                         </div>
                                     `);
                                 }
