@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0</title>
+    <title>Map Forge v2.0 - OPTIMIZED</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -3977,7 +3977,17 @@
                             let combatEffects = null;
                             let combatLoot = null;
                             
-                            // If we have dedicated fields, just clean the text without extracting
+                            // Always remove fields that have dedicated UI elements:
+                            // - EXP (shown in rewards line with ⭐)
+                            // - Gold (shown in rewards line with 💰)
+                            // - Add Cards (shown in cyan Add Cards box)
+                            // - Gold from Loot (skipped equipment gold, not needed)
+                            cleanText = cleanText.replace(/\bEXP:\s*[\d.]+\s*\|?\s*/gi, '');
+                            cleanText = cleanText.replace(/\bGold:\s*[\d.]+\s*\|?\s*/gi, '');
+                            cleanText = cleanText.replace(/\bGold from Loot:\s*[\d.]+\s*\|?\s*/gi, '');
+                            cleanText = cleanText.replace(/\bAdd Cards?:\s*[^|]+\s*\|?\s*/gi, '');
+                            
+                            // If we have dedicated fields, also clean combat effects/loot
                             if (hasDedicatedFields) {
                                 cleanText = cleanText.replace(/Combat Effects:[^|]+\|?/g, '').trim();
                                 cleanText = cleanText.replace(/Combat Loot:[^|]+(?:\|[^|]+)*$/g, '').trim();
@@ -3992,7 +4002,9 @@
                                 cleanText = cleanText.replace(/Combat Effects:[^\n]+\n?/, '').trim();
                             }
                             
-                            // Clean up
+                            // Clean up multiple pipes, leading/trailing pipes
+                            cleanText = cleanText.replace(/\|\s*\|/g, '|').replace(/^\s*\|\s*/, '').replace(/\s*\|\s*$/, '').trim();
+                            // Clean up any remaining empty segments
                             cleanText = cleanText.replace(/\|\s*\|/g, '|').replace(/^\s*\|\s*/, '').replace(/\s*\|\s*$/, '').trim();
                             
                             return { cleanText, combatEffects, combatLoot };
