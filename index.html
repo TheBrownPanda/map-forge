@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Forge v2.0 - OPTIMIZED</title>
+    <title>Map Forge v2.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
     
     <!-- Supabase SDK -->
@@ -1792,7 +1792,7 @@
             <div class="header-actions">
                 <button class="btn btn-secondary admin-only" id="importNodesBtn" style="display: none;">📥 Import Data</button>
                 <!-- Mass Import removed - use single file import instead -->
-                <button class="btn btn-secondary" id="manageImagesBtn">ðŸ–¼ï¸ Image Library</button>
+                <button class="btn btn-secondary" id="manageImagesBtn">🖼️ Image Library</button>
                 <button class="btn btn-secondary" id="addMapBtn">+ New Map</button>
                 <button class="btn btn-primary" id="addNodeBtn">+ Add Node</button>
             </div>
@@ -1834,7 +1834,7 @@
                         <span>Add</span>
                     </button>
                     <button class="mobile-tool-btn" id="mobBtnMove">
-                        <span class="icon">âŠ•</span>
+                        <span class="icon">⊕</span>
                         <span>Move</span>
                     </button>
                     <button class="mobile-tool-btn" id="mobBtnZoomIn">
@@ -2049,7 +2049,7 @@
     <div class="modal" id="imageLibraryModal">
         <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
-                <h2 class="modal-title">ðŸ–¼ï¸ Image Library</h2>
+                <h2 class="modal-title">🖼️ Image Library</h2>
                 <button class="close-btn" id="closeImageLibraryBtn">×</button>
             </div>
             
@@ -2092,7 +2092,7 @@
                 <!-- Target Map Indicator -->
                 <div id="importTargetMapInfo" style="display: none; background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(201, 169, 97, 0.2)); border: 2px solid var(--primary); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="font-size: 1.5rem;">ðŸ“Â</div>
+                        <div style="font-size: 1.5rem;">📍</div>
                         <div style="flex: 1;">
                             <div style="font-size: 0.85rem; color: rgba(245, 230, 211, 0.7); margin-bottom: 0.25rem;">Importing to Map:</div>
                             <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary);" id="importTargetMap"></div>
@@ -2198,8 +2198,8 @@
         //    - Optimized CSS transforms
         //
         // Expected Performance Improvements:
-        // - Edit modal: 95% faster (20s â†‘ <1s)
-        // - Node movement: 80% faster (5s â†‘ <1s)
+        // - Edit modal: 95% faster (20s → <1s)
+        // - Node movement: 80% faster (5s → <1s)
         // - Map rendering: 75-90% faster with viewport culling
         // - Overall smoother, more responsive experience
         //
@@ -2209,7 +2209,7 @@
         // ==========================================
         // SUPABASE CONFIGURATION
         // IMPORTANT: Replace these with your actual Supabase values!
-        // Get these from: Supabase Dashboard â†‘ Settings â†‘ API
+        // Get these from: Supabase Dashboard → Settings → API
         // ==========================================
         const SUPABASE_URL = 'https://sczwwgszicbwomriucuz.supabase.co'; // e.g., 'https://xxxxx.supabase.co'
         const SUPABASE_ANON_KEY = 'sb_publishable_7Zh2AuEoohMwZKFLdTZjHQ_9fmeso6p'; // Publishable key
@@ -2607,7 +2607,7 @@
                 }, 2000);
                 
             } catch (error) {
-                status.innerHTML = 'âŒ Error: ' + error.message;
+                status.innerHTML = '❌ Error: ' + error.message;
                 console.error('Upload error:', error);
             }
         }
@@ -3142,7 +3142,7 @@
             
             const actionsHtml = isAdmin ? `
                 <div class="map-item-actions">
-                    <button class="map-action-btn" onclick="event.stopPropagation(); editMap('${map.id}')" title="Edit Map">âœ</button>
+                    <button class="map-action-btn" onclick="event.stopPropagation(); editMap('${map.id}')" title="Edit Map">✏</button>
                     <button class="map-action-btn" onclick="event.stopPropagation(); deleteMapFromSidebar('${map.id}')" title="Delete Map">🗑</button>
                 </div>
             ` : '';
@@ -3476,7 +3476,7 @@
                 combat: '⚔️',
                 event: '📜',
                 card: '🎴',
-                crafter: 'ðŸ”¨',
+                crafter: '📨',
                 rest: '🛏',
                 character: '👤',
                 transition: '🚪',
@@ -3487,7 +3487,7 @@
                 information: 'ℹ️'
             };
             const icon = icons[type] || '⭐';
-            console.log('Getting icon for type:', type, 'â†‘', icon);
+            console.log('Getting icon for type:', type, '→', icon);
             return icon;
         }
 
@@ -3745,7 +3745,7 @@
                 const sampleText = JSON.stringify(node.variants[0]).substring(0, 500);
                 console.log('Sample variant data:', sampleText);
                 if (sampleText.includes("Let's")) {
-                    console.log('âœ“ VIEW NODE ENCODING OK');
+                    console.log('✔ VIEW NODE ENCODING OK');
                 } else if (sampleText.includes("LetÃ¢â‚¬â„¢s")) {
                     console.log('✗ VIEW NODE ENCODING BAD - mojibake detected!');
                 }
@@ -4321,7 +4321,7 @@
                             variantHtml.push(`
                                 <div style="margin-top: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border: 2px solid #3b82f6; border-radius: 8px;" onclick="event.stopPropagation();">
                                     <div style="font-size: 0.95rem; color: #3b82f6; font-weight: 700; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                                        âž¡ ON SUCCESS, LEADS TO: ${followUp.name || followUp.eventId}
+                                        ➡ ON SUCCESS, LEADS TO: ${followUp.name || followUp.eventId}
                                     </div>
                                     <div style="font-size: 0.85rem; color: #60a5fa; margin-bottom: 0.75rem;">OPTIONS</div>
                             `);
@@ -4590,7 +4590,7 @@
             if (isAdmin) {
                 html += `
                     <div class="node-viewer-actions">
-                        <button class="btn btn-primary btn-small" onclick="editNodeFromViewer()">âœ Edit</button>
+                        <button class="btn btn-primary btn-small" onclick="editNodeFromViewer()">✏ Edit</button>
                         <button class="btn btn-secondary btn-small" onclick="moveNodeFromViewer()">↓ Move</button>
                         <button class="btn btn-danger btn-small" onclick="deleteNodeFromViewer()">🗑 Delete</button>
                     </div>
@@ -4908,7 +4908,7 @@
                         </button>
                         <div class="outcomes-section" style="display: ${hasOutcomeData ? 'block' : 'none'}; margin-top: 0.75rem; padding: 1rem; background: rgba(42, 35, 26, 0.3); border-radius: 6px;">
                             <div style="margin-bottom: 1rem; background: rgba(72, 187, 120, 0.08); padding: 0.75rem; border-radius: 6px; border-left: 3px solid #48bb78;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #48bb78;">âœ“ On Success</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #48bb78;">✔ On Success</label>
                                 <textarea class="form-textarea" placeholder="What happens on success..." data-option="onSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onSuccess || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="successGold" value="${option?.successGold !== undefined && option.successGold !== 0 ? option.successGold : ""}">
@@ -4920,7 +4920,7 @@
                             </div>
                             
                             <div style="margin-bottom: 1rem; background: rgba(246, 224, 94, 0.08); padding: 0.75rem; border-radius: 6px; border-left: 3px solid #f6e05e;">
-                                <label class="form-label" style="font-size: 0.9rem; color: #f6e05e;">â˜… On Critical Success</label>
+                                <label class="form-label" style="font-size: 0.9rem; color: #f6e05e;">★… On Critical Success</label>
                                 <textarea class="form-textarea" placeholder="What happens on critical success..." data-option="onCritSuccess" style="min-height: 60px; margin-top: 0.5rem;">${option?.onCritSuccess || ''}</textarea>
                                 <div class="rewards-row" style="margin-top: 0.5rem;">
                                     <input type="number" class="form-input" placeholder="Gold" data-option="critSuccessGold" value="${option?.critSuccessGold !== undefined && option.critSuccessGold !== 0 ? option.critSuccessGold : ""}">
@@ -4967,7 +4967,7 @@
                         <label class="form-label" style="font-size: 0.9rem;">
                             Follow-up Events (sequential sub-events after this option)
                             <small style="display: block; font-weight: normal; color: rgba(245, 230, 211, 0.6); margin-top: 0.25rem;">
-                                Add events that happen in sequence (e.g., e_sen4_a1 â†‘ e_sen4_a2)
+                                Add events that happen in sequence (e.g., e_sen4_a1 → e_sen4_a2)
                             </small>
                         </label>
                         <div class="followup-events-container" data-followup-container>
@@ -5013,7 +5013,7 @@
                             </div>
                             ${opt.requirements ? '<div style="font-size: 0.75rem; color: #f6ad55; margin-top: 0.25rem;">⚠️ ' + opt.requirements + '</div>' : ''}
                             ${opt.rollInfo ? '<div style="font-size: 0.75rem; color: #90cdf4; margin-top: 0.25rem;">🎲 ' + opt.rollInfo + '</div>' : ''}
-                            ${rewards.length > 0 ? '<div style="font-size: 0.75rem; color: #48bb78; margin-top: 0.25rem;">âœ“ ' + rewards.join(' ') + '</div>' : ''}
+                            ${rewards.length > 0 ? '<div style="font-size: 0.75rem; color: #48bb78; margin-top: 0.25rem;">✔ ' + rewards.join(' ') + '</div>' : ''}
                         </div>
                     `;
                 }).join('');
@@ -6014,7 +6014,7 @@
                             const savings = ((1 - compressedSize / originalSize) * 100).toFixed(1);
                             
                             console.log(`✔️ Compression complete!`);
-                            console.log(`  Size: ${(originalSize / 1024 / 1024).toFixed(2)}MB â†‘ ${(compressedSize / 1024 / 1024).toFixed(2)}MB`);
+                            console.log(`  Size: ${(originalSize / 1024 / 1024).toFixed(2)}MB → ${(compressedSize / 1024 / 1024).toFixed(2)}MB`);
                             console.log(`  Savings: ${savings}% smaller`);
                             console.log(`  Format: ${mimeType}`);
                             
@@ -6079,7 +6079,7 @@
                     // Check encoding before save
                     const mapJson = JSON.stringify(sampleMap.nodes);
                     if (mapJson.includes("Let's")) {
-                        console.log('âœ“ SAVING ENCODING OK: Found clean "Let\'s"');
+                        console.log('✔ SAVING ENCODING OK: Found clean "Let\'s"');
                     } else if (mapJson.includes("LetÃ¢â‚¬â„¢s")) {
                         console.log('✗ SAVING ENCODING BAD: Found mojibake "LetÃ¢â‚¬â„¢s"');
                     }
@@ -6159,7 +6159,7 @@
                         // Check encoding after load
                         const mapJson = JSON.stringify(sampleMap.nodes);
                         if (mapJson.includes("Let's")) {
-                            console.log('âœ“ LOADED ENCODING OK: Found clean "Let\'s"');
+                            console.log('✔ LOADED ENCODING OK: Found clean "Let\'s"');
                         } else if (mapJson.includes("LetÃ¢â‚¬â„¢s")) {
                             console.log('✗ LOADED ENCODING BAD: Found mojibake "LetÃ¢â‚¬â„¢s"');
                         }
@@ -6827,7 +6827,7 @@
                 }
                 
                 // Follow-up event indicator
-                if (line.includes('â†‘ On Success, leads to:')) {
+                if (line.includes('→ On Success, leads to:')) {
                     i++;
                     // Parse follow-up event
                     const followup = parseFollowupEvent(lines, i);
