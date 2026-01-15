@@ -319,7 +319,8 @@
 
         async function joinOrCreateRoom() {
             state.userName = document.getElementById('userName').value.trim() || 'Anonymous';
-            state.roomId = document.getElementById('roomIdInput').value.trim().toUpperCase() || 'room_' + Math.random().toString(36).substr(2,6).toUpperCase();
+            const inputRoomId = document.getElementById('roomIdInput').value.trim();
+            state.roomId = inputRoomId || 'ROOM_' + Math.random().toString(36).substr(2,6).toUpperCase();
             document.getElementById('roomModal').classList.remove('active');
             document.getElementById('roomInfo').style.display = 'flex';
             document.getElementById('onlineUsers').style.display = 'flex';
