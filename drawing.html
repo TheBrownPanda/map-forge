@@ -91,10 +91,6 @@
         .zoom-btn { width: 36px; height: 36px; background: rgba(42,35,26,0.8); border: 1px solid var(--secondary); border-radius: 4px; color: var(--light); cursor: pointer; font-size: 1.2rem; transition: all 0.2s ease; }
         .zoom-btn:hover { background: rgba(212,175,55,0.2); border-color: var(--primary); }
         .zoom-level { padding: 0 0.75rem; display: flex; align-items: center; color: var(--light); font-size: 0.9rem; min-width: 60px; justify-content: center; }
-        .history-controls { position: absolute; top: 1.5rem; right: 1.5rem; display: flex; gap: 0.5rem; }
-        .history-btn { width: 40px; height: 40px; background: rgba(26,20,16,0.9); border: 1px solid var(--secondary); border-radius: 6px; color: var(--light); cursor: pointer; font-size: 1.1rem; transition: all 0.2s ease; }
-        .history-btn:hover:not(:disabled) { background: rgba(212,175,55,0.2); border-color: var(--primary); }
-        .history-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .coords-display { position: absolute; bottom: 1.5rem; left: 1.5rem; background: rgba(26,20,16,0.9); padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid var(--secondary); font-size: 0.85rem; color: var(--light); }
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-overlay.active { display: flex; }
@@ -118,7 +114,7 @@
         .divider { display: flex; align-items: center; margin: 1.5rem 0; color: var(--secondary); }
         .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--secondary); }
         .divider span { padding: 0 1rem; }
-        .text-input-container { position: absolute; display: none; }
+        .text-input-container { position: absolute; display: none; z-index: 1001; }
         .text-input-container.active { display: block; }
         .text-input { background: rgba(26,20,16,0.95); border: 2px solid var(--primary); border-radius: 4px; color: var(--light); padding: 0.5rem; font-family: 'Lato', sans-serif; font-size: 16px; min-width: 200px; outline: none; }
         .tooltip { position: relative; }
@@ -267,10 +263,6 @@
                 <div class="canvas-container" id="canvasContainer"><canvas id="drawingCanvas"></canvas></div>
                 <div id="remoteCursors"></div>
                 <div class="text-input-container" id="textInputContainer"><input type="text" class="text-input" id="textInput" placeholder="Enter text..." onkeydown="handleTextInput(event)"></div>
-                <div class="history-controls">
-                    <button class="history-btn tooltip" id="undoBtn" data-tooltip="Undo (Ctrl+Z)" onclick="undo()" disabled>&#8630;</button>
-                    <button class="history-btn tooltip" id="redoBtn" data-tooltip="Redo (Ctrl+Y)" onclick="redo()" disabled>&#8631;</button>
-                </div>
                 <div class="zoom-controls">
                     <button class="zoom-btn" onclick="zoomOut()">-</button>
                     <div class="zoom-level" id="zoomLevel">100%</div>
@@ -546,7 +538,25 @@
         function draw(e) { const c = getCanvasCoords(e); document.getElementById('coordsDisplay').textContent = `X: ${Math.round(c.x)} Y: ${Math.round(c.y)}`; if (!cursorThrottle) { cursorThrottle = true; broadcastCursor(c.x, c.y); setTimeout(() => cursorThrottle = false, 50); } if (state.isPanning) { state.pan.x = e.clientX - state.panStart.x; state.pan.y = e.clientY - state.panStart.y; redrawCanvas(); return; } if (!state.isDrawing) return; const lc = getActiveLayerCtx(); state.drawingBuffer.push({ x: c.x, y: c.y }); if (['pen', 'brush'].includes(state.currentTool)) { lc.lineTo(c.x, c.y); lc.strokeStyle = state.currentColor; lc.lineWidth = state.currentTool === 'brush' ? state.brushSize * 2 : state.brushSize; lc.lineCap = 'round'; lc.lineJoin = 'round'; lc.globalAlpha = state.opacity; lc.stroke(); redrawCanvas(); } else if (state.currentTool === 'eraser') { lc.lineTo(c.x, c.y); lc.lineWidth = state.brushSize * 2; lc.lineCap = 'round'; lc.globalCompositeOperation = 'destination-out'; lc.stroke(); lc.globalCompositeOperation = 'source-over'; redrawCanvas(); } else if (['line', 'arrow', 'rect', 'circle'].includes(state.currentTool)) { redrawCanvas(); ctx.save(); ctx.translate(state.pan.x, state.pan.y); ctx.scale(state.zoom, state.zoom); ctx.strokeStyle = state.currentColor; ctx.fillStyle = state.currentColor; ctx.globalAlpha = state.opacity; drawShapeOnCtx(ctx, state.currentTool, state.startX, state.startY, c.x, c.y, state.fillShape, state.brushSize); ctx.restore(); } state.lastX = c.x; state.lastY = c.y; }
         function stopDrawing(e) { if (state.isPanning) { state.isPanning = false; mainCanvas.style.cursor = 'crosshair'; return; } if (!state.isDrawing) return; state.isDrawing = false; const c = getCanvasCoords(e); if (['pen', 'brush'].includes(state.currentTool)) { broadcastDrawing('stroke', { points: state.drawingBuffer, size: state.currentTool === 'brush' ? state.brushSize * 2 : state.brushSize }); } else if (state.currentTool === 'eraser') { broadcastDrawing('erase', { points: state.drawingBuffer, size: state.brushSize }); } else if (['line', 'arrow', 'rect', 'circle'].includes(state.currentTool)) { const lc = getActiveLayerCtx(); lc.strokeStyle = state.currentColor; lc.fillStyle = state.currentColor; lc.globalAlpha = state.opacity; drawShapeOnCtx(lc, state.currentTool, state.startX, state.startY, c.x, c.y, state.fillShape, state.brushSize); redrawCanvas(); broadcastDrawing('shape', { tool: state.currentTool, x1: state.startX, y1: state.startY, x2: c.x, y2: c.y, fill: state.fillShape }); } state.drawingBuffer = []; saveState(); }
 
-        function showTextInput(cx, cy, coords) { const c = document.getElementById('textInputContainer'), i = document.getElementById('textInput'); c.style.left = cx + 'px'; c.style.top = cy + 'px'; c.classList.add('active'); c.dataset.x = coords.x; c.dataset.y = coords.y; i.value = ''; i.style.color = state.currentColor; i.style.fontSize = (state.brushSize + 12) + 'px'; i.focus(); }
+        function showTextInput(clientX, clientY, coords) {
+            const container = document.getElementById('textInputContainer');
+            const input = document.getElementById('textInput');
+            // Position the input at the screen position (accounting for canvas area offset)
+            const canvasRect = document.getElementById('canvasArea').getBoundingClientRect();
+            container.style.left = (clientX - canvasRect.left) + 'px';
+            container.style.top = (clientY - canvasRect.top) + 'px';
+            container.classList.add('active');
+            container.dataset.x = coords.x;
+            container.dataset.y = coords.y;
+            container.dataset.justOpened = 'true';
+            input.value = '';
+            input.style.color = state.currentColor;
+            input.style.fontSize = Math.max(12, (state.brushSize + 12) * state.zoom) + 'px';
+            setTimeout(() => {
+                input.focus();
+                container.dataset.justOpened = 'false';
+            }, 50);
+        }
         function handleTextInput(e) { if (e.key === 'Enter') { const c = document.getElementById('textInputContainer'), i = document.getElementById('textInput'); if (i.value.trim()) { const lc = getActiveLayerCtx(), x = parseFloat(c.dataset.x), y = parseFloat(c.dataset.y), s = state.brushSize + 12; lc.font = `${s}px Lato, sans-serif`; lc.fillStyle = state.currentColor; lc.globalAlpha = state.opacity; lc.fillText(i.value, x, y); lc.globalAlpha = 1; broadcastDrawing('text', { text: i.value, x, y, size: s }); redrawCanvas(); saveState(); } c.classList.remove('active'); } else if (e.key === 'Escape') document.getElementById('textInputContainer').classList.remove('active'); }
         function selectMarker(m) { state.currentTool = 'marker'; state.currentMarker = m; document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active')); document.querySelectorAll('.marker-btn').forEach(b => b.classList.toggle('active', b.dataset.marker === m)); document.getElementById('fillSection').style.display = 'none'; }
         function placeMarker(x, y) { const lc = getActiveLayerCtx(), s = state.brushSize + 20; lc.font = `${s}px Arial`; lc.fillStyle = state.currentColor; lc.textAlign = 'center'; lc.textBaseline = 'middle'; lc.globalAlpha = state.opacity; lc.fillText(state.currentMarker, x, y); lc.globalAlpha = 1; broadcastDrawing('marker', { marker: state.currentMarker, x, y, size: s }); redrawCanvas(); saveState(); }
@@ -558,11 +568,7 @@
         function zoomOut() { state.zoom = Math.max(0.25, state.zoom - 0.25); updateZoomDisplay(); redrawCanvas(); }
         function resetZoom() { state.zoom = 1; state.pan = { x: 0, y: 0 }; updateZoomDisplay(); redrawCanvas(); }
         function updateZoomDisplay() { document.getElementById('zoomLevel').textContent = Math.round(state.zoom * 100) + '%'; }
-        function saveState() { if (state.historyIndex < state.history.length - 1) state.history = state.history.slice(0, state.historyIndex + 1); state.history.push({ layers: state.layers.map(l => { const c = document.createElement('canvas'); c.width = l.canvas.width; c.height = l.canvas.height; c.getContext('2d').drawImage(l.canvas, 0, 0); return { name: l.name, canvas: c, visible: l.visible }; }), activeLayerIndex: state.activeLayerIndex }); if (state.history.length > state.maxHistory) state.history.shift(); else state.historyIndex++; updateHistoryButtons(); }
-        function undo() { if (state.historyIndex > 0) { state.historyIndex--; restoreState(state.history[state.historyIndex]); } }
-        function redo() { if (state.historyIndex < state.history.length - 1) { state.historyIndex++; restoreState(state.history[state.historyIndex]); } }
-        function restoreState(s) { state.layers = s.layers.map(l => ({ name: l.name, canvas: l.canvas, visible: l.visible })); state.activeLayerIndex = s.activeLayerIndex; updateLayersList(); redrawCanvas(); updateHistoryButtons(); }
-        function updateHistoryButtons() { document.getElementById('undoBtn').disabled = state.historyIndex <= 0; document.getElementById('redoBtn').disabled = state.historyIndex >= state.history.length - 1; }
+        function saveState() { /* History disabled for multiplayer sync */ }
         function openUploadModal() { document.getElementById('uploadModal').classList.add('active'); }
         function closeUploadModal() { document.getElementById('uploadModal').classList.remove('active'); }
         function handleFileSelect(e) { if (e.target.files[0]) loadImage(e.target.files[0]); }
@@ -622,10 +628,10 @@
         mainCanvas.addEventListener('mouseup', stopDrawing);
         mainCanvas.addEventListener('mouseleave', stopDrawing);
         canvasArea.addEventListener('wheel', e => { e.preventDefault(); state.zoom = Math.max(0.25, Math.min(5, state.zoom + (e.deltaY > 0 ? -0.1 : 0.1))); updateZoomDisplay(); redrawCanvas(); });
-        document.addEventListener('keydown', e => { if (e.ctrlKey || e.metaKey) { if (e.key === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); } else if (e.key === 'y') { e.preventDefault(); redo(); } else if (e.key === 's') { e.preventDefault(); exportCanvas(); } } if (!e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') { const k = e.key.toLowerCase(); if (k === 'p') selectTool('pen'); else if (k === 'b') selectTool('brush'); else if (k === 'l') selectTool('line'); else if (k === 'a') selectTool('arrow'); else if (k === 'r') selectTool('rect'); else if (k === 'c') selectTool('circle'); else if (k === 't') selectTool('text'); else if (k === 'e') selectTool('eraser'); } });
+        document.addEventListener('keydown', e => { if (e.ctrlKey || e.metaKey) { if (e.key === 's') { e.preventDefault(); exportCanvas(); } } if (!e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') { const k = e.key.toLowerCase(); if (k === 'p') selectTool('pen'); else if (k === 'b') selectTool('brush'); else if (k === 'l') selectTool('line'); else if (k === 'a') selectTool('arrow'); else if (k === 'r') selectTool('rect'); else if (k === 'c') selectTool('circle'); else if (k === 't') selectTool('text'); else if (k === 'e') selectTool('eraser'); } });
         document.getElementById('fillShape').addEventListener('change', e => state.fillShape = e.target.checked);
         window.addEventListener('resize', () => { const r = canvasArea.getBoundingClientRect(); if (!state.backgroundImage) { mainCanvas.width = r.width; mainCanvas.height = r.height; state.layers.forEach(l => { l.canvas.width = r.width; l.canvas.height = r.height; }); } redrawCanvas(); });
-        document.addEventListener('click', e => { const c = document.getElementById('textInputContainer'); if (c.classList.contains('active') && !c.contains(e.target)) c.classList.remove('active'); });
+        document.addEventListener('click', e => { const c = document.getElementById('textInputContainer'); if (c.classList.contains('active') && c.dataset.justOpened !== 'true' && !c.contains(e.target)) c.classList.remove('active'); });
         window.addEventListener('beforeunload', () => { if (state.channel) state.channel.unsubscribe(); });
 
         initCanvas();
