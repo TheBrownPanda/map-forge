@@ -330,18 +330,65 @@
 
         async function connectToRoom() {
             updateConnectionStatus('connecting');
-            state.channel = supabaseClient.channel(`strategy-${state.roomId}`, { config: { broadcast: { self: false }, presence: { key: state.oderId } } });
-            state.channel.on('presence', { event: 'sync' }, () => { state.onlineUsers.clear(); Object.values(state.channel.presenceState()).forEach(users => users.forEach(u => state.onlineUsers.set(u.oderId, u))); updateOnlineUsersDisplay(); });
-            state.channel.on('broadcast', { event: 'draw' }, ({ payload }) => handleRemoteDrawing(payload));
-            state.channel.on('broadcast', { event: 'cursor' }, ({ payload }) => updateRemoteCursor(payload));
-            state.channel.on('broadcast', { event: 'clear' }, () => clearCanvasLocal());
-            state.channel.on('broadcast', { event: 'background' }, ({ payload }) => loadBackgroundFromData(payload.imageData));
-            state.channel.on('broadcast', { event: 'request_sync' }, () => { if (state.backgroundImageData || hasDrawings()) broadcastFullState(); });
-            state.channel.on('broadcast', { event: 'full_state' }, ({ payload }) => loadFullState(payload));
-            await state.channel.subscribe(async (status) => {
-                if (status === 'SUBSCRIBED') { state.isConnected = true; updateConnectionStatus('connected'); await state.channel.track({ oderId: state.oderId, name: state.userName, color: state.userColor }); setTimeout(() => state.channel.send({ type: 'broadcast', event: 'request_sync', payload: {} }), 500); showToast(`Joined room ${state.roomId}`, 'success'); }
-                else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') { state.isConnected = false; updateConnectionStatus('disconnected'); }
-            });
+            console.log('[Strategy] Connecting to room:', state.roomId);
+            
+            try {
+                state.channel = supabaseClient.channel(`strategy-${state.roomId}`, { 
+                    config: { 
+                        broadcast: { self: false }, 
+                        presence: { key: state.oderId } 
+                    } 
+                });
+                
+                state.channel.on('presence', { event: 'sync' }, () => { 
+                    console.log('[Strategy] Presence sync');
+                    state.onlineUsers.clear(); 
+                    Object.values(state.channel.presenceState()).forEach(users => users.forEach(u => state.onlineUsers.set(u.oderId, u))); 
+                    updateOnlineUsersDisplay(); 
+                });
+                
+                state.channel.on('broadcast', { event: 'draw' }, ({ payload }) => handleRemoteDrawing(payload));
+                state.channel.on('broadcast', { event: 'cursor' }, ({ payload }) => updateRemoteCursor(payload));
+                state.channel.on('broadcast', { event: 'clear' }, () => clearCanvasLocal());
+                state.channel.on('broadcast', { event: 'background' }, ({ payload }) => loadBackgroundFromData(payload.imageData));
+                state.channel.on('broadcast', { event: 'request_sync' }, () => { if (state.backgroundImageData || hasDrawings()) broadcastFullState(); });
+                state.channel.on('broadcast', { event: 'full_state' }, ({ payload }) => loadFullState(payload));
+                
+                state.channel.subscribe(async (status, err) => {
+                    console.log('[Strategy] Channel status:', status, err || '');
+                    
+                    if (status === 'SUBSCRIBED') { 
+                        state.isConnected = true; 
+                        updateConnectionStatus('connected'); 
+                        
+                        try {
+                            await state.channel.track({ oderId: state.oderId, name: state.userName, color: state.userColor }); 
+                            console.log('[Strategy] Presence tracked');
+                        } catch (e) {
+                            console.error('[Strategy] Track error:', e);
+                        }
+                        
+                        setTimeout(() => state.channel.send({ type: 'broadcast', event: 'request_sync', payload: {} }), 500); 
+                        showToast(`Joined room ${state.roomId}`, 'success'); 
+                    }
+                    else if (status === 'TIMED_OUT') {
+                        console.error('[Strategy] Connection timed out');
+                        state.isConnected = false;
+                        updateConnectionStatus('disconnected');
+                        showToast('Connection timed out. Retrying...', 'error');
+                        setTimeout(() => connectToRoom(), 2000);
+                    }
+                    else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') { 
+                        console.error('[Strategy] Channel error or closed:', status);
+                        state.isConnected = false; 
+                        updateConnectionStatus('disconnected'); 
+                    }
+                });
+            } catch (e) {
+                console.error('[Strategy] Connection error:', e);
+                updateConnectionStatus('disconnected');
+                showToast('Connection failed: ' + e.message, 'error');
+            }
         }
 
         function hasDrawings() { return state.layers.some(l => { const d = l.canvas.getContext('2d').getImageData(0,0,l.canvas.width,l.canvas.height).data; return d.some((v,i) => i%4===3 && v>0); }); }
