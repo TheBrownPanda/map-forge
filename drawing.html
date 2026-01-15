@@ -297,9 +297,34 @@
     <script>
         const SUPABASE_URL = 'https://sczwwgszicbwomriucuz.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_7Zh2AuEoohMwZKFLdTZjHQ_9fmeso6p';
+        const SUPABASE_STORAGE_BUCKET = 'map-images';
         
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Upload image to Supabase Storage and return public URL
+        async function uploadImageToStorage(file) {
+            try {
+                showToast('Uploading map...', 'info');
+                const fileName = `strategy-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+                const { data, error } = await supabaseClient.storage
+                    .from(SUPABASE_STORAGE_BUCKET)
+                    .upload(fileName, file, { cacheControl: '3600', upsert: false });
+                
+                if (error) throw new Error(error.message || 'Failed to upload image');
+                
+                const { data: urlData } = supabaseClient.storage
+                    .from(SUPABASE_STORAGE_BUCKET)
+                    .getPublicUrl(fileName);
+                
+                showToast('Map uploaded!', 'success');
+                return urlData.publicUrl;
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                showToast('Upload failed: ' + error.message, 'error');
+                throw error;
+            }
+        }
 
         let state = {
             currentTool: 'pen', currentColor: '#ff0000', brushSize: 5, opacity: 1, fillShape: false,
@@ -360,7 +385,7 @@
             state.channel.on('broadcast', { event: 'draw' }, ({ payload }) => handleRemoteDrawing(payload));
             state.channel.on('broadcast', { event: 'cursor' }, ({ payload }) => updateRemoteCursor(payload));
             state.channel.on('broadcast', { event: 'clear' }, () => clearCanvasLocal());
-            state.channel.on('broadcast', { event: 'background' }, ({ payload }) => loadBackgroundFromData(payload.imageData));
+            state.channel.on('broadcast', { event: 'background' }, ({ payload }) => loadBackgroundFromUrl(payload.imageUrl));
             state.channel.on('broadcast', { event: 'request_sync' }, () => { if (state.backgroundImageData || hasDrawings()) broadcastFullState(); });
             state.channel.on('broadcast', { event: 'full_state' }, ({ payload }) => loadFullState(payload));
 
@@ -381,8 +406,8 @@
         }
 
         function hasDrawings() { return state.layers.some(l => { const d = l.canvas.getContext('2d').getImageData(0,0,l.canvas.width,l.canvas.height).data; return d.some((v,i) => i%4===3 && v>0); }); }
-        function broadcastFullState() { if (!state.channel || !state.isConnected) return; state.channel.send({ type: 'broadcast', event: 'full_state', payload: { backgroundImageData: state.backgroundImageData, layers: state.layers.map(l => ({ name: l.name, visible: l.visible, imageData: l.canvas.toDataURL() })), canvasWidth: mainCanvas.width, canvasHeight: mainCanvas.height } }); }
-        function loadFullState(p) { if (p.backgroundImageData) loadBackgroundFromData(p.backgroundImageData); if (p.canvasWidth) { mainCanvas.width = p.canvasWidth; mainCanvas.height = p.canvasHeight; } if (p.layers?.length) { state.layers = []; p.layers.forEach(ld => { const c = document.createElement('canvas'); c.width = mainCanvas.width; c.height = mainCanvas.height; const img = new Image(); img.onload = () => { c.getContext('2d').drawImage(img,0,0); redrawCanvas(); }; img.src = ld.imageData; state.layers.push({ name: ld.name, canvas: c, visible: ld.visible }); }); updateLayersList(); } }
+        function broadcastFullState() { if (!state.channel || !state.isConnected) return; state.channel.send({ type: 'broadcast', event: 'full_state', payload: { backgroundImageUrl: state.backgroundImageData, layers: state.layers.map(l => ({ name: l.name, visible: l.visible, imageData: l.canvas.toDataURL() })), canvasWidth: mainCanvas.width, canvasHeight: mainCanvas.height } }); }
+        function loadFullState(p) { if (p.backgroundImageUrl) loadBackgroundFromUrl(p.backgroundImageUrl); if (p.canvasWidth) { mainCanvas.width = p.canvasWidth; mainCanvas.height = p.canvasHeight; } if (p.layers?.length) { state.layers = []; p.layers.forEach(ld => { const c = document.createElement('canvas'); c.width = mainCanvas.width; c.height = mainCanvas.height; const img = new Image(); img.onload = () => { c.getContext('2d').drawImage(img,0,0); redrawCanvas(); }; img.src = ld.imageData; state.layers.push({ name: ld.name, canvas: c, visible: ld.visible }); }); updateLayersList(); } }
         function updateOnlineUsersDisplay() { document.getElementById('userCount').textContent = state.onlineUsers.size; const av = document.getElementById('userAvatars'); av.innerHTML = ''; state.onlineUsers.forEach((u, id) => { const d = document.createElement('div'); d.className = 'user-avatar'; d.style.background = u.color; d.textContent = u.name.charAt(0).toUpperCase(); d.dataset.name = u.name; if (id === state.oderId) d.style.border = '2px solid var(--primary)'; av.appendChild(d); }); }
         function copyRoomId() { navigator.clipboard.writeText(state.roomId); showToast('Room ID copied!', 'success'); }
 
@@ -392,7 +417,7 @@
         function broadcastCursor(x, y) { if (state.channel && state.isConnected) state.channel.send({ type: 'broadcast', event: 'cursor', payload: { oderId: state.oderId, name: state.userName, color: state.userColor, x, y } }); }
         function broadcastDrawing(type, data) { if (state.channel && state.isConnected) state.channel.send({ type: 'broadcast', event: 'draw', payload: { type, layerIndex: state.activeLayerIndex, color: state.currentColor, size: state.brushSize, opacity: state.opacity, ...data } }); }
         function broadcastClear() { if (state.channel && state.isConnected) state.channel.send({ type: 'broadcast', event: 'clear', payload: {} }); }
-        function broadcastBackground(d) { if (state.channel && state.isConnected) state.channel.send({ type: 'broadcast', event: 'background', payload: { imageData: d } }); }
+        function broadcastBackground(url) { if (state.channel && state.isConnected) state.channel.send({ type: 'broadcast', event: 'background', payload: { imageUrl: url } }); }
 
         function initCanvas() { const r = canvasArea.getBoundingClientRect(); mainCanvas.width = r.width; mainCanvas.height = r.height; addLayer('Background'); addLayer('Drawings'); selectLayer(1); redrawCanvas(); }
         function addLayer(name = null) { const n = name || `Layer ${state.layers.length + 1}`; const c = document.createElement('canvas'); c.width = mainCanvas.width; c.height = mainCanvas.height; state.layers.push({ name: n, canvas: c, visible: true }); updateLayersList(); if (!name) { selectLayer(state.layers.length - 1); saveState(); } }
@@ -430,8 +455,42 @@
         function openUploadModal() { document.getElementById('uploadModal').classList.add('active'); }
         function closeUploadModal() { document.getElementById('uploadModal').classList.remove('active'); }
         function handleFileSelect(e) { if (e.target.files[0]) loadImage(e.target.files[0]); }
-        function loadImage(f) { const r = new FileReader(); r.onload = e => { state.backgroundImageData = e.target.result; loadBackgroundFromData(e.target.result); broadcastBackground(e.target.result); closeUploadModal(); }; r.readAsDataURL(f); }
-        function loadBackgroundFromData(d) { const img = new Image(); img.onload = () => { state.backgroundImage = img; state.backgroundImageData = d; mainCanvas.width = img.width; mainCanvas.height = img.height; state.layers.forEach(l => { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; c.getContext('2d').drawImage(l.canvas, 0, 0); l.canvas = c; }); state.layers[0].canvas.getContext('2d').drawImage(img, 0, 0); resetZoom(); document.getElementById('uploadPrompt').classList.add('hidden'); redrawCanvas(); saveState(); }; img.src = d; }
+        async function loadImage(f) {
+            try {
+                // Upload to Supabase Storage
+                const imageUrl = await uploadImageToStorage(f);
+                state.backgroundImageData = imageUrl;
+                loadBackgroundFromUrl(imageUrl);
+                broadcastBackground(imageUrl);
+                closeUploadModal();
+            } catch (error) {
+                console.error('Failed to load image:', error);
+            }
+        }
+        function loadBackgroundFromUrl(url) {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                state.backgroundImage = img;
+                state.backgroundImageData = url;
+                mainCanvas.width = img.width;
+                mainCanvas.height = img.height;
+                state.layers.forEach(l => {
+                    const c = document.createElement('canvas');
+                    c.width = img.width;
+                    c.height = img.height;
+                    c.getContext('2d').drawImage(l.canvas, 0, 0);
+                    l.canvas = c;
+                });
+                state.layers[0].canvas.getContext('2d').drawImage(img, 0, 0);
+                resetZoom();
+                document.getElementById('uploadPrompt').classList.add('hidden');
+                redrawCanvas();
+                saveState();
+            };
+            img.onerror = () => showToast('Failed to load image', 'error');
+            img.src = url;
+        }
         function clearCanvasLocal() { state.layers.forEach((l, i) => { const c = l.canvas.getContext('2d'); c.clearRect(0, 0, l.canvas.width, l.canvas.height); if (i === 0 && state.backgroundImage) c.drawImage(state.backgroundImage, 0, 0); }); redrawCanvas(); saveState(); }
         function clearCanvas() { if (!confirm('Clear all drawings? This will affect all collaborators.')) return; clearCanvasLocal(); broadcastClear(); }
         function exportCanvas() { const c = document.createElement('canvas'); c.width = mainCanvas.width; c.height = mainCanvas.height; const cx = c.getContext('2d'); if (state.backgroundImage) cx.drawImage(state.backgroundImage, 0, 0); state.layers.forEach(l => { if (l.visible) cx.drawImage(l.canvas, 0, 0); }); const a = document.createElement('a'); a.download = `battle-strategy-${state.roomId}-${Date.now()}.png`; a.href = c.toDataURL(); a.click(); }
