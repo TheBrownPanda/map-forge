@@ -14,7 +14,7 @@
         }
         body { font-family: 'Lato', sans-serif; background: linear-gradient(135deg, #1a1410 0%, #2d2416 100%); color: var(--light); overflow: hidden; height: 100vh; }
         .app-container { display: flex; flex-direction: column; height: 100vh; }
-        .header { background: linear-gradient(to bottom, var(--darker), var(--dark)); border-bottom: 2px solid var(--primary); padding: 1rem 2rem; display: flex; align-items: center; gap: 2rem; box-shadow: 0 4px 20px var(--shadow); z-index: 1000; }
+        .header { background: linear-gradient(to bottom, var(--darker), var(--dark)); border-bottom: 2px solid var(--primary); padding: 1rem 2rem; display: flex; align-items: center; gap: 2rem; box-shadow: 0 4px 20px var(--shadow); z-index: 1000; flex-wrap: wrap; }
         .title { font-family: 'Cinzel', serif; font-size: 1.8rem; font-weight: 700; color: var(--primary); text-shadow: 2px 2px 4px var(--shadow); letter-spacing: 2px; }
         .title-sub { font-size: 1rem; color: var(--secondary); font-weight: 400; }
         .room-info { display: flex; align-items: center; gap: 1rem; background: rgba(42,35,26,0.5); padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid var(--secondary); }
@@ -297,14 +297,15 @@
     <script>
         const SUPABASE_URL = 'https://sczwwgszicbwomriucuz.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjend3Z3N6aWNid29tcml1Y3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0MTIzMzcsImV4cCI6MjA2MTk4ODMzN30.mfMYhPkickCVdHjMCVjF2znpGlJUy-PzfDgR3yvPLbk';
+        
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let state = {
             currentTool: 'pen', currentColor: '#ff0000', brushSize: 5, opacity: 1, fillShape: false,
-            currentMarker: null, zoom: 1, pan: { x: 0, y: 0 }, isDrawing: false, startX: 0, startY: 0,
-            lastX: 0, lastY: 0, backgroundImage: null, backgroundImageData: null, layers: [],
-            activeLayerIndex: 0, history: [], historyIndex: -1, maxHistory: 50,
+            currentMarker: null, zoom: 1, pan: { x: 0, y: 0 }, isDrawing: false, isPanning: false,
+            startX: 0, startY: 0, lastX: 0, lastY: 0, backgroundImage: null, backgroundImageData: null,
+            layers: [], activeLayerIndex: 0, history: [], historyIndex: -1, maxHistory: 50,
             roomId: null, oderId: 'user_' + Math.random().toString(36).substr(2, 9),
             userName: 'Anonymous', userColor: ['#ff6b6b','#4ecdc4','#45b7d1','#96ceb4','#ffeaa7','#a29bfe','#fd79a8','#00b894'][Math.floor(Math.random()*8)],
             channel: null, onlineUsers: new Map(), isConnected: false, drawingBuffer: []
@@ -314,13 +315,25 @@
         const mainCanvas = document.getElementById('drawingCanvas');
         const ctx = mainCanvas.getContext('2d');
 
-        function showToast(msg, type='info') { const t = document.createElement('div'); t.className = `toast ${type}`; t.textContent = msg; document.getElementById('toastContainer').appendChild(t); setTimeout(() => t.remove(), 3000); }
-        function updateConnectionStatus(status) { const el = document.getElementById('connectionStatus'); el.className = `connection-status ${status}`; el.innerHTML = `<div class="status-dot"></div><span>${{connected:'Connected',disconnected:'Disconnected',connecting:'Connecting...'}[status]}</span>`; }
+        function showToast(msg, type = 'info') {
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.textContent = msg;
+            document.getElementById('toastContainer').appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        function updateConnectionStatus(status) {
+            const el = document.getElementById('connectionStatus');
+            el.className = `connection-status ${status}`;
+            const labels = { connected: 'Connected', disconnected: 'Disconnected', connecting: 'Connecting...' };
+            el.innerHTML = `<div class="status-dot"></div><span>${labels[status]}</span>`;
+        }
 
         async function joinOrCreateRoom() {
             state.userName = document.getElementById('userName').value.trim() || 'Anonymous';
             const inputRoomId = document.getElementById('roomIdInput').value.trim();
-            state.roomId = inputRoomId || 'ROOM_' + Math.random().toString(36).substr(2,6).toUpperCase();
+            state.roomId = inputRoomId || 'ROOM_' + Math.random().toString(36).substr(2, 6).toUpperCase();
             document.getElementById('roomModal').classList.remove('active');
             document.getElementById('roomInfo').style.display = 'flex';
             document.getElementById('onlineUsers').style.display = 'flex';
@@ -331,64 +344,40 @@
         async function connectToRoom() {
             updateConnectionStatus('connecting');
             console.log('[Strategy] Connecting to room:', state.roomId);
-            
-            try {
-                state.channel = supabaseClient.channel(`strategy-${state.roomId}`, { 
-                    config: { 
-                        broadcast: { self: false }, 
-                        presence: { key: state.oderId } 
-                    } 
-                });
-                
-                state.channel.on('presence', { event: 'sync' }, () => { 
-                    console.log('[Strategy] Presence sync');
-                    state.onlineUsers.clear(); 
-                    Object.values(state.channel.presenceState()).forEach(users => users.forEach(u => state.onlineUsers.set(u.oderId, u))); 
-                    updateOnlineUsersDisplay(); 
-                });
-                
-                state.channel.on('broadcast', { event: 'draw' }, ({ payload }) => handleRemoteDrawing(payload));
-                state.channel.on('broadcast', { event: 'cursor' }, ({ payload }) => updateRemoteCursor(payload));
-                state.channel.on('broadcast', { event: 'clear' }, () => clearCanvasLocal());
-                state.channel.on('broadcast', { event: 'background' }, ({ payload }) => loadBackgroundFromData(payload.imageData));
-                state.channel.on('broadcast', { event: 'request_sync' }, () => { if (state.backgroundImageData || hasDrawings()) broadcastFullState(); });
-                state.channel.on('broadcast', { event: 'full_state' }, ({ payload }) => loadFullState(payload));
-                
-                state.channel.subscribe(async (status, err) => {
-                    console.log('[Strategy] Channel status:', status, err || '');
-                    
-                    if (status === 'SUBSCRIBED') { 
-                        state.isConnected = true; 
-                        updateConnectionStatus('connected'); 
-                        
-                        try {
-                            await state.channel.track({ oderId: state.oderId, name: state.userName, color: state.userColor }); 
-                            console.log('[Strategy] Presence tracked');
-                        } catch (e) {
-                            console.error('[Strategy] Track error:', e);
-                        }
-                        
-                        setTimeout(() => state.channel.send({ type: 'broadcast', event: 'request_sync', payload: {} }), 500); 
-                        showToast(`Joined room ${state.roomId}`, 'success'); 
-                    }
-                    else if (status === 'TIMED_OUT') {
-                        console.error('[Strategy] Connection timed out');
-                        state.isConnected = false;
-                        updateConnectionStatus('disconnected');
-                        showToast('Connection timed out. Retrying...', 'error');
-                        setTimeout(() => connectToRoom(), 2000);
-                    }
-                    else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') { 
-                        console.error('[Strategy] Channel error or closed:', status);
-                        state.isConnected = false; 
-                        updateConnectionStatus('disconnected'); 
-                    }
-                });
-            } catch (e) {
-                console.error('[Strategy] Connection error:', e);
-                updateConnectionStatus('disconnected');
-                showToast('Connection failed: ' + e.message, 'error');
-            }
+
+            state.channel = supabaseClient.channel(`strategy-${state.roomId}`, {
+                config: { broadcast: { self: false }, presence: { key: state.oderId } }
+            });
+
+            state.channel.on('presence', { event: 'sync' }, () => {
+                console.log('[Strategy] Presence sync');
+                state.onlineUsers.clear();
+                const presenceState = state.channel.presenceState();
+                Object.values(presenceState).forEach(users => users.forEach(u => state.onlineUsers.set(u.oderId, u)));
+                updateOnlineUsersDisplay();
+            });
+
+            state.channel.on('broadcast', { event: 'draw' }, ({ payload }) => handleRemoteDrawing(payload));
+            state.channel.on('broadcast', { event: 'cursor' }, ({ payload }) => updateRemoteCursor(payload));
+            state.channel.on('broadcast', { event: 'clear' }, () => clearCanvasLocal());
+            state.channel.on('broadcast', { event: 'background' }, ({ payload }) => loadBackgroundFromData(payload.imageData));
+            state.channel.on('broadcast', { event: 'request_sync' }, () => { if (state.backgroundImageData || hasDrawings()) broadcastFullState(); });
+            state.channel.on('broadcast', { event: 'full_state' }, ({ payload }) => loadFullState(payload));
+
+            state.channel.subscribe(async (status, err) => {
+                console.log('[Strategy] Subscribe status:', status, err || '');
+                if (status === 'SUBSCRIBED') {
+                    state.isConnected = true;
+                    updateConnectionStatus('connected');
+                    await state.channel.track({ oderId: state.oderId, name: state.userName, color: state.userColor });
+                    setTimeout(() => state.channel.send({ type: 'broadcast', event: 'request_sync', payload: { oderId: state.oderId } }), 1000);
+                    showToast(`Joined room ${state.roomId}`, 'success');
+                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                    state.isConnected = false;
+                    updateConnectionStatus('disconnected');
+                    if (status === 'CHANNEL_ERROR') showToast('Connection error', 'error');
+                }
+            });
         }
 
         function hasDrawings() { return state.layers.some(l => { const d = l.canvas.getContext('2d').getImageData(0,0,l.canvas.width,l.canvas.height).data; return d.some((v,i) => i%4===3 && v>0); }); }
@@ -397,17 +386,8 @@
         function updateOnlineUsersDisplay() { document.getElementById('userCount').textContent = state.onlineUsers.size; const av = document.getElementById('userAvatars'); av.innerHTML = ''; state.onlineUsers.forEach((u, id) => { const d = document.createElement('div'); d.className = 'user-avatar'; d.style.background = u.color; d.textContent = u.name.charAt(0).toUpperCase(); d.dataset.name = u.name; if (id === state.oderId) d.style.border = '2px solid var(--primary)'; av.appendChild(d); }); }
         function copyRoomId() { navigator.clipboard.writeText(state.roomId); showToast('Room ID copied!', 'success'); }
 
-        function handleRemoteDrawing(p) {
-            const lctx = state.layers[p.layerIndex]?.canvas.getContext('2d'); if (!lctx) return;
-            lctx.strokeStyle = p.color; lctx.fillStyle = p.color; lctx.lineWidth = p.size; lctx.lineCap = 'round'; lctx.lineJoin = 'round'; lctx.globalAlpha = p.opacity;
-            if (p.type === 'stroke' && p.points?.length) { lctx.beginPath(); lctx.moveTo(p.points[0].x, p.points[0].y); p.points.slice(1).forEach(pt => lctx.lineTo(pt.x, pt.y)); lctx.stroke(); }
-            else if (p.type === 'erase' && p.points?.length) { lctx.globalCompositeOperation = 'destination-out'; lctx.lineWidth = p.size * 2; lctx.beginPath(); lctx.moveTo(p.points[0].x, p.points[0].y); p.points.slice(1).forEach(pt => lctx.lineTo(pt.x, pt.y)); lctx.stroke(); lctx.globalCompositeOperation = 'source-over'; }
-            else if (p.type === 'shape') { const { x1, y1, x2, y2, tool, fill } = p; if (tool === 'line') { lctx.beginPath(); lctx.moveTo(x1,y1); lctx.lineTo(x2,y2); lctx.stroke(); } else if (tool === 'arrow') { const a = Math.atan2(y2-y1,x2-x1), h = 15+p.size; lctx.beginPath(); lctx.moveTo(x1,y1); lctx.lineTo(x2,y2); lctx.stroke(); lctx.beginPath(); lctx.moveTo(x2,y2); lctx.lineTo(x2-h*Math.cos(a-Math.PI/6),y2-h*Math.sin(a-Math.PI/6)); lctx.moveTo(x2,y2); lctx.lineTo(x2-h*Math.cos(a+Math.PI/6),y2-h*Math.sin(a+Math.PI/6)); lctx.stroke(); } else if (tool === 'rect') { if (fill) lctx.fillRect(x1,y1,x2-x1,y2-y1); lctx.strokeRect(x1,y1,x2-x1,y2-y1); } else if (tool === 'circle') { const r = Math.hypot(x2-x1,y2-y1); lctx.beginPath(); lctx.arc(x1,y1,r,0,Math.PI*2); if (fill) lctx.fill(); lctx.stroke(); } }
-            else if (p.type === 'text') { lctx.font = `${p.size}px Lato, sans-serif`; lctx.fillText(p.text, p.x, p.y); }
-            else if (p.type === 'marker') { lctx.font = `${p.size}px Arial`; lctx.textAlign = 'center'; lctx.textBaseline = 'middle'; lctx.fillText(p.marker, p.x, p.y); }
-            lctx.globalAlpha = 1; redrawCanvas();
-        }
-
+        function handleRemoteDrawing(p) { const lctx = state.layers[p.layerIndex]?.canvas.getContext('2d'); if (!lctx) return; lctx.strokeStyle = p.color; lctx.fillStyle = p.color; lctx.lineWidth = p.size; lctx.lineCap = 'round'; lctx.lineJoin = 'round'; lctx.globalAlpha = p.opacity; if (p.type === 'stroke' && p.points?.length) { lctx.beginPath(); lctx.moveTo(p.points[0].x, p.points[0].y); p.points.slice(1).forEach(pt => lctx.lineTo(pt.x, pt.y)); lctx.stroke(); } else if (p.type === 'erase' && p.points?.length) { lctx.globalCompositeOperation = 'destination-out'; lctx.lineWidth = p.size * 2; lctx.beginPath(); lctx.moveTo(p.points[0].x, p.points[0].y); p.points.slice(1).forEach(pt => lctx.lineTo(pt.x, pt.y)); lctx.stroke(); lctx.globalCompositeOperation = 'source-over'; } else if (p.type === 'shape') { drawShapeOnCtx(lctx, p.tool, p.x1, p.y1, p.x2, p.y2, p.fill, p.size); } else if (p.type === 'text') { lctx.font = `${p.size}px Lato, sans-serif`; lctx.fillText(p.text, p.x, p.y); } else if (p.type === 'marker') { lctx.font = `${p.size}px Arial`; lctx.textAlign = 'center'; lctx.textBaseline = 'middle'; lctx.fillText(p.marker, p.x, p.y); } lctx.globalAlpha = 1; redrawCanvas(); }
+        function drawShapeOnCtx(cx, tool, x1, y1, x2, y2, fill, size) { cx.lineWidth = size; if (tool === 'line') { cx.beginPath(); cx.moveTo(x1, y1); cx.lineTo(x2, y2); cx.stroke(); } else if (tool === 'arrow') { const a = Math.atan2(y2-y1,x2-x1), h = 15+size; cx.beginPath(); cx.moveTo(x1,y1); cx.lineTo(x2,y2); cx.stroke(); cx.beginPath(); cx.moveTo(x2,y2); cx.lineTo(x2-h*Math.cos(a-Math.PI/6),y2-h*Math.sin(a-Math.PI/6)); cx.moveTo(x2,y2); cx.lineTo(x2-h*Math.cos(a+Math.PI/6),y2-h*Math.sin(a+Math.PI/6)); cx.stroke(); } else if (tool === 'rect') { if (fill) cx.fillRect(x1,y1,x2-x1,y2-y1); cx.strokeRect(x1,y1,x2-x1,y2-y1); } else if (tool === 'circle') { const r = Math.hypot(x2-x1,y2-y1); cx.beginPath(); cx.arc(x1,y1,r,0,Math.PI*2); if (fill) cx.fill(); cx.stroke(); } }
         function updateRemoteCursor(p) { if (p.oderId === state.oderId) return; let c = document.getElementById(`cursor-${p.oderId}`); if (!c) { c = document.createElement('div'); c.id = `cursor-${p.oderId}`; c.className = 'remote-cursor'; c.style.color = p.color; c.innerHTML = `<div class="cursor-pointer"></div><div class="cursor-label">${p.name}</div>`; document.getElementById('remoteCursors').appendChild(c); } c.style.transform = `translate(${p.x * state.zoom + state.pan.x}px, ${p.y * state.zoom + state.pan.y}px)`; clearTimeout(c.hideTimeout); c.hideTimeout = setTimeout(() => c.remove(), 5000); }
         function broadcastCursor(x, y) { if (state.channel && state.isConnected) state.channel.send({ type: 'broadcast', event: 'cursor', payload: { oderId: state.oderId, name: state.userName, color: state.userColor, x, y } }); }
         function broadcastDrawing(type, data) { if (state.channel && state.isConnected) state.channel.send({ type: 'broadcast', event: 'draw', payload: { type, layerIndex: state.activeLayerIndex, color: state.currentColor, size: state.brushSize, opacity: state.opacity, ...data } }); }
@@ -425,45 +405,10 @@
         function getActiveLayerCtx() { return state.layers[state.activeLayerIndex].canvas.getContext('2d'); }
         function getCanvasCoords(e) { const r = mainCanvas.getBoundingClientRect(); return { x: (e.clientX - r.left - state.pan.x) / state.zoom, y: (e.clientY - r.top - state.pan.y) / state.zoom }; }
 
-        function startDrawing(e) {
-            if (e.button === 1 || (e.button === 0 && e.altKey)) { state.isPanning = true; state.panStart = { x: e.clientX - state.pan.x, y: e.clientY - state.pan.y }; mainCanvas.style.cursor = 'grabbing'; return; }
-            if (state.currentTool === 'text') { const c = getCanvasCoords(e); showTextInput(e.clientX, e.clientY, c); return; }
-            if (state.currentTool === 'marker' && state.currentMarker) { const c = getCanvasCoords(e); placeMarker(c.x, c.y); return; }
-            state.isDrawing = true; const c = getCanvasCoords(e); state.startX = c.x; state.startY = c.y; state.lastX = c.x; state.lastY = c.y; state.drawingBuffer = [{ x: c.x, y: c.y }];
-            if (['pen', 'brush', 'eraser'].includes(state.currentTool)) { const lc = getActiveLayerCtx(); lc.beginPath(); lc.moveTo(c.x, c.y); }
-        }
-
-        function draw(e) {
-            const c = getCanvasCoords(e);
-            document.getElementById('coordsDisplay').textContent = `X: ${Math.round(c.x)} Y: ${Math.round(c.y)}`;
-            if (!state.cursorThrottle) { state.cursorThrottle = true; broadcastCursor(c.x, c.y); setTimeout(() => state.cursorThrottle = false, 50); }
-            if (state.isPanning) { state.pan.x = e.clientX - state.panStart.x; state.pan.y = e.clientY - state.panStart.y; redrawCanvas(); return; }
-            if (!state.isDrawing) return;
-            const lc = getActiveLayerCtx(); state.drawingBuffer.push({ x: c.x, y: c.y });
-            if (['pen', 'brush'].includes(state.currentTool)) { lc.lineTo(c.x, c.y); lc.strokeStyle = state.currentColor; lc.lineWidth = state.currentTool === 'brush' ? state.brushSize * 2 : state.brushSize; lc.lineCap = 'round'; lc.lineJoin = 'round'; lc.globalAlpha = state.opacity; lc.stroke(); redrawCanvas(); }
-            else if (state.currentTool === 'eraser') { lc.lineTo(c.x, c.y); lc.lineWidth = state.brushSize * 2; lc.lineCap = 'round'; lc.globalCompositeOperation = 'destination-out'; lc.stroke(); lc.globalCompositeOperation = 'source-over'; redrawCanvas(); }
-            else if (['line', 'arrow', 'rect', 'circle'].includes(state.currentTool)) { redrawCanvas(); ctx.save(); ctx.translate(state.pan.x, state.pan.y); ctx.scale(state.zoom, state.zoom); drawShape(ctx, state.startX, state.startY, c.x, c.y); ctx.restore(); }
-            state.lastX = c.x; state.lastY = c.y;
-        }
-
-        function stopDrawing(e) {
-            if (state.isPanning) { state.isPanning = false; mainCanvas.style.cursor = 'crosshair'; return; }
-            if (!state.isDrawing) return; state.isDrawing = false;
-            const c = getCanvasCoords(e);
-            if (['pen', 'brush'].includes(state.currentTool)) broadcastDrawing('stroke', { points: state.drawingBuffer, size: state.currentTool === 'brush' ? state.brushSize * 2 : state.brushSize });
-            else if (state.currentTool === 'eraser') broadcastDrawing('erase', { points: state.drawingBuffer, size: state.brushSize });
-            else if (['line', 'arrow', 'rect', 'circle'].includes(state.currentTool)) { drawShape(getActiveLayerCtx(), state.startX, state.startY, c.x, c.y); redrawCanvas(); broadcastDrawing('shape', { tool: state.currentTool, x1: state.startX, y1: state.startY, x2: c.x, y2: c.y, fill: state.fillShape }); }
-            state.drawingBuffer = []; saveState();
-        }
-
-        function drawShape(cx, x1, y1, x2, y2) {
-            cx.strokeStyle = state.currentColor; cx.fillStyle = state.currentColor; cx.lineWidth = state.brushSize; cx.lineCap = 'round'; cx.globalAlpha = state.opacity;
-            if (state.currentTool === 'line') { cx.beginPath(); cx.moveTo(x1, y1); cx.lineTo(x2, y2); cx.stroke(); }
-            else if (state.currentTool === 'arrow') { const a = Math.atan2(y2 - y1, x2 - x1), h = 15 + state.brushSize; cx.beginPath(); cx.moveTo(x1, y1); cx.lineTo(x2, y2); cx.stroke(); cx.beginPath(); cx.moveTo(x2, y2); cx.lineTo(x2 - h * Math.cos(a - Math.PI / 6), y2 - h * Math.sin(a - Math.PI / 6)); cx.moveTo(x2, y2); cx.lineTo(x2 - h * Math.cos(a + Math.PI / 6), y2 - h * Math.sin(a + Math.PI / 6)); cx.stroke(); }
-            else if (state.currentTool === 'rect') { if (state.fillShape) cx.fillRect(x1, y1, x2 - x1, y2 - y1); cx.strokeRect(x1, y1, x2 - x1, y2 - y1); }
-            else if (state.currentTool === 'circle') { const r = Math.hypot(x2 - x1, y2 - y1); cx.beginPath(); cx.arc(x1, y1, r, 0, Math.PI * 2); if (state.fillShape) cx.fill(); cx.stroke(); }
-            cx.globalAlpha = 1;
-        }
+        function startDrawing(e) { if (e.button === 1 || (e.button === 0 && e.altKey)) { state.isPanning = true; state.panStart = { x: e.clientX - state.pan.x, y: e.clientY - state.pan.y }; mainCanvas.style.cursor = 'grabbing'; return; } if (state.currentTool === 'text') { const c = getCanvasCoords(e); showTextInput(e.clientX, e.clientY, c); return; } if (state.currentTool === 'marker' && state.currentMarker) { const c = getCanvasCoords(e); placeMarker(c.x, c.y); return; } state.isDrawing = true; const c = getCanvasCoords(e); state.startX = c.x; state.startY = c.y; state.lastX = c.x; state.lastY = c.y; state.drawingBuffer = [{ x: c.x, y: c.y }]; if (['pen', 'brush', 'eraser'].includes(state.currentTool)) { const lc = getActiveLayerCtx(); lc.beginPath(); lc.moveTo(c.x, c.y); } }
+        let cursorThrottle = false;
+        function draw(e) { const c = getCanvasCoords(e); document.getElementById('coordsDisplay').textContent = `X: ${Math.round(c.x)} Y: ${Math.round(c.y)}`; if (!cursorThrottle) { cursorThrottle = true; broadcastCursor(c.x, c.y); setTimeout(() => cursorThrottle = false, 50); } if (state.isPanning) { state.pan.x = e.clientX - state.panStart.x; state.pan.y = e.clientY - state.panStart.y; redrawCanvas(); return; } if (!state.isDrawing) return; const lc = getActiveLayerCtx(); state.drawingBuffer.push({ x: c.x, y: c.y }); if (['pen', 'brush'].includes(state.currentTool)) { lc.lineTo(c.x, c.y); lc.strokeStyle = state.currentColor; lc.lineWidth = state.currentTool === 'brush' ? state.brushSize * 2 : state.brushSize; lc.lineCap = 'round'; lc.lineJoin = 'round'; lc.globalAlpha = state.opacity; lc.stroke(); redrawCanvas(); } else if (state.currentTool === 'eraser') { lc.lineTo(c.x, c.y); lc.lineWidth = state.brushSize * 2; lc.lineCap = 'round'; lc.globalCompositeOperation = 'destination-out'; lc.stroke(); lc.globalCompositeOperation = 'source-over'; redrawCanvas(); } else if (['line', 'arrow', 'rect', 'circle'].includes(state.currentTool)) { redrawCanvas(); ctx.save(); ctx.translate(state.pan.x, state.pan.y); ctx.scale(state.zoom, state.zoom); ctx.strokeStyle = state.currentColor; ctx.fillStyle = state.currentColor; ctx.globalAlpha = state.opacity; drawShapeOnCtx(ctx, state.currentTool, state.startX, state.startY, c.x, c.y, state.fillShape, state.brushSize); ctx.restore(); } state.lastX = c.x; state.lastY = c.y; }
+        function stopDrawing(e) { if (state.isPanning) { state.isPanning = false; mainCanvas.style.cursor = 'crosshair'; return; } if (!state.isDrawing) return; state.isDrawing = false; const c = getCanvasCoords(e); if (['pen', 'brush'].includes(state.currentTool)) { broadcastDrawing('stroke', { points: state.drawingBuffer, size: state.currentTool === 'brush' ? state.brushSize * 2 : state.brushSize }); } else if (state.currentTool === 'eraser') { broadcastDrawing('erase', { points: state.drawingBuffer, size: state.brushSize }); } else if (['line', 'arrow', 'rect', 'circle'].includes(state.currentTool)) { const lc = getActiveLayerCtx(); lc.strokeStyle = state.currentColor; lc.fillStyle = state.currentColor; lc.globalAlpha = state.opacity; drawShapeOnCtx(lc, state.currentTool, state.startX, state.startY, c.x, c.y, state.fillShape, state.brushSize); redrawCanvas(); broadcastDrawing('shape', { tool: state.currentTool, x1: state.startX, y1: state.startY, x2: c.x, y2: c.y, fill: state.fillShape }); } state.drawingBuffer = []; saveState(); }
 
         function showTextInput(cx, cy, coords) { const c = document.getElementById('textInputContainer'), i = document.getElementById('textInput'); c.style.left = cx + 'px'; c.style.top = cy + 'px'; c.classList.add('active'); c.dataset.x = coords.x; c.dataset.y = coords.y; i.value = ''; i.style.color = state.currentColor; i.style.fontSize = (state.brushSize + 12) + 'px'; i.focus(); }
         function handleTextInput(e) { if (e.key === 'Enter') { const c = document.getElementById('textInputContainer'), i = document.getElementById('textInput'); if (i.value.trim()) { const lc = getActiveLayerCtx(), x = parseFloat(c.dataset.x), y = parseFloat(c.dataset.y), s = state.brushSize + 12; lc.font = `${s}px Lato, sans-serif`; lc.fillStyle = state.currentColor; lc.globalAlpha = state.opacity; lc.fillText(i.value, x, y); lc.globalAlpha = 1; broadcastDrawing('text', { text: i.value, x, y, size: s }); redrawCanvas(); saveState(); } c.classList.remove('active'); } else if (e.key === 'Escape') document.getElementById('textInputContainer').classList.remove('active'); }
@@ -502,10 +447,7 @@
         mainCanvas.addEventListener('mouseup', stopDrawing);
         mainCanvas.addEventListener('mouseleave', stopDrawing);
         canvasArea.addEventListener('wheel', e => { e.preventDefault(); state.zoom = Math.max(0.25, Math.min(5, state.zoom + (e.deltaY > 0 ? -0.1 : 0.1))); updateZoomDisplay(); redrawCanvas(); });
-        document.addEventListener('keydown', e => {
-            if (e.ctrlKey || e.metaKey) { if (e.key === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); } else if (e.key === 'y') { e.preventDefault(); redo(); } else if (e.key === 's') { e.preventDefault(); exportCanvas(); } }
-            if (!e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') { const k = e.key.toLowerCase(); if (k === 'p') selectTool('pen'); else if (k === 'b') selectTool('brush'); else if (k === 'l') selectTool('line'); else if (k === 'a') selectTool('arrow'); else if (k === 'r') selectTool('rect'); else if (k === 'c') selectTool('circle'); else if (k === 't') selectTool('text'); else if (k === 'e') selectTool('eraser'); }
-        });
+        document.addEventListener('keydown', e => { if (e.ctrlKey || e.metaKey) { if (e.key === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); } else if (e.key === 'y') { e.preventDefault(); redo(); } else if (e.key === 's') { e.preventDefault(); exportCanvas(); } } if (!e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') { const k = e.key.toLowerCase(); if (k === 'p') selectTool('pen'); else if (k === 'b') selectTool('brush'); else if (k === 'l') selectTool('line'); else if (k === 'a') selectTool('arrow'); else if (k === 'r') selectTool('rect'); else if (k === 'c') selectTool('circle'); else if (k === 't') selectTool('text'); else if (k === 'e') selectTool('eraser'); } });
         document.getElementById('fillShape').addEventListener('change', e => state.fillShape = e.target.checked);
         window.addEventListener('resize', () => { const r = canvasArea.getBoundingClientRect(); if (!state.backgroundImage) { mainCanvas.width = r.width; mainCanvas.height = r.height; state.layers.forEach(l => { l.canvas.width = r.width; l.canvas.height = r.height; }); } redrawCanvas(); });
         document.addEventListener('click', e => { const c = document.getElementById('textInputContainer'); if (c.classList.contains('active') && !c.contains(e.target)) c.classList.remove('active'); });
